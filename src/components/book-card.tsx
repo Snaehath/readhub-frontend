@@ -16,7 +16,7 @@ export default function BookCard({ book }: BookCardProps) {
       </div>
       <CardHeader className="pl-3">
         <Badge className="w-fit mb-1 text-xs">{book.tag.slice(0,12)}</Badge>
-        <CardTitle className="text-md line-clamp-2">{book.title}</CardTitle>
+        <CardTitle className="text-md line-clamp-1">{book.title}</CardTitle>
         <p className="text-xs text-muted-foreground">by {book.author_name[0] ?? "finding"}</p>
       </CardHeader>
       <CardFooter className="p-3 pt-0 flex justify-between">

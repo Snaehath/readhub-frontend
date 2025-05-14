@@ -7,15 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeExternalLinks from "rehype-external-links";
-
-type ChatMessage = {
-  sender: "user" | "bot";
-  message: string;
-};
+import { ChatMessage as ChatMessageType } from "@/types";
 
 export default function ChatbotPage() {
   const [userMessage, setUserMessage] = useState("");
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [chatHistory, setChatHistory] = useState<ChatMessageType[]>([]);
   const [loading, setLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);

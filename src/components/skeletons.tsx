@@ -80,7 +80,7 @@ export function CardsSkeleton() {
 
 export function BooksSkeleton() {
   return (
-    <div>
+    <div className="animate-pulse">
       <BookCardSkeleton />
     </div>
   );

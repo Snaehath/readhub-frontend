@@ -1,6 +1,5 @@
 "use client";
 
-import BookCard from "@/components/book-card";
 import { Input } from "@/components/ui/input";
 import { SetStateAction, useEffect, useState } from "react";
 import { Suspense } from "react";
@@ -22,7 +21,7 @@ export default function LibraryPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("children");
+  const [selectedCategory, setSelectedCategory] = useState<string>("general");
 
   const booksCategories = [
     { id: "history", name: "History" },
@@ -39,7 +38,7 @@ export default function LibraryPage() {
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
-    }, 400);
+    }, 1000);
 
     return () => {
       clearTimeout(handler);
@@ -98,7 +97,7 @@ export default function LibraryPage() {
           onChange={(e) => setSelectedCategory(e.target.value)}
           className="mb-4 p-2 border rounded w-32"
         >
-          <option value="">Select Category</option>
+          <option value="general">All</option>
           {booksCategories.map((category) => (
             <option key={category.id} value={category.id}>
               {category.name}

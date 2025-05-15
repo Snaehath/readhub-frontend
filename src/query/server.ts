@@ -3,7 +3,7 @@
 import client from "../lib/mongodb";
 
 export async function databaseConnection() {
-  let isConnected = false;
+  const isConnected = false;
   try {
     const mongoClient = await client.connect();
     await mongoClient.db("admin").command({ ping: 1 });

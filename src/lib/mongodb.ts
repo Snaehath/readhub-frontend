@@ -10,9 +10,9 @@ if (!uri) {
 let client: MongoClient;
 
 if (process.env.NODE_ENV === "development") {
-  let globalWithMongo = global as typeof globalThis & {
-    _mongoClient?: MongoClient;
-  };
+  const globalWithMongo = global as typeof globalThis & {
+  _mongoClient?: MongoClient;
+};
 
   if (!globalWithMongo._mongoClient) {
     globalWithMongo._mongoClient = new MongoClient(uri, options);

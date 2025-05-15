@@ -19,6 +19,7 @@ export type NewsCardProps = {
 
 
 export type Book = {
+  key: any;
   cover_edition_key?: string;
   cover_id?: number;
   title: string;

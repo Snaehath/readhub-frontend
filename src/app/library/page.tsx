@@ -47,7 +47,9 @@ export default function LibraryPage() {
       setError(null);
 
       try {
-        let query = `https://openlibrary.org/search.json?q=${debouncedSearchQuery || "all"}&lang=en&limit=20`;
+        let query = `https://openlibrary.org/search.json?q=${
+          debouncedSearchQuery || "all"
+        }&lang=en&limit=20`;
 
         if (selectedCategory && selectedCategory !== "general") {
           query += `&subject=${selectedCategory}`;
@@ -56,16 +58,18 @@ export default function LibraryPage() {
         const res = await fetch(query, { cache: "no-store" });
 
         if (!res.ok) {
-          throw new Error(`Failed to fetch books: ${res.status} ${res.statusText}`);
+          throw new Error(
+            `Failed to fetch books: ${res.status} ${res.statusText}`
+          );
         }
 
         const data = await res.json();
 
-        const cleaned = (data.docs || []).map((book: any) => ({
+        const cleaned = (data.docs || []).map((book: Book) => ({
           title: book.title,
           author_key: book.author_key ?? [],
           author_name: book.author_name ?? [],
-          cover_id: book.cover_i || book.cover_id,
+          cover_id: book.cover_id,
           cover_edition_key: book.cover_edition_key,
           work_key: book.key,
           lending_identifier_s: book.lending_identifier_s || "",
@@ -73,9 +77,12 @@ export default function LibraryPage() {
         }));
 
         setBooks(cleaned);
-      } catch (err: any) {
-        setError(err.message || "Unknown error occurred.");
-        setBooks([]);
+      } catch (err: unknown) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Unknown error occurred.");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -153,15 +160,11 @@ export default function LibraryPage() {
       </Dialog>
 
       {error && (
-        <div className="text-center text-red-600 mb-4">
-          Error: {error}
-        </div>
+        <div className="text-center text-red-600 mb-4">Error: {error}</div>
       )}
 
       {!isLoading && !error && books.length === 0 && (
-        <div className="text-center text-gray-500 mb-4">
-          No books found.
-        </div>
+        <div className="text-center text-gray-500 mb-4">No books found.</div>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">

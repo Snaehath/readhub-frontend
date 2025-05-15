@@ -24,7 +24,7 @@ export default async function FeaturedBooks() {
               src={book.urlToImage}
               alt={book.title}
 
-              className="object-contain w-full h-full"
+              className="object-contain w-full h-full outline outline-black p-2"
             />
           </div>
           <CardHeader className="p-4">

@@ -54,7 +54,7 @@ export async function getNewsIndia() {
         description: article.description,
         content:article.content,
         url: article.url,
-        urlToImage: article.image,
+        urlToImage: article.urlToImage,
         publishedAt: article.publishedAt instanceof Date
           ? article.publishedAt.toISOString()
           : article.publishedAt,

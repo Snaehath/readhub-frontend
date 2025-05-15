@@ -10,7 +10,7 @@ interface BookCardProps {
 
 export default function BookCard({ book }: BookCardProps) {
   return (
-    <Card className="overflow-hidden flex flex-col h-96 w-84 sm:w-auto hover:shadow-md hover:shadow-gray-500/50 ">
+    <Card className="overflow-hidden flex flex-col h-96 sm:w-auto hover:shadow-md hover:shadow-gray-500/50 ">
       <div className="relative h-48 w-full">
         <img src={book.cover_edition_key ? `https://covers.openlibrary.org/b/olid/${book.cover_edition_key}-M.jpg` : `https://covers.openlibrary.org/b/id/${book.cover_id}-M.jpg`} alt={book.title} className="object-contain w-full h-full " />
       </div>

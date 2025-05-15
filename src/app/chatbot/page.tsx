@@ -77,11 +77,11 @@ export default function ChatbotPage() {
 
   const suggestions = [
     "Summarize the latest news",
-    "Recommend me a story book",
-    "What's trending in technology?",
     "Today's top news in india",
-    "Give me a fun fact from today's news",
     "Latest news in India",
+    "Recommend me children's books",
+    "What's trending in technology?",
+    "Give me a fun fact from today's news",
     "Summarize the latest India news",
   ];
 

@@ -60,14 +60,11 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
 
     if (!responseUS.ok) {
       toast(`HTTP error (US)! status: ${responseUS.status}`);
-    } else {
-      toast("US news has been fetched and updated");
-    }
-
+    } 
     if (!responseIN.ok) {
       toast(`HTTP error (IN)! status: ${responseIN.status}`);
     } else {
-      toast("India news has been fetched and updated");
+      toast("Latest news has been fetched and updated");
     }
 
     router.refresh();

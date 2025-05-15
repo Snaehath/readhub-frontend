@@ -19,12 +19,12 @@ export type NewsCardProps = {
 
 
 export type Book = {
-  key: any;
+  key: string;
   cover_edition_key?: string;
   cover_id?: number;
   title: string;
   author_name: string[];
-   author_key: string;
+  author_key: string;
   lending_identifier_s: string;
   work_key: string;
   tag: string;

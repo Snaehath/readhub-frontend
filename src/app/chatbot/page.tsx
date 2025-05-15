@@ -34,41 +34,41 @@ export default function ChatbotPage() {
   }, [chatHistory]);
 
   const sendMessage = async (messageOverride?: string) => {
-    const messageToSend = messageOverride ?? userMessage;
-    if (!messageToSend.trim()) return;
+  const messageToSend = messageOverride ?? userMessage;
+  if (!messageToSend.trim()) return;
 
-    const updatedHistory = [
-      ...chatHistory,
-      { sender: "user", message: messageToSend },
-    ];
-    setChatHistory(updatedHistory);
-    setUserMessage("");
-    setLoading(true);
+  const updatedHistory: ChatMessage[] = [
+    ...chatHistory,
+    { sender: "user" as const, message: messageToSend },
+  ];
+  setChatHistory(updatedHistory);
+  setUserMessage("");
+  setLoading(true);
 
-    try {
-      const res = await fetch("https://readhub-backend.onrender.com/api/ai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userMessage: messageToSend }),
-      });
+  try {
+    const res = await fetch("https://readhub-backend.onrender.com/api/ai/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userMessage: messageToSend }),
+    });
 
-      const data = await res.json();
-      const reply = data?.reply?.trim() || "No response.";
+    const data = await res.json();
+    const reply = data?.reply?.trim() || "No response.";
 
-      setChatHistory([
-        ...updatedHistory,
-        { sender: "bot", message: reply },
-      ]);
-    } catch (error) {
-      console.error("Chat error:", error);
-      setChatHistory([
-        ...updatedHistory,
-        { sender: "bot", message: "Something went wrong. Please try again." },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setChatHistory([
+      ...updatedHistory,
+      { sender: "bot" as const, message: reply },
+    ]);
+  } catch (error) {
+    console.error("Chat error:", error);
+    setChatHistory([
+      ...updatedHistory,
+      { sender: "bot" as const, message: "Something went wrong. Please try again." },
+    ]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const clearChat = () => {
     localStorage.removeItem("chatHistory");

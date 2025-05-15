@@ -1,27 +1,26 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { SetStateAction, useEffect, useState } from "react";
-import { Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { CardSkeleton } from "@/components/skeletons";
 import { BooksCardLoader } from "@/components/card-loader";
+import { Book } from "@/types";
 
-type Book = {
-  title: string;
-  author_key: string[];
-  author_name: string[];
-  cover_edition_key: string;
-  cover_id:string;
-  work_key: string;
-  lending_identifier_s: string;
-  tag: string;
-};
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function LibraryPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("general");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const booksCategories = [
     { id: "history", name: "History" },
@@ -34,49 +33,60 @@ export default function LibraryPage() {
     { id: "cooking", name: "Cooking" },
   ];
 
-  // Debounce the search query
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
+      setDebouncedSearchQuery(searchQuery.trim());
     }, 1000);
 
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => clearTimeout(handler);
   }, [searchQuery]);
 
-  // Fetch books when debouncedSearchQuery or selectedCategory changes
   useEffect(() => {
     const fetchBooks = async () => {
-      let query = `https://openlibrary.org/search.json?q=${debouncedSearchQuery}&lang=en&limit=20`;
+      setIsLoading(true);
+      setError(null);
 
-      if (selectedCategory) {
-        query += `&subject=${selectedCategory}`;
+      try {
+        let query = `https://openlibrary.org/search.json?q=${debouncedSearchQuery || "all"}&lang=en&limit=20`;
+
+        if (selectedCategory && selectedCategory !== "general") {
+          query += `&subject=${selectedCategory}`;
+        }
+
+        const res = await fetch(query, { cache: "no-store" });
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch books: ${res.status} ${res.statusText}`);
+        }
+
+        const data = await res.json();
+
+        const cleaned = (data.docs || []).map((book: any) => ({
+          title: book.title,
+          author_key: book.author_key ?? [],
+          author_name: book.author_name ?? [],
+          cover_id: book.cover_i || book.cover_id,
+          cover_edition_key: book.cover_edition_key,
+          work_key: book.key,
+          lending_identifier_s: book.lending_identifier_s || "",
+          tag: debouncedSearchQuery || selectedCategory,
+        }));
+
+        setBooks(cleaned);
+      } catch (err: any) {
+        setError(err.message || "Unknown error occurred.");
+        setBooks([]);
+      } finally {
+        setIsLoading(false);
       }
-
-      const res = await fetch(query, { cache: "no-store" });
-      const data = await res.json();
-      const cleaned = data.docs.map((book: any) => ({
-        title: book.title,
-        author_key: book.author_key,
-        author_name: book.author_name,
-        cover_id : book.cover_i,
-        cover_edition_key: book.cover_edition_key,
-        work_key: book.key,
-        lending_identifier_s: book.lending_identifier_s,
-        tag: debouncedSearchQuery || selectedCategory,
-      }));
-      setBooks(cleaned);
     };
 
     fetchBooks();
   }, [debouncedSearchQuery, selectedCategory]);
 
-  const handleBookSearch = (e: {
-    target: { value: SetStateAction<string> };
-  }) => {
+  const handleBookSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setSelectedCategory("");
+    setSelectedCategory("general");
   };
 
   return (
@@ -89,12 +99,14 @@ export default function LibraryPage() {
           placeholder="Search for books..."
           value={searchQuery}
           onChange={handleBookSearch}
+          aria-label="Search books"
           className="p-2 w-full sm:w-1/2 lg:w-1/4 hover:border-black"
         />
 
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
+          aria-label="Select book category"
           className="mb-4 p-2 border rounded w-32"
         >
           <option value="general">All</option>
@@ -106,10 +118,56 @@ export default function LibraryPage() {
         </select>
       </div>
 
+      {/* Loading Dialog */}
+      <Dialog open={isLoading} onOpenChange={() => {}}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Loading books</DialogTitle>
+            <DialogDescription>
+              Please wait while we fetch the latest books for you.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-6">
+            <svg
+              className="animate-spin h-8 w-8 text-blue-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              ></path>
+            </svg>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {error && (
+        <div className="text-center text-red-600 mb-4">
+          Error: {error}
+        </div>
+      )}
+
+      {!isLoading && !error && books.length === 0 && (
+        <div className="text-center text-gray-500 mb-4">
+          No books found.
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {books.map((book) => (
           <Suspense key={book.work_key} fallback={<CardSkeleton />}>
-            <BooksCardLoader key={book.work_key} book={book} />
+            <BooksCardLoader book={book} />
           </Suspense>
         ))}
       </div>

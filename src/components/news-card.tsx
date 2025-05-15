@@ -15,10 +15,11 @@ import {
   CardTitle,
 } from "./ui/card";
 import { Button } from "./ui/button";
+import { NewsArticle } from "@/types";
 
 interface NewsCardProps {
-  articlesUS: any;
-  articlesIN: any;
+  articlesUS: NewsArticle[];
+  articlesIN: NewsArticle[];
 }
 
 export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
@@ -87,7 +88,7 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
     selectedCategory === "all"
       ? articles.slice(0, newsLimit)
       : articles
-          .filter((article: any) =>
+          .filter((article) =>
             article.category?.includes(selectedCategory)
           )
           .slice(0, newsLimit);
@@ -140,7 +141,7 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
 
       {/* News Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ">
-        {filteredArticles.map((article: any, i: number) => (
+        {filteredArticles.map((article, i: number) => (
           <Card
             className="overflow-hidden hover:shadow-lg hover:shadow-gray-500/50"
             key={i}
@@ -154,7 +155,7 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
             </div>
             <CardHeader className="p-4">
               <div className="flex items-center gap-2 mb-2">
-                {article.category.map((cat: any, i: number) => (
+                {article.category.map((cat, i: number) => (
                   <Badge key={i}>{cat}</Badge>
                 ))}
               </div>

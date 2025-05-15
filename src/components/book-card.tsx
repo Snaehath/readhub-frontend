@@ -3,9 +3,10 @@ import { BookOpen} from "lucide-react"
 
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Book } from "@/types"
 
 interface BookCardProps {
-  book: any
+  book: Book
 }
 
 export default function BookCard({ book }: BookCardProps) {

@@ -1,10 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
-import { BookOpen, Star } from "lucide-react";
 
 import {
   Card,
-  CardContent,
   CardFooter,
   CardHeader,
   CardTitle,

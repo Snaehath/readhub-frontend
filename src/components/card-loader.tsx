@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { CardsSkeleton,BooksSkeleton } from "./skeletons";
+import { NewsCardProps,Book } from "@/types";
 
 function delay(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
@@ -16,9 +17,9 @@ const BookCard = dynamic(() => delay(2000).then(() => import("./book-card")), {
   ssr: false,
 });
 
-export function NewsCardLoader(props: any) {
+export function NewsCardLoader(props: NewsCardProps) {
   return <NewsCard {...props} />;
 }
-export function BooksCardLoader(props: any) {
+export function BooksCardLoader(props: {book:Book}) {
   return <BookCard {...props} />;
 }

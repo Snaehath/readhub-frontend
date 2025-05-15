@@ -10,11 +10,12 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getNews } from "@/lib/data";
+import { NewsArticle } from "@/types";
 
 export default async function FeaturedNews() {
   const allNews = await getNews();
   const featuredNews = allNews
-  .filter((news: any) => news.category?.includes('science'))
+  .filter((news: NewsArticle) => news.category?.includes('science'))
   .slice(0, 3);
 
   return (

@@ -12,7 +12,6 @@ export async function getNews() {
     const news = await newsCollection
       .find({})
       .sort({ publishedAt: -1 })
-      .limit(50)
       .toArray();
 
       const formattedNews = news.map((article) => ({
@@ -45,7 +44,6 @@ export async function getNewsIndia() {
     const news = await newsCollection
       .find({})
       .sort({ publishedAt: -1 })
-      .limit(50)
       .toArray();
 
       const formattedNews = news.map((article) => ({

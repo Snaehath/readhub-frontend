@@ -107,6 +107,9 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
           <Button
             className="rounded-full px-6 py-3 font-semibold bg-gray-200 text-gray-700"
             onClick={handleClickEvent}
+            disabled={isLoading}
+            aria-label="Refresh news"
+            title="Refresh news"
           >
             <RefreshCcw className={`${isLoading ? "animate-spin" : ""}`} />
           </Button>

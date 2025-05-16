@@ -30,7 +30,7 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
-  
+
   const newsCategories = [
     { id: "all", name: "All" },
     { id: "technology", name: "Technology" },
@@ -52,85 +52,75 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
   };
 
   const handleClickEvent = async () => {
-  try {
-    setIsLoading(true)
-    const [responseUS, responseIN] = await Promise.all([
-      fetch("https://readhub-backend.onrender.com/api/news/fetch-categories/us"),
-      fetch("https://readhub-backend.onrender.com/api/news/fetch-categories/in")
-    ]);
+    try {
+      setIsLoading(true);
+      const [responseUS, responseIN] = await Promise.all([
+        fetch("https://readhub-backend.onrender.com/api/news/fetch-categories/us"),
+        fetch("https://readhub-backend.onrender.com/api/news/fetch-categories/in"),
+      ]);
 
-    if (!responseUS.ok) {
-      toast(`HTTP error (US)! status: ${responseUS.status}`);
-    } 
-    if (!responseIN.ok) {
-      toast(`HTTP error (IN)! status: ${responseIN.status}`);
-    } else {
-      toast("Latest news has been fetched and updated");
+      if (!responseUS.ok) {
+        toast(`HTTP error (US)! status: ${responseUS.status}`);
+      }
+      if (!responseIN.ok) {
+        toast(`HTTP error (IN)! status: ${responseIN.status}`);
+      } else {
+        toast("Latest news has been fetched and updated");
+      }
+
+      router.refresh();
+      setIsLoading(false);
+    } catch (error) {
+      toast(`Error fetching news: ${error}`);
     }
-
-    router.refresh();
-    setIsLoading(false)
-
-  } catch (error) {
-    toast(`Error fetching news: ${error}`);
-  }
-};
+  };
 
   useEffect(() => {
-    if (selectedCountry === "us") {
-      setArticles(articlesUS);
-    } else if (selectedCountry === "in") {
-      setArticles(articlesIN);
-    }
+    setArticles(selectedCountry === "us" ? articlesUS : articlesIN);
   }, [selectedCountry, articlesUS, articlesIN]);
 
   const filteredArticles =
     selectedCategory === "all"
       ? articles.slice(0, newsLimit)
       : articles
-          .filter((article) =>
-            article.category?.includes(selectedCategory)
-          )
+          .filter((article) => article.category?.includes(selectedCategory))
           .slice(0, newsLimit);
 
   return (
-    <div className="w-full">
-      {/* Category Buttons */}
-      <div className="flex flex-wrap justify-between gap-2 mb-6">
-        <div>
+    <div className="w-full px-4 sm:px-6 lg:px-8">
+      {/* Category + Country Buttons */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between flex-wrap gap-4 mb-6">
+        <div className="flex flex-wrap gap-2">
           {newsCategories.map((cat) => (
             <Button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-2 mr-2 rounded-full mb-2 transform transition-all duration-100 ${
+              className={`px-4 py-2 rounded-full transition-all duration-100 ${
                 selectedCategory === cat.id
-                  ? "bg-blue-600 text-white scale-90"
+                  ? "bg-blue-600 text-white scale-95"
                   : "bg-gray-200 text-gray-700"
               }`}
             >
               {cat.name}
             </Button>
           ))}
-          <span>
-            <Button
-              className="rounded-4xl  px-6 py-3 font-semibold bg-gray-200 text-gray-700"
-              onClick={handleClickEvent}
-            >
-              <RefreshCcw className={`${isLoading ? "animate-spin" : ""} `}/>
-            </Button>
-          </span>
+          <Button
+            className="rounded-full px-6 py-3 font-semibold bg-gray-200 text-gray-700"
+            onClick={handleClickEvent}
+          >
+            <RefreshCcw className={`${isLoading ? "animate-spin" : ""}`} />
+          </Button>
         </div>
-        <div>
+        <div className="flex gap-2 flex-wrap">
           {newsCountries.map((country) => (
             <Button
-              size={"sm"}
               key={country.id}
               onClick={() => setSelectedCountry(country.id)}
               aria-pressed={selectedCountry === country.id}
-              className={`px-4 py-2 mr-2 rounded-full mt-2 transform transition-all duration-100  ${
+              className={`px-4 py-2 rounded-full transition-all duration-100 ${
                 selectedCountry === country.id
-                  ? "bg-blue-600 text-white scale-90"
-                  : "bg-gray-200 text-gray-700 "
+                  ? "bg-blue-600 text-white scale-95"
+                  : "bg-gray-200 text-gray-700"
               }`}
             >
               {country.tag}
@@ -140,7 +130,7 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
       </div>
 
       {/* News Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 ">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredArticles.map((article, i: number) => (
           <Card
             className="overflow-hidden hover:shadow-lg hover:shadow-gray-500/50"
@@ -154,7 +144,7 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
               />
             </div>
             <CardHeader className="p-4">
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex flex-wrap gap-2 mb-2">
                 {article.category.map((cat, i: number) => (
                   <Badge key={i}>{cat}</Badge>
                 ))}
@@ -169,7 +159,7 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
               </p>
             </CardContent>
             <CardFooter className="p-4 pt-0 flex justify-between">
-              <div className="flex items-center text-xs ">
+              <div className="flex items-center text-xs">
                 <CalendarIcon className="mr-1 h-3 w-3" />
                 {new Date(article.publishedAt).toLocaleDateString()}
               </div>
@@ -185,18 +175,19 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
           </Card>
         ))}
       </div>
+
+      {/* when no article found in the category */}
       {filteredArticles.length === 0 && (
-        <div className="text-center text-gray-500 col-span-full">
+        <div className="text-center text-gray-500 mt-6">
           No articles found for this category.
         </div>
       )}
-      {articles.length > 12 && (
-        <Button
-          onClick={handleLoadMore}
-          className="items-center justify-center ml-230 mt-4"
-        >
-          Load More
-        </Button>
+
+      {/* Load More Button */}
+      {articles.length > newsLimit && (
+        <div className="flex justify-center mt-6">
+          <Button onClick={handleLoadMore}>Load More</Button>
+        </div>
       )}
     </div>
   );

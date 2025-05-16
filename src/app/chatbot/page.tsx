@@ -79,10 +79,10 @@ export default function ChatbotPage() {
     "Summarize the latest news",
     "Today's top news in india",
     "Latest news in India",
-    "Recommend me children's books",
+    "Children's books",
+    "Horror books",
     "What's trending in technology?",
     "Give me a fun fact from today's news",
-    "Summarize the latest India news",
   ];
 
   return (

@@ -46,7 +46,7 @@ export default function ChatbotPage() {
   setLoading(true);
 
   try {
-    const res = await fetch("https://readhub-backend.onrender.com/api/ai/chat", {
+    const res = await fetch("https://readhub-backend.onrender.com/api/ai/chat", { //local testing --- "http://localhost:5000/api/ai/chat" ---
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userMessage: messageToSend }),
@@ -92,7 +92,7 @@ export default function ChatbotPage() {
         Ask anything about the latest news!
       </p>
 
-      <div className="mb-4 border rounded-md p-3 max-h-[400px] overflow-y-auto bg-background" aria-live="polite">
+      <div className="mb-4 border rounded-md p-3 h-[400px] overflow-y-auto bg-background" aria-live="polite">
         <div className="space-y-4">
           {chatHistory.map((chat, idx) => (
             <Card

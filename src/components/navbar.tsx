@@ -21,51 +21,57 @@ export default function Navbar() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <header className="border-b sticky top-0 z-50 bg-background">
-      <div className="container mx-auto px-4 flex h-16 items-center justify-between lg:m-0">
+    <header className="sticky top-0 z-50 border-b bg-background shadow-sm backdrop-blur-lg transition-all">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Logo & Desktop Navbar */}
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex font-bold text-xl">
+          <Link
+            href="/"
+            className="text-2xl font-extrabold tracking-tight text-primary hover:opacity-90 transition"
+          >
             ReadHub
           </Link>
 
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Link
-              href="/news"
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive("/news") ? "text-primary" : "text-muted-foreground"
-              }`}
-            >
-              News
-            </Link>
-            <Link
-              href="/library"
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive("/library") ? "text-primary" : "text-muted-foreground"
-              }`}
-            >
-              E-Books
-            </Link>
-            <Link
-              href="/chatbot"
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                isActive("/chatbot") ? "text-primary" : "text-muted-foreground"
-              }`}
-            >
-              ChatBot
-            </Link>
+            {[
+              { href: "/news", label: "News", icon: <Newspaper className="h-4 w-4" /> },
+              { href: "/library", label: "E-Books", icon: <BookOpen className="h-4 w-4" /> },
+              { href: "/chatbot", label: "ChatBot", icon: "🤖" },
+            ].map(({ href, label, icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className={`relative flex items-center gap-1 text-sm font-medium transition-colors hover:text-primary group ${
+                  isActive(href) ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                {icon}
+                {label}
+                <span
+                  className={`absolute left-0 -bottom-1 h-0.5 w-0 bg-primary transition-all duration-300 group-hover:w-full ${
+                    isActive(href) ? "w-full" : ""
+                  }`}
+                />
+              </Link>
+            ))}
           </nav>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden md:flex relative w-full max-w-sm items-center">
-            <Avatar>
+        {/* Right: Avatar, ThemeToggle, small-device: Menu Button */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          {/* Desktop Avatar */}
+          <div className="hidden md:block">
+            <Avatar className="ring-2 ring-primary ring-offset-2 ring-offset-background hover:scale-105 transition">
               <AvatarImage src="https://github.com/shadcn.png" alt="user" />
               <AvatarFallback>AI</AvatarFallback>
             </Avatar>
           </div>
 
+          {/* Theme Toggle */}
           <ThemeToggle />
 
+          {/* Mobile Menu */}
           <Drawer>
             <DrawerTrigger asChild>
               <Button variant="outline" size="icon" className="md:hidden">
@@ -73,51 +79,37 @@ export default function Navbar() {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </DrawerTrigger>
-            <DrawerContent>
-              <DrawerTitle className=" pl-3 text-lg font-semibold">
+
+            <DrawerContent className="pt-6 pb-10">
+              <DrawerTitle className="px-4 text-lg font-semibold text-primary">
                 Menu
               </DrawerTitle>
-              <DrawerDescription className=" pl-3">
-                Navigate through the main sections
+              <DrawerDescription className="px-4 text-sm text-muted-foreground">
+                Navigate through the app
               </DrawerDescription>
 
-              <nav className="flex flex-col gap-4 p-6">
-                <Link
-                  href="/news"
-                  className={`flex items-center gap-2 text-lg font-medium ${
-                    isActive("/news") ? "text-primary" : "text-muted-foreground"
-                  }`}
-                >
-                  <Newspaper className="h-5 w-5" />
-                  News
-                </Link>
-                <Link
-                  href="/library"
-                  className={`flex items-center gap-2 text-lg font-medium ${
-                    isActive("/library")
-                      ? "text-primary"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  <BookOpen className="h-5 w-5" />
-                  E-Books
-                </Link>
-                <Link
-                  href="/chatbot"
-                  className={`flex items-center gap-2 text-lg font-medium ${
-                    isActive("/chatbot")
-                      ? "text-primary"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  🤖 ChatBot
-                </Link>
-                <div className="relative w-full mt-4">
-                  <Avatar>
-                    <AvatarImage
-                      src="https://github.com/shadcn.png"
-                      alt="user"
-                    />
+              <nav className="flex flex-col gap-6 px-6 py-4">
+                {[
+                  { href: "/news", label: "News", icon: <Newspaper className="h-5 w-5" /> },
+                  { href: "/library", label: "E-Books", icon: <BookOpen className="h-5 w-5" /> },
+                  { href: "/chatbot", label: "ChatBot", icon: "🤖" },
+                ].map(({ href, label, icon }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`flex items-center gap-2 text-lg font-medium transition-colors hover:text-primary ${
+                      isActive(href) ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    {icon}
+                    {label}
+                  </Link>
+                ))}
+
+                {/* Avatar in Mobile */}
+                <div className="pt-6">
+                  <Avatar className="ring-2 ring-primary ring-offset-2 ring-offset-background hover:scale-105 transition">
+                    <AvatarImage src="https://github.com/shadcn.png" alt="user" />
                     <AvatarFallback>AI</AvatarFallback>
                   </Avatar>
                 </div>

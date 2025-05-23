@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import FeaturedNews from "@/components/featured-news";
 import FeaturedBooks from "@/components/featured-books";
+export const dynamic = "force-dynamic";
 
 export default function Home() {
   return (

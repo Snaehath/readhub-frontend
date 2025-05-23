@@ -79,6 +79,12 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
     setArticles(selectedCountry === "us" ? articlesUS : articlesIN);
   }, [selectedCountry, articlesUS, articlesIN]);
 
+  useEffect(() => {
+  if (selectedCategory !== "all") {
+    setNewsLimit(12);
+  }
+}, [selectedCategory]);
+
   const filteredArticles =
     selectedCategory === "all"
       ? articles.slice(0, newsLimit)

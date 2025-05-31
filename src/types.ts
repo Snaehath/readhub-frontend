@@ -10,13 +10,13 @@ export type NewsArticle = {
   urlToImage?: string;
   publishedAt: string;
   category: string[];
-}
+  id: string;
+};
 
 export type NewsCardProps = {
   articlesUS: NewsArticle[];
   articlesIN: NewsArticle[];
-}
-
+};
 
 export type Book = {
   key: string;
@@ -28,4 +28,4 @@ export type Book = {
   lending_identifier_s: string;
   work_key: string;
   tag: string;
-}
+};

@@ -1,10 +1,10 @@
 "use client";
 
-import { CalendarIcon, RefreshCcw } from "lucide-react";
+import {BotMessageSquare, CalendarIcon, RefreshCcw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-
+import ReactMarkdown from "react-markdown";
 import { Badge } from "./ui/badge";
 import { toast } from "sonner";
 import {
@@ -16,6 +16,14 @@ import {
 } from "./ui/card";
 import { Button } from "./ui/button";
 import { NewsArticle } from "@/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 
 interface NewsCardProps {
   articlesUS: NewsArticle[];
@@ -26,6 +34,8 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
   const [articles, setArticles] = useState(articlesUS);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedCountry, setSelectedCountry] = useState("us");
+  const [aiResponse, setAiResponse] = useState("");
+  const [showDialog, setShowDialog] = useState(false);
   const [newsLimit, setNewsLimit] = useState(12);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -55,8 +65,12 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
     try {
       setIsLoading(true);
       const [responseUS, responseIN] = await Promise.all([
-        fetch("https://readhub-backend.onrender.com/api/news/fetch-categories/us"),
-        fetch("https://readhub-backend.onrender.com/api/news/fetch-categories/in"),
+        fetch(
+          "https://readhub-backend.onrender.com/api/news/fetch-categories/us"
+        ),
+        fetch(
+          "https://readhub-backend.onrender.com/api/news/fetch-categories/in"
+        ),
       ]);
 
       if (!responseUS.ok) {
@@ -80,10 +94,10 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
   }, [selectedCountry, articlesUS, articlesIN]);
 
   useEffect(() => {
-  if (selectedCategory !== "all") {
-    setNewsLimit(12);
-  }
-}, [selectedCategory]);
+    if (selectedCategory !== "all") {
+      setNewsLimit(12);
+    }
+  }, [selectedCategory]);
 
   const filteredArticles =
     selectedCategory === "all"
@@ -92,8 +106,67 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
           .filter((article) => article.category?.includes(selectedCategory))
           .slice(0, newsLimit);
 
+  const handleAskAi = async (id: string) => {
+    try {
+      setAiResponse("");
+      setShowDialog(true);
+
+      const res = await fetch("https://readhub-backend.onrender.com/api/ai/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userMessage: { id, selectedCountry } }),
+      });
+      const data = await res.json();
+      setAiResponse(data?.reply?.trim() || "No response.");
+    } catch (error) {
+      console.error("Chat error:", error);
+    }
+  };
+
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8">
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent">
+          <DialogHeader>
+            <DialogTitle>AI Summary</DialogTitle>
+            <DialogDescription>
+              Insight and explanation of the selected news.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[400px] overflow-y-auto whitespace-pre-wrap text-sm text-muted-foreground">
+            {aiResponse === "" ? (
+              <div className="flex items-center gap-2 py-4">
+                <svg
+                  className="w-5 h-5 animate-spin text-indigo-500"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  />
+                </svg>
+                <span>Thinking...</span>
+              </div>
+            ) : (
+              <ReactMarkdown>{aiResponse}</ReactMarkdown>
+            )}
+          </div>
+          <DialogFooter>
+            <Button className="cursor-pointer" onClick={() => setShowDialog(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Category + Country Buttons */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between flex-wrap gap-4 mb-6">
         <div className="flex flex-wrap gap-2">
@@ -155,8 +228,22 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
             <CardHeader className="p-4">
               <div className="flex flex-wrap gap-2 mb-2">
                 {article.category.map((cat, i: number) => (
-                  <Badge key={i}>{cat}</Badge>
+                  <Badge
+                    className="rounded-full px-3 py-1 text-xs font-semibold"
+                    key={i}
+                  >
+                    {cat}
+                  </Badge>
                 ))}
+                <Badge
+                  className="ml-auto px-3 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800 flex items-center cursor-pointer hover:bg-indigo-200 active:scale-95 active:bg-indigo-300 transition-transform duration-150"
+                  onClick={() => handleAskAi(article.id)}
+                  aria-label="Ask AI"
+                  title="Ask AI"
+                >
+                  Ask AI
+                  <BotMessageSquare className="w-4 h-4" />
+                </Badge>
               </div>
               <CardTitle className="text-lg line-clamp-2">
                 {article.title}

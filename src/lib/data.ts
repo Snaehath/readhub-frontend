@@ -15,7 +15,7 @@ export async function getNews() {
       .toArray();
 
       const formattedNews = news.map((article) => ({
-        _id: article._id.toString(), 
+        id: article._id.toString(), 
         title: article.title,
         description: article.description,
         url: article.url,
@@ -47,7 +47,7 @@ export async function getNewsIndia() {
       .toArray();
 
       const formattedNews = news.map((article) => ({
-        _id: article._id.toString(), 
+        id: article._id.toString(), 
         title: article.title,
         description: article.description,
         content:article.content,

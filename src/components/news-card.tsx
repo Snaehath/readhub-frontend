@@ -118,7 +118,7 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
       setShowDialog(true);
 
       const res = await fetch(
-        "http://localhost:5000/api/ai/chat",
+        "https://readhub-backend.onrender.com/api/ai/chat",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

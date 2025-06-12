@@ -29,3 +29,17 @@ export type Book = {
   work_key: string;
   tag: string;
 };
+export type BookCopy = {
+  authors: any;
+  _id: any;
+  work_id: string;
+  title: string;
+  author_name: string[];
+  author_key: string[];
+  coverImage: string;
+  readUrl: string;
+  summaries: string[];
+  category: string[];
+  gutenbergId: number;
+  tag: string;
+};

@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EyeClosed, Eye } from "lucide-react";
+import { useRouter } from 'next/navigation';
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +22,7 @@ export default function LoginForm() {
     await new Promise((res) => setTimeout(res, 1000));
 
     setLoading(false);
-    alert("Login success");
+     router.push('/');
   };
 
   return (

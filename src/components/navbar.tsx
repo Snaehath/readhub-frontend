@@ -70,6 +70,7 @@ export default function Navbar() {
 
           {/* Theme Toggle */}
           <ThemeToggle />
+          <Button><Link href='/login' className="">Login</Link></Button>
 
           {/* Mobile Menu */}
           <Drawer>

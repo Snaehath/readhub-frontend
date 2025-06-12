@@ -1,6 +1,12 @@
 "use client";
 
-import {BotMessageSquare, CalendarIcon, RefreshCcw } from "lucide-react";
+import {
+  Bookmark,
+  BotMessageSquare,
+  CalendarIcon,
+  Heart,
+  RefreshCcw,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -66,10 +72,10 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
       setIsLoading(true);
       const [responseUS, responseIN] = await Promise.all([
         fetch(
-          "https://readhub-backend.onrender.com/api/news/fetch-categories/us"
+          "http://localhost:5000/api/news/fetch-categories/us"
         ),
         fetch(
-          "https://readhub-backend.onrender.com/api/news/fetch-categories/in"
+          "http://localhost:5000/api/news/fetch-categories/in"
         ),
       ]);
 
@@ -111,16 +117,24 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
       setAiResponse("");
       setShowDialog(true);
 
-      const res = await fetch("https://readhub-backend.onrender.com/api/ai/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userMessage: { id, selectedCountry } }),
-      });
+      const res = await fetch(
+        "http://localhost:5000/api/ai/chat",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userMessage: { id, selectedCountry } }),
+        }
+      );
       const data = await res.json();
       setAiResponse(data?.reply?.trim() || "No response.");
     } catch (error) {
       console.error("Chat error:", error);
     }
+  };
+
+  const isLatest = (publishedAt: string) => {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+    return new Date(publishedAt) > twoHoursAgo;
   };
 
   return (
@@ -162,7 +176,12 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
             )}
           </div>
           <DialogFooter>
-            <Button className="cursor-pointer" onClick={() => setShowDialog(false)}>Close</Button>
+            <Button
+              className="cursor-pointer"
+              onClick={() => setShowDialog(false)}
+            >
+              Close
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -219,6 +238,14 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
             key={i}
           >
             <div className="relative h-64 w-full outline outline-black">
+              {isLatest(article.publishedAt) && (
+                <div className="absolute top-0 left-0 overflow-hidden w-24 h-24">
+                  <div className="absolute transform -rotate-45 bg-red-500 text-white text-[10px] font-bold py-1 px-0.5 left-[-30px] top-[18px] w-[100px] text-center shadow-md">
+                    Latest
+                  </div>
+                </div>
+              )}
+
               <img
                 src={article.urlToImage || "https://placehold.co/400x200"}
                 alt="news thumbnail"
@@ -230,7 +257,7 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
                 {article.category.map((cat, i: number) => (
                   <Badge
                     className="rounded-full px-3 py-1 text-xs font-semibold"
-                    key={i}
+                    key={`${cat}-${i}`}
                   >
                     {cat}
                   </Badge>
@@ -249,8 +276,8 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
                 {article.title}
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <p className="text-sm text-muted-foreground line-clamp-3">
+            <CardContent className="pt-0">
+              <p className="text-sm text-muted-foreground line-clamp-3 text-justify">
                 {article.description || "No description available."}
               </p>
             </CardContent>
@@ -259,6 +286,15 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
                 <CalendarIcon className="mr-1 h-3 w-3" />
                 {new Date(article.publishedAt).toLocaleDateString()}
               </div>
+              <div className="flex gap-2">
+                <Button variant="ghost" title="Like">
+                  <Heart />
+                </Button>
+                <Button variant="ghost" title="Save">
+                  <Bookmark />
+                </Button>
+              </div>
+
               <Link
                 href={article.url}
                 target="_blank"

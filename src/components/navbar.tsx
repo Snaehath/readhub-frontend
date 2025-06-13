@@ -35,8 +35,16 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
             {[
-              { href: "/news", label: "News", icon: <Newspaper className="h-4 w-4" /> },
-              { href: "/library", label: "E-Books", icon: <BookOpen className="h-4 w-4" /> },
+              {
+                href: "/news",
+                label: "News",
+                icon: <Newspaper className="h-4 w-4" />,
+              },
+              {
+                href: "/library",
+                label: "E-Books",
+                icon: <BookOpen className="h-4 w-4" />,
+              },
               { href: "/chatbot", label: "ChatBot", icon: "🤖" },
             ].map(({ href, label, icon }) => (
               <Link
@@ -70,7 +78,14 @@ export default function Navbar() {
 
           {/* Theme Toggle */}
           <ThemeToggle />
-          <Button><Link href='/login' className="">Login</Link></Button>
+          <Button asChild >
+            <Link
+              href="/login"
+              className="px-6 py-2 rounded-md bg-blue-600 hover:bg-blue-700 text-white font-medium transition duration-200"
+            >
+              Login
+            </Link>
+          </Button>
 
           {/* Mobile Menu */}
           <Drawer>
@@ -91,8 +106,16 @@ export default function Navbar() {
 
               <nav className="flex flex-col gap-6 px-6 py-4">
                 {[
-                  { href: "/news", label: "News", icon: <Newspaper className="h-5 w-5" /> },
-                  { href: "/library", label: "E-Books", icon: <BookOpen className="h-5 w-5" /> },
+                  {
+                    href: "/news",
+                    label: "News",
+                    icon: <Newspaper className="h-5 w-5" />,
+                  },
+                  {
+                    href: "/library",
+                    label: "E-Books",
+                    icon: <BookOpen className="h-5 w-5" />,
+                  },
                   { href: "/chatbot", label: "ChatBot", icon: "🤖" },
                 ].map(({ href, label, icon }) => (
                   <Link
@@ -110,7 +133,10 @@ export default function Navbar() {
                 {/* Avatar in Mobile */}
                 <div className="pt-6">
                   <Avatar className="ring-2 ring-primary ring-offset-2 ring-offset-background hover:scale-105 transition">
-                    <AvatarImage src="https://github.com/shadcn.png" alt="user" />
+                    <AvatarImage
+                      src="https://github.com/shadcn.png"
+                      alt="user"
+                    />
                     <AvatarFallback>AI</AvatarFallback>
                   </Avatar>
                 </div>

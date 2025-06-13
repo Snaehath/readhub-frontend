@@ -1,11 +1,7 @@
-// Tailwind shimmer animation style
-const shimmer =
-  "before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/60 before:to-transparent";
-
 export function CardSkeleton() {
   return (
     <div
-      className={`${shimmer} relative overflow-hidden rounded-xl bg-white shadow-sm border`}
+      className={` relative overflow-hidden rounded-xl bg-white shadow-sm border`}
     >
       {/* Image */}
       <div className="h-44 w-full bg-gray-200" />
@@ -40,7 +36,7 @@ export function BookCardSkeleton() {
   return (
     <div className="relative overflow-hidden rounded-xl bg-white shadow-sm border">
       {/* Shimmer overlay */}
-      <div className={`${shimmer} absolute inset-0`} />
+      <div className={` absolute inset-0`} />
 
       {/* Cover Image Placeholder */}
       <div className="h-72 w-full bg-gray-200" />

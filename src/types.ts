@@ -30,8 +30,8 @@ export type Book = {
   tag: string;
 };
 export type BookCopy = {
-  authors: any;
-  _id: any;
+  authors: string;
+  _id: string;
   work_id: string;
   title: string;
   author_name: string[];

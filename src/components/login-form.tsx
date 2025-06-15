@@ -24,13 +24,16 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const response = await fetch("https://readhub-backend.onrender.com/api/user/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await fetch(
+        "https://readhub-backend.onrender.com/api/user/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, password }),
+        }
+      );
 
       const data = await response.json();
 
@@ -41,8 +44,12 @@ export default function LoginForm() {
       setUser(data.user);
       toast.success("Logged in successfully!");
       router.push("/");
-    } catch (err: any) {
-      toast.error(err.message || "An error occurred");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }
@@ -54,13 +61,18 @@ export default function LoginForm() {
         <CardTitle className="text-2xl text-center font-semibold text-primary">
           Welcome back 👋
         </CardTitle>
-        <p className="text-sm text-center text-muted-foreground">Login to ReadHub</p>
+        <p className="text-sm text-center text-muted-foreground">
+          Login to ReadHub
+        </p>
       </CardHeader>
 
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <Label htmlFor="email" className="text-sm font-medium text-muted-foreground">
+            <Label
+              htmlFor="email"
+              className="text-sm font-medium text-muted-foreground"
+            >
               Email
             </Label>
             <Input
@@ -75,7 +87,10 @@ export default function LoginForm() {
           </div>
 
           <div>
-            <Label htmlFor="password" className="text-sm font-medium text-muted-foreground">
+            <Label
+              htmlFor="password"
+              className="text-sm font-medium text-muted-foreground"
+            >
               Password
             </Label>
             <div className="relative">

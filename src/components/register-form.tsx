@@ -50,13 +50,16 @@ export default function RegisterForm() {
     setLoading(true);
 
     try {
-      const response = await fetch("https://readhub-backend.onrender.com/api/user/adduser", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, username, password, avatar }),
-      });
+      const response = await fetch(
+        "https://readhub-backend.onrender.com/api/user/adduser",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, username, password, avatar }),
+        }
+      );
 
       const data = await response.json();
 
@@ -66,8 +69,12 @@ export default function RegisterForm() {
 
       toast.success("User registered successfully!");
       router.push("/login");
-    } catch (err: any) {
-      toast.error(err.message || "An error occurred");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("An unknown error occurred");
+      }
     } finally {
       setLoading(false);
     }

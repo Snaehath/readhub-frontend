@@ -167,7 +167,7 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
                     d="M4 12a8 8 0 018-8v8H4z"
                   />
                 </svg>
-                <span>Thinking...</span>
+                <span>Analysing...</span>
               </div>
             ) : (
               <ReactMarkdown>{aiResponse}</ReactMarkdown>

@@ -3,14 +3,16 @@ import Link from "next/link";
 
 export default function LoginPage() {
   return (
-    <div className="flex flex-col min-h-screen items-center justify-center  px-4">
-      <LoginForm />
-      <Link
-        href="/register"
-        className=" text-primary hover:opacity-90 transition align-left"
-      >
-        New user
-      </Link>
+    <div className="flex min-h-screen items-center justify-center px-4">
+      <div className="space-y-4 text-center">
+        <LoginForm />
+        <Link
+          href="/register"
+          className="block text-sm text-muted-foreground hover:text-primary transition"
+        >
+          New user? Create an account
+        </Link>
+      </div>
     </div>
   );
 }

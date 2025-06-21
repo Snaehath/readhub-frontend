@@ -81,7 +81,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <Card className="w-full max-w-md shadow-xl border border-gray-200 rounded-2xl">
+    <Card className="w-full border border-gray-200 shadow-lg rounded-xl">
       <CardHeader className="pb-2">
         <CardTitle className="text-2xl text-center font-semibold text-primary">
           Create your ReadHub account
@@ -98,6 +98,7 @@ export default function RegisterForm() {
             <Input
               id="email"
               type="email"
+              autoComplete="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -110,6 +111,7 @@ export default function RegisterForm() {
             <Label htmlFor="username">Username</Label>
             <Input
               id="username"
+              autoComplete="username"
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -120,7 +122,7 @@ export default function RegisterForm() {
 
           <div>
             <Label>Select an Avatar</Label>
-            <div className="flex flex-wrap gap-4 mt-2">
+            <div className="flex flex-wrap justify-center gap-4 mt-2">
               {avatarOptions.map((opt) => (
                 <button
                   key={opt.value}
@@ -152,6 +154,7 @@ export default function RegisterForm() {
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
+                autoComplete="new-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -181,18 +184,6 @@ export default function RegisterForm() {
               className="bg-white border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary"
             />
           </div>
-
-          {/* <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              id="terms"
-              required
-              className="accent-primary"
-            />
-            <Label htmlFor="terms" className="text-sm text-muted-foreground">
-              I accept the terms and conditions
-            </Label>
-          </div> */}
 
           <Button type="submit" className="w-full mt-2" disabled={loading}>
             {loading ? "Registering..." : "Register"}

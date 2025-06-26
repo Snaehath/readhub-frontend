@@ -46,7 +46,7 @@ export default async function FeaturedNews() {
           <CardFooter className="p-4 pt-0 flex justify-between">
             <div className="flex items-center text-xs text-muted-foreground">
               <CalendarIcon className="mr-1 h-3 w-3" />
-              {new Date(article.publishedAt).toLocaleDateString()}
+              {article.publishedAt.split(",")[0]}
             </div>
             <Link
               href={article.url}

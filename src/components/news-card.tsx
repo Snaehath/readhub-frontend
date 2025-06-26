@@ -9,7 +9,7 @@ import ReactMarkdown from "react-markdown";
 
 import { toast } from "sonner";
 import { Button } from "./ui/button";
-import { NewsArticle } from "@/types";
+import { NewsCardProps } from "@/types";
 import {
   Dialog,
   DialogContent,
@@ -20,11 +20,6 @@ import {
 } from "./ui/dialog";
 import NewsCardItems from "./news-card-items";
 import { newsCategories,newsCountries } from "@/constants";
-
-interface NewsCardProps {
-  articlesUS: NewsArticle[];
-  articlesIN: NewsArticle[];
-}
 
 export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");

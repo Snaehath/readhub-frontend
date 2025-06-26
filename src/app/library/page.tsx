@@ -5,6 +5,7 @@ import { useEffect, useState, Suspense } from "react";
 import { CardSkeleton } from "@/components/skeletons";
 import { BooksCardLoader } from "@/components/card-loader";
 import { Book } from "@/types";
+import { booksCategories } from "@/constants";
 
 import {
   Dialog,
@@ -22,17 +23,6 @@ export default function LibraryPage() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const booksCategories = [
-    { id: "history", name: "History" },
-    { id: "business", name: "Business" },
-    { id: "health", name: "Health" },
-    { id: "sports", name: "Sports" },
-    { id: "science", name: "Science" },
-    { id: "horror", name: "Horror" },
-    { id: "children", name: "Children" },
-    { id: "cooking", name: "Cooking" },
-  ];
-
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery.trim());
@@ -49,7 +39,7 @@ export default function LibraryPage() {
       try {
         let query = `https://openlibrary.org/search.json?q=${
           debouncedSearchQuery || "all"
-        }&lang=en&limit=20`;
+        }&lang=en&limit=${debouncedSearchQuery?"4":"15"}`;
 
         if (selectedCategory && selectedCategory !== "general") {
           query += `&subject=${selectedCategory}`;

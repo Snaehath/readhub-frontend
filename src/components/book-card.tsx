@@ -13,7 +13,7 @@ export default function BookCard({ book }: BookCardProps) {
   return (
     <Card className="overflow-hidden flex flex-col h-96 sm:w-auto hover:shadow-md hover:shadow-gray-500/50 ">
       <div className="relative h-48 w-full">
-        <img src={book.cover_edition_key ? `https://covers.openlibrary.org/b/olid/${book.cover_edition_key}-M.jpg` : `https://covers.openlibrary.org/b/id/${book.cover_id}-M.jpg`} alt={book.title} className="object-contain w-full h-full " />
+        <img src={book.cover_edition_key ? `https://covers.openlibrary.org/b/olid/${book.cover_edition_key}-M.jpg` : `https://placehold.co/200x200?text=${book.title}%0ABy%0A${book.author_name[0]}`} alt={book.title} className="object-contain w-full h-full " />
       </div>
       <CardHeader className="pl-3">
         <Badge className="w-fit mb-1 text-xs">{book.tag.slice(0,12)}</Badge>

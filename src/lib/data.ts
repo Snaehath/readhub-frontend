@@ -15,18 +15,14 @@ export async function getNews() {
       .toArray();
 
     const formattedNews = news.map((article) => {
-      const date = new Date(article.publishedAt);
-
-      // Convert to IST (UTC+5:30)
-      const istDate = new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
-
       return {
         id: article._id.toString(),
         title: article.title,
         description: article.description,
         url: article.url,
         urlToImage: article.urlToImage,
-        publishedAt: istDate.toISOString(),
+        publishedAt: new Date(article.publishedAt).toLocaleString(),
+        dateOriginal:article.publishedAt,
         source: article.source,
         category: article.category,
       };
@@ -58,10 +54,8 @@ export async function getNewsIndia() {
       content: article.content,
       url: article.url,
       urlToImage: article.urlToImage,
-      publishedAt:
-        article.publishedAt instanceof Date
-          ? article.publishedAt.toISOString()
-          : article.publishedAt,
+      publishedAt:new Date(article.publishedAt).toLocaleString(),
+      dateOriginal:article.publishedAt,
       source: article.source,
       category: article.category,
     }));

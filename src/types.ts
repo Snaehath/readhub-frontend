@@ -9,6 +9,7 @@ export type NewsArticle = {
   url: string;
   urlToImage?: string;
   publishedAt: string;
+  dateOriginal:string;
   category: string[];
   id: string;
 };

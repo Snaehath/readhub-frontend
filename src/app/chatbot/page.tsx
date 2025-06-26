@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeExternalLinks from "rehype-external-links";
 import { ChatMessage } from "@/types";
+import { suggestions } from "@/constants";
 
 export default function ChatbotPage() {
   const [userMessage, setUserMessage] = useState("");
@@ -74,16 +75,6 @@ export default function ChatbotPage() {
     localStorage.removeItem("chatHistory");
     setChatHistory([]);
   };
-
-  const suggestions = [
-    "Summarize the latest news",
-    "Today's top news in india",
-    "Latest news in India",
-    "Children's books",
-    "Horror books",
-    "What's trending in technology?",
-    "Give me a fun fact from today's news",
-  ];
 
   return (
     <div className="max-w-4xl mx-auto p-6">

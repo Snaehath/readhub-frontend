@@ -9,25 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EyeClosed, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
-const avatarOptions = [
-  {
-    label: "Default Dev",
-    value: "https://github.com/shadcn.png",
-  },
-  {
-    label: "Detective",
-    value: "https://cdn-icons-png.flaticon.com/512/3067/3067572.png",
-  },
-  {
-    label: "Smart Nerd",
-    value: "https://cdn-icons-png.flaticon.com/512/3360/3360125.png",
-  },
-  {
-    label: "Reader Nerd",
-    value: "https://cdn-icons-png.flaticon.com/512/3445/3445926.png",
-  },
-];
+import { avatarOptions } from "@/constants";
 
 export default function RegisterForm() {
   const [email, setEmail] = useState("");

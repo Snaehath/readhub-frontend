@@ -1,8 +1,6 @@
 "use client";
 
-import {
-  RefreshCcw,
-} from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
@@ -19,7 +17,8 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import NewsCardItems from "./news-card-items";
-import { newsCategories,newsCountries } from "@/constants";
+import { newsCategories, newsCountries } from "@/constants";
+import TopLoadingBar from "./topLoadBar";
 
 export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -33,11 +32,12 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
 
   const filteredArticles = useMemo(() => {
     const source = selectedCountry === "us" ? articlesUS : articlesIN;
-    const filtered = selectedCategory === "all"
-      ? source
-      : source.filter((article) =>
-          article.category?.includes(selectedCategory)
-        );
+    const filtered =
+      selectedCategory === "all"
+        ? source
+        : source.filter((article) =>
+            article.category?.includes(selectedCategory)
+          );
     return filtered.slice(0, newsLimit);
   }, [articlesUS, articlesIN, selectedCountry, selectedCategory, newsLimit]);
 
@@ -47,13 +47,23 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
     }
   }, [selectedCategory]);
 
+  const delay = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
+
   const handleRefreshNews = async () => {
     try {
       setIsLoading(true);
-      const [responseUS, responseIN] = await Promise.all([
-        fetch("https://readhub-backend.onrender.com/api/news/fetch-categories/us"),
-        fetch("https://readhub-backend.onrender.com/api/news/fetch-categories/in"),
-      ]);
+
+      const responseUS = await fetch(
+        "https://readhub-backend.onrender.com/api/news/fetch-categories/us"
+      );
+
+      // Optional delay (e.g., 1 second)
+      await delay(1000);
+
+      const responseIN = await fetch(
+        "https://readhub-backend.onrender.com/api/news/fetch-categories/in"
+      );
 
       if (!responseUS.ok) toast(`HTTP error (US): ${responseUS.status}`);
       if (!responseIN.ok) toast(`HTTP error (IN): ${responseIN.status}`);
@@ -149,6 +159,7 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {isLoading && <TopLoadingBar duration={15000}/>}
 
       {/* Filters */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between flex-wrap gap-4 mb-6">
@@ -186,8 +197,11 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
         </div>
       </div>
 
-      <NewsCardItems filteredArticles={filteredArticles} onAskAi={handleAskAi} isLatest={isLatest}/>
-      
+      <NewsCardItems
+        filteredArticles={filteredArticles}
+        onAskAi={handleAskAi}
+        isLatest={isLatest}
+      />
 
       {/* No Results */}
       {filteredArticles.length === 0 && (
@@ -199,7 +213,9 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
       {/* Load More */}
       {filteredArticles.length >= newsLimit && (
         <div className="flex justify-center mt-6">
-          <Button onClick={() => setNewsLimit((prev) => prev + 8)}>Load More</Button>
+          <Button onClick={() => setNewsLimit((prev) => prev + 8)}>
+            Load More
+          </Button>
         </div>
       )}
     </div>

@@ -14,9 +14,14 @@ export default function ChatbotPage() {
   const [userMessage, setUserMessage] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+
+useEffect(() => {
+  const storedToken = localStorage.getItem("jwt");
+  setToken(storedToken);
+}, []);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const token = localStorage.getItem("jwt")
 
   useEffect(() => {
     if (messagesEndRef.current) {

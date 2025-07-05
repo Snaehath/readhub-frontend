@@ -9,7 +9,6 @@ import rehypeRaw from "rehype-raw";
 import rehypeExternalLinks from "rehype-external-links";
 import { ChatMessage } from "@/types";
 import { suggestions } from "@/constants";
-import { toast } from "sonner";
 
 export default function ChatbotPage() {
   const [userMessage, setUserMessage] = useState("");

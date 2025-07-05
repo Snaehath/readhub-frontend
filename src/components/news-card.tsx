@@ -28,6 +28,12 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
   const [showDialog, setShowDialog] = useState(false);
   const [newsLimit, setNewsLimit] = useState(12);
   const [isLoading, setIsLoading] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem("jwt");
+    setToken(storedToken);
+  }, []);
   const router = useRouter();
 
   const filteredArticles = useMemo(() => {
@@ -86,12 +92,21 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
     setAiLoading(true);
     setShowDialog(true);
 
+    if (!token) {
+      setAiResponse("🔒 Please log in to use AI features.");
+      setAiLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch(
         "https://readhub-backend.onrender.com/api/ai/chat",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({ userMessage: { id, selectedCountry } }),
         }
       );
@@ -159,7 +174,7 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {isLoading && <TopLoadingBar duration={15000}/>}
+      {isLoading && <TopLoadingBar duration={15000} />}
 
       {/* Filters */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between flex-wrap gap-4 mb-6">

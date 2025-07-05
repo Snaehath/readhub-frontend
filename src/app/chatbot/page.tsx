@@ -9,6 +9,7 @@ import rehypeRaw from "rehype-raw";
 import rehypeExternalLinks from "rehype-external-links";
 import { ChatMessage } from "@/types";
 import { suggestions } from "@/constants";
+import { toast } from "sonner";
 
 export default function ChatbotPage() {
   const [userMessage, setUserMessage] = useState("");
@@ -16,10 +17,10 @@ export default function ChatbotPage() {
   const [loading, setLoading] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
-useEffect(() => {
-  const storedToken = localStorage.getItem("jwt");
-  setToken(storedToken);
-}, []);
+  useEffect(() => {
+    const storedToken = localStorage.getItem("jwt");
+    setToken(storedToken);
+  }, []);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -41,44 +42,58 @@ useEffect(() => {
   }, [chatHistory]);
 
   const sendMessage = async (messageOverride?: string) => {
-  const messageToSend = messageOverride ?? userMessage;
-  if (!messageToSend.trim()) return;
+    const messageToSend = messageOverride ?? userMessage;
+    if (!messageToSend.trim()) return;
+    if (!token) {
+      setChatHistory([
+        ...chatHistory,
+        {
+          sender: "bot" as const,
+          message: "🔒 Please log in to use the AI assistant.",
+        },
+      ]);
+      return;
+    }
 
-  const updatedHistory: ChatMessage[] = [
-    ...chatHistory,
-    { sender: "user" as const, message: messageToSend },
-  ];
-  setChatHistory(updatedHistory);
-  setUserMessage("");
-  setLoading(true);
+    const updatedHistory: ChatMessage[] = [
+      ...chatHistory,
+      { sender: "user" as const, message: messageToSend },
+    ];
+    setChatHistory(updatedHistory);
+    setUserMessage("");
+    setLoading(true);
 
-  try {
-    const res = await fetch("https://readhub-backend.onrender.com/api/ai/chat", { //local testing --- "http://localhost:5000/api/ai/chat" ---
-      method: "POST",
-     headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`, 
-    },
-      body: JSON.stringify({ userMessage: messageToSend }),
-    });
+    try {
+      const res = await fetch("https://readhub-backend.onrender.com/api/ai/chat", {
+        //local testing --- " http://localhost:5000/api/ai/chat" ---
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userMessage: messageToSend }),
+      });
 
-    const data = await res.json();
-    const reply = data?.reply?.trim() || "No response.";
+      const data = await res.json();
+      const reply = data?.reply?.trim() || "No response.";
 
-    setChatHistory([
-      ...updatedHistory,
-      { sender: "bot" as const, message: reply },
-    ]);
-  } catch (error) {
-    console.error("Chat error:", error);
-    setChatHistory([
-      ...updatedHistory,
-      { sender: "bot" as const, message: "Something went wrong. Please try again." },
-    ]);
-  } finally {
-    setLoading(false);
-  }
-};
+      setChatHistory([
+        ...updatedHistory,
+        { sender: "bot" as const, message: reply },
+      ]);
+    } catch (error) {
+      console.error("Chat error:", error);
+      setChatHistory([
+        ...updatedHistory,
+        {
+          sender: "bot" as const,
+          message: "Something went wrong. Please try again.",
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const clearChat = () => {
     localStorage.removeItem("chatHistory");
@@ -92,7 +107,10 @@ useEffect(() => {
         Ask anything about the latest news!
       </p>
 
-      <div className="mb-4 border rounded-md p-3 h-[400px] overflow-y-auto bg-background" aria-live="polite">
+      <div
+        className="mb-4 border rounded-md p-3 h-[400px] overflow-y-auto bg-background"
+        aria-live="polite"
+      >
         <div className="space-y-4">
           {chatHistory.map((chat, idx) => (
             <Card
@@ -107,7 +125,10 @@ useEffect(() => {
                 <ReactMarkdown
                   rehypePlugins={[
                     rehypeRaw,
-                    [rehypeExternalLinks, { target: "_blank", rel: "noopener noreferrer" }],
+                    [
+                      rehypeExternalLinks,
+                      { target: "_blank", rel: "noopener noreferrer" },
+                    ],
                   ]}
                 >
                   {chat.message}
@@ -163,7 +184,12 @@ useEffect(() => {
       </div>
 
       <div className="text-right">
-        <Button variant="ghost" size="sm" onClick={clearChat} disabled={loading}>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={clearChat}
+          disabled={loading}
+        >
           Clear Chat
         </Button>
       </div>

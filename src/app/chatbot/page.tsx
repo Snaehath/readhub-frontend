@@ -16,6 +16,7 @@ export default function ChatbotPage() {
   const [loading, setLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const token = localStorage.getItem("jwt")
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -49,7 +50,10 @@ export default function ChatbotPage() {
   try {
     const res = await fetch("https://readhub-backend.onrender.com/api/ai/chat", { //local testing --- "http://localhost:5000/api/ai/chat" ---
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+     headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`, 
+    },
       body: JSON.stringify({ userMessage: messageToSend }),
     });
 

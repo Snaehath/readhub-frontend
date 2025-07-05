@@ -40,7 +40,7 @@ export default function LoginForm() {
       if (!response.ok) {
         throw new Error(data.error || "Login failed");
       }
-
+      localStorage.setItem("jwt", data.token)
       setUser(data.user);
       toast.success("Logged in successfully!");
       router.push("/");

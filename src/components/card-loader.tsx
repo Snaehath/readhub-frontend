@@ -22,8 +22,8 @@ const BookCard = dynamic(() => delay(2000).then(() => import("./book-card")), {
 });
 
 // Wrapper for NewsCard with props passed through
-export function NewsCardLoader(props: NewsCardProps) {
-  return <NewsCard {...props} />;
+export function NewsCardLoader() {
+  return <NewsCard  />;
 }
 
 // Wrapper for BookCard with props passed through

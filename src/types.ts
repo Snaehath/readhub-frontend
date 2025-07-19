@@ -4,6 +4,9 @@ export type ChatMessage = {
 };
 
 export type NewsArticle = {
+  source: {
+    name: string;
+  };
   title: string;
   description?: string;
   url: string;
@@ -16,7 +19,6 @@ export type NewsArticle = {
 
 export type NewsCardProps = {
   articlesUS: NewsArticle[];
-  articlesIN: NewsArticle[];
 };
 
 export type Book = {

@@ -18,8 +18,8 @@ export default function NewsCardItems({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredArticles.map((article, i) => (
-          <Card key={i} className="overflow-hidden hover:shadow-lg hover:shadow-gray-500/50">
-            <div className="relative h-64 w-full outline outline-black">
+          <Card key={i} className="overflow-hidden hover:shadow-lg hover:shadow-gray-500/50 p-0">
+            <div className="relative h-64 w-full p-2">
               {isLatest(article.dateOriginal) && (
                 <div className="absolute top-0 left-0 overflow-hidden w-24 h-24">
                   <div className="absolute transform -rotate-45 bg-red-500 text-white text-[10px] font-bold py-1 px-0.5 left-[-30px] top-[18px] w-[100px] text-center shadow-md">
@@ -28,15 +28,15 @@ export default function NewsCardItems({
                 </div>
               )}
               <img
-                src={article.urlToImage || "https://placehold.co/400x200?text=ReadHub%0ADigital+Reading+Companion"}
+                src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
                 alt="news thumbnail"
                 onError={(e) => {
-                  e.currentTarget.src = "https://placehold.co/400x200?text=ReadHub%0ADigital+Reading+Companion";
+                  e.currentTarget.src = "/ReadHub_PlaceHolder.png";
                 }}
-                className="object-cover w-full h-full"
+                className="object-cover w-full h-full rounded-2xl"
               />
             </div>
-            <CardHeader className="p-4">
+            <CardHeader className="p-4 pt-0">
               <div className="flex flex-wrap gap-2 mb-2">
                 {article.category.map((cat, i) => (
                   <Badge

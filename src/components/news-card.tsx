@@ -1,13 +1,15 @@
 "use client";
 
-import { RefreshCcw } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useMemo } from "react";
+import { RefreshCcw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 import { toast } from "sonner";
 import { Button } from "./ui/button";
-import { NewsCardProps } from "@/types";
+import TopLoadingBar from "./topLoadBar";
+import NewsCardItems from "./news-card-items";
+
 import {
   Dialog,
   DialogContent,
@@ -16,45 +18,67 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
-import NewsCardItems from "./news-card-items";
-import { newsCategories, newsCountries } from "@/constants";
-import TopLoadingBar from "./topLoadBar";
 
-export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
+import { NewsArticle } from "@/types";
+import { newsCategories, newsCountries } from "@/constants";
+import { getNewsPaginated } from "@/lib/data";
+
+export default function NewsCard() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedCountry, setSelectedCountry] = useState("us");
+  const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+
   const [aiResponse, setAiResponse] = useState("");
   const [aiLoading, setAiLoading] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
-  const [newsLimit, setNewsLimit] = useState(12);
-  const [isLoading, setIsLoading] = useState(false);
   const [token, setToken] = useState<string | null>(null);
+
+  const router = useRouter();
 
   useEffect(() => {
     const storedToken = localStorage.getItem("jwt");
     setToken(storedToken);
   }, []);
-  const router = useRouter();
 
-  const filteredArticles = useMemo(() => {
-    const source = selectedCountry === "us" ? articlesUS : articlesIN;
-    const filtered =
-      selectedCategory === "all"
-        ? source
-        : source.filter((article) =>
-            article.category?.includes(selectedCategory)
-          );
-    return filtered.slice(0, newsLimit);
-  }, [articlesUS, articlesIN, selectedCountry, selectedCategory, newsLimit]);
-
+  // Fetch paginated news based on country + category
   useEffect(() => {
-    if (selectedCategory !== "all") {
-      setNewsLimit(12);
-    }
-  }, [selectedCategory]);
+    const fetchNews = async () => {
+      setIsLoading(true);
+      try {
+        const res = await getNewsPaginated(
+          page,
+          12,
+          selectedCategory,
+          selectedCountry
+        );
 
-  const delay = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
+        if (page === 1) {
+          setArticles(res.news);
+        } else {
+          setArticles((prev) => [...prev, ...res.news]);
+        }
+
+        setHasMore(res.currentPage < res.totalPages);
+      } catch (err) {
+        console.error("Error fetching news:", err);
+        toast("Failed to fetch news.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, [page, selectedCountry, selectedCategory]);
+
+  // Reset pagination when country or category changes
+  useEffect(() => {
+    setPage(1);
+  }, [selectedCountry, selectedCategory]);
+
+  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleRefreshNews = async () => {
     try {
@@ -63,25 +87,20 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
       const responseUS = await fetch(
         "https://readhub-backend.onrender.com/api/news/fetch-categories/us"
       );
-
-      // Optional delay (e.g., 1 second)
-      await delay(1000);
-
       const responseIN = await fetch(
         "https://readhub-backend.onrender.com/api/news/fetch-categories/in"
       );
 
+      await delay(1000);
+
       if (!responseUS.ok) toast(`HTTP error (US): ${responseUS.status}`);
       if (!responseIN.ok) toast(`HTTP error (IN): ${responseIN.status}`);
+
       if (responseUS.ok && responseIN.ok) toast("Latest news updated");
 
       router.refresh();
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        toast(`Error fetching news: ${error.message}`);
-      } else {
-        toast("Unknown error occurred.");
-      }
+    } catch (error) {
+      toast("Error refreshing news.");
     } finally {
       setIsLoading(false);
     }
@@ -113,7 +132,6 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
       const data = await res.json();
       setAiResponse(data?.reply?.trim() || "No response.");
     } catch (error) {
-      console.error("Chat error:", error);
       setAiResponse("An error occurred while processing your request.");
     } finally {
       setAiLoading(false);
@@ -132,9 +150,9 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8">
-      {/* Dialog for AI response */}
+      {/* AI Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/30 scrollbar-track-transparent">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>AI Summary</DialogTitle>
             <DialogDescription>
@@ -174,6 +192,7 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
       {isLoading && <TopLoadingBar duration={15000} />}
 
       {/* Filters */}
@@ -193,7 +212,6 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
             onClick={handleRefreshNews}
             disabled={isLoading}
             aria-label="Refresh news"
-            title="Refresh news"
           >
             <RefreshCcw className={`${isLoading ? "animate-spin" : ""}`} />
           </Button>
@@ -212,25 +230,24 @@ export default function NewsCard({ articlesUS, articlesIN }: NewsCardProps) {
         </div>
       </div>
 
+      {/* Articles */}
       <NewsCardItems
-        filteredArticles={filteredArticles}
+        filteredArticles={articles}
         onAskAi={handleAskAi}
         isLatest={isLatest}
       />
 
       {/* No Results */}
-      {filteredArticles.length === 0 && (
+      {articles.length === 0 && !isLoading && (
         <div className="text-center text-gray-500 mt-6">
           No articles found for this category.
         </div>
       )}
 
       {/* Load More */}
-      {filteredArticles.length >= newsLimit && (
+      {hasMore && (
         <div className="flex justify-center mt-6">
-          <Button onClick={() => setNewsLimit((prev) => prev + 8)}>
-            Load More
-          </Button>
+          <Button onClick={() => setPage((prev) => prev + 1)}>Load More</Button>
         </div>
       )}
     </div>

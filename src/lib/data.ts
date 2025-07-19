@@ -1,72 +1,74 @@
 "use server";
 
+import { NewsArticle } from "@/types";
 import client from "../lib/mongodb";
 
+export type PaginatedNewsResponse = {
+  news: NewsArticle[];
+  totalPages: number;
+  currentPage: number;
+  totalArticles: number;
+};
+
 //get news data from database country:us
-export async function getNews() {
+export async function getNewsPaginated(
+  page: number = 1,
+  limit: number = 12,
+  category: string = "all",
+  country: string = "us" 
+): Promise<PaginatedNewsResponse> {
   try {
-    const mongoClient = await client.connect();
-    const db = mongoClient.db();
-    const newsCollection = db.collection("news");
-
-    const news = await newsCollection
-      .find({})
-      .sort({ publishedAt: -1 })
-      .toArray();
-
-    const formattedNews = news.map((article) => {
-      return {
-        id: article._id.toString(),
-        title: article.title,
-        description: article.description,
-        url: article.url,
-        urlToImage: article.urlToImage,
-        publishedAt: new Date(article.publishedAt).toLocaleString(),
-        dateOriginal:article.publishedAt,
-        source: article.source,
-        category: article.category,
-      };
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: String(limit),
     });
 
-    return formattedNews;
-  } catch (error) {
-    console.error("Error fetching news:", error);
-    return [];
-  }
-}
+    if (category !== "all") {
+      params.append("category", category);
+    }
 
-//get news data from databse country:india
-export async function getNewsIndia() {
-  try {
-    const mongoClient = await client.connect();
-    const db = mongoClient.db();
-    const newsCollection = db.collection("newsins");
+    const endpoint =
+      country === "in"
+        ? "https://readhub-backend.onrender.com/api/news/newIn/pagination"
+        : "https://readhub-backend.onrender.com/api/news/new/pagination";
 
-    const news = await newsCollection
-      .find({})
-      .sort({ publishedAt: -1 })
-      .toArray();
+    const res = await fetch(`${endpoint}?${params.toString()}`);
 
-    const formattedNews = news.map((article) => ({
+    if (!res.ok) {
+      throw new Error(`Failed to fetch news for ${country}`);
+    }
+
+    const data = await res.json();
+
+    const formattedNews: NewsArticle[] = data.articles.map((article: any) => ({
       id: article._id.toString(),
       title: article.title,
       description: article.description,
       content: article.content,
       url: article.url,
       urlToImage: article.urlToImage,
-      publishedAt:new Date(article.publishedAt).toLocaleString(),
-      dateOriginal:article.publishedAt,
-      source: article.source,
-      category: article.category,
+      publishedAt: new Date(article.publishedAt).toLocaleString(),
+      dateOriginal: article.publishedAt,
+      source: article.source ?? { name: "Unknown" },
+      category: article.category ?? [],
     }));
 
-    return formattedNews;
+    return {
+      news: formattedNews,
+      totalPages: data.totalPages,
+      currentPage: data.currentPage,
+      totalArticles: data.totalArticles,
+    };
   } catch (error) {
-    console.error("Error fetching news:", error);
-    return [];
+    console.error("Error fetching paginated news:", error);
+    return {
+      news: [],
+      totalPages: 0,
+      currentPage: 1,
+      totalArticles: 0,
+    };
   }
 }
-
 export async function getFeaturedBooks() {
   try {
     const mongoClient = await client.connect();

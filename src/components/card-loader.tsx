@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { CardsSkeleton, BooksSkeleton } from "./skeletons";
-import { NewsCardProps, Book } from "@/types";
+import { Book } from "@/types";
 
 // Artificial delay (optional, for demo/testing)
 function delay(ms: number) {

@@ -40,7 +40,7 @@ export async function getNewsPaginated(
 
     const data = await res.json();
 
-    const formattedNews: NewsArticle[] = data.articles.map((article: any) => ({
+    const formattedNews: NewsArticle[] = data.articles.map((article:NewsArticle) => ({
       id: article._id.toString(),
       title: article.title,
       description: article.description,

@@ -100,7 +100,7 @@ export default function NewsCard() {
 
       router.refresh();
     } catch (error) {
-      toast("Error refreshing news.");
+      toast(`Error refreshing news: ${error}`);
     } finally {
       setIsLoading(false);
     }
@@ -132,7 +132,7 @@ export default function NewsCard() {
       const data = await res.json();
       setAiResponse(data?.reply?.trim() || "No response.");
     } catch (error) {
-      setAiResponse("An error occurred while processing your request.");
+      setAiResponse(`An error occurred while processing your request: ${error}`);
     } finally {
       setAiLoading(false);
     }

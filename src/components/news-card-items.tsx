@@ -19,7 +19,7 @@ export default function NewsCardItems({
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredArticles.map((article, i) => (
           <Card key={i} className="overflow-hidden hover:shadow-lg hover:shadow-gray-500/50 p-0">
-            <div className="relative h-64 w-full p-2">
+            <div className="relative h-64 w-full p-2 pb-0">
               {isLatest(article.dateOriginal) && (
                 <div className="absolute top-0 left-0 overflow-hidden w-24 h-24">
                   <div className="absolute transform -rotate-45 bg-red-500 text-white text-[10px] font-bold py-1 px-0.5 left-[-30px] top-[18px] w-[100px] text-center shadow-md">
@@ -33,10 +33,10 @@ export default function NewsCardItems({
                 onError={(e) => {
                   e.currentTarget.src = "/ReadHub_PlaceHolder.png";
                 }}
-                className="object-cover w-full h-full rounded-2xl"
+                className="object-cover w-full h-full rounded-md "
               />
             </div>
-            <CardHeader className="p-4 pt-0">
+            <CardHeader className="p-4 pt-0 pb-0">
               <div className="flex flex-wrap gap-2 mb-2">
                 {article.category.map((cat, i) => (
                   <Badge
@@ -55,16 +55,16 @@ export default function NewsCardItems({
                   Ask AI <BotMessageSquare className="w-4 h-4 ml-1" />
                 </Badge>
               </div>
-              <CardTitle className="text-lg line-clamp-2">
+              <CardTitle className="text-lg line-clamp-2 p-0">
                 {article.title}
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="pt-0 pb-0">
               <p className="text-sm text-muted-foreground line-clamp-3 text-justify">
                 {article.description || "No description available."}
               </p>
             </CardContent>
-            <CardFooter className="p-4 pt-0 flex justify-between">
+            <CardFooter className="p-4 pt-0 flex justify-between pb-2">
               <div className="flex items-center text-xs">
                 <CalendarIcon className="mr-1 h-3 w-3" />
                 {article.publishedAt.split(",")[0]}

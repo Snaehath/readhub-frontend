@@ -16,7 +16,7 @@ export default function NewsCardItems({
   isLatest,
 }: NewsCardItemsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredArticles.map((article, i) => (
           <Card key={i} className="overflow-hidden hover:shadow-lg hover:shadow-gray-500/50 p-0">
             <div className="relative h-64 w-full p-2 pb-0">

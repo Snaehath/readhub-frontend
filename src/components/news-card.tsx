@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { RefreshCcw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -36,7 +35,6 @@ export default function NewsCard() {
   const [showDialog, setShowDialog] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
-  const router = useRouter();
 
   useEffect(() => {
     const storedToken = localStorage.getItem("jwt");
@@ -78,7 +76,8 @@ export default function NewsCard() {
     setPage(1);
   }, [selectedCountry, selectedCategory]);
 
-  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+  const delay = (ms: number) =>
+    new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleRefreshNews = async () => {
     try {
@@ -98,7 +97,7 @@ export default function NewsCard() {
 
       if (responseUS.ok && responseIN.ok) toast("Latest news updated");
 
-      router.refresh();
+      setPage(1);
     } catch (error) {
       toast(`Error refreshing news: ${error}`);
     } finally {
@@ -132,7 +131,9 @@ export default function NewsCard() {
       const data = await res.json();
       setAiResponse(data?.reply?.trim() || "No response.");
     } catch (error) {
-      setAiResponse(`An error occurred while processing your request: ${error}`);
+      setAiResponse(
+        `An error occurred while processing your request: ${error}`
+      );
     } finally {
       setAiLoading(false);
     }

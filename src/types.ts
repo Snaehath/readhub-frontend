@@ -4,7 +4,7 @@ export type ChatMessage = {
 };
 
 export type NewsArticle = {
-  _id: string;
+  id: string;
   content: string;
   source: {
     name: string;

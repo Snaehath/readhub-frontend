@@ -48,7 +48,7 @@ export default function NewsCardItems({
                 ))}
                 <Badge
                   className="ml-auto px-3 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800 flex items-center cursor-pointer hover:bg-indigo-200 active:scale-95 active:bg-indigo-300 transition-transform duration-150"
-                  onClick={() => onAskAi(article._id)}
+                  onClick={() => onAskAi(article.id)}
                   aria-label="Ask AI"
                   title="Ask AI"
                 >

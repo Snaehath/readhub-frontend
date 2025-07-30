@@ -5,6 +5,7 @@ export type ChatMessage = {
 
 export type NewsArticle = {
   id: string;
+  _id: string;
   content: string;
   source: {
     name: string;
@@ -14,7 +15,7 @@ export type NewsArticle = {
   url: string;
   urlToImage?: string;
   publishedAt: string;
-  dateOriginal:string;
+  dateOriginal: string;
   category: string[];
 };
 

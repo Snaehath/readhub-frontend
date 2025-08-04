@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-export default function TopLoadingBar({ duration = 15000 }: { duration?: number }) {
+export default function TopLoadingBar({ duration = 5000 }: { duration?: number }) {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {

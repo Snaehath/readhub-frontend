@@ -1,11 +1,18 @@
 import { CalendarIcon, BotMessageSquare } from "lucide-react";
 import { Badge } from "./ui/badge";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
 import { NewsArticle } from "@/types";
 import Link from "next/link";
+import { Button } from "./ui/button";
 
 interface NewsCardItemsProps {
-  filteredArticles: NewsArticle[] ;
+  filteredArticles: NewsArticle[];
   onAskAi: (id: string) => void;
   isLatest: (publishedAt: string) => boolean;
 }
@@ -16,9 +23,73 @@ export default function NewsCardItems({
   isLatest,
 }: NewsCardItemsProps) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <>
+      <ul className="flex flex-col gap-4 sm:hidden">
         {filteredArticles.map((article, i) => (
-          <Card key={i} className="overflow-hidden hover:shadow-lg hover:shadow-gray-500/50 p-0">
+          <li
+            key={i}
+            className="flex gap-4 p-2 rounded-md shadow hover:shadow-md transition"
+          >
+            <div className="w-24 h-24 flex-shrink-0 relative">
+              <img
+                src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
+                onError={(e) => {
+                  e.currentTarget.src = "/ReadHub_PlaceHolder.png";
+                }}
+                className="w-full h-full object-cover rounded-md"
+                alt="news"
+              />
+              {isLatest(article.dateOriginal) && (
+                <div className="absolute top-0 left-0 w-10 h-16 overflow-hidden">
+                  <div className="absolute transform -rotate-45 bg-red-500 text-white text-[10px] font-bold px-0.5 left-[-25px] top-[7px] w-[80px] text-center shadow-md">
+                    Latest
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-col justify-between flex-1">
+              <div>
+                <h3 className="text-sm font-semibold line-clamp-2">
+                  {article.title}
+                </h3>
+                <p className="text-xs text-muted-foreground line-clamp-3 mt-1">
+                  {article.description || "No description available."}
+                </p>
+              </div>
+              <div className="flex justify-between items-center mt-2">
+                <div className="flex items-center text-[10px] text-gray-500">
+                  <CalendarIcon className="w-3 h-3 mr-1" />
+                  {article.publishedAt.split(",")[0]}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    className="h-3 text-[10px] text-indigo-700 bg-indigo-100 hover:bg-indigo-200 rounded-full flex items-center"
+                    onClick={() => onAskAi(article.id)}
+                  >
+                    Ask AI
+                    <BotMessageSquare className="w-4 h-4 ml-1" />
+                  </Button>
+                  <Link
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:underline"
+                  >
+                    Read more
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <div className="hidden sm:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {filteredArticles.map((article, i) => (
+          <Card
+            key={i}
+            className="overflow-hidden hover:shadow-lg hover:shadow-gray-500/50 p-0"
+          >
             <div className="relative h-64 w-full p-2 pb-0">
               {isLatest(article.dateOriginal) && (
                 <div className="absolute top-0 left-0 overflow-hidden w-24 h-24">
@@ -81,5 +152,6 @@ export default function NewsCardItems({
           </Card>
         ))}
       </div>
+    </>
   );
 }

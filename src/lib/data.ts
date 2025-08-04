@@ -29,8 +29,8 @@ export async function getNewsPaginated(
 
     const endpoint =
       country === "in"
-        ? "https://readhub-backend.onrender.com/api/news/newIn/pagination"
-        : "https://readhub-backend.onrender.com/api/news/new/pagination";
+        ? "http://localhost:5000/api/news/newIn/pagination"
+        : "http://localhost:5000/api/news/new/pagination";
 
     const res = await fetch(`${endpoint}?${params.toString()}`);
 

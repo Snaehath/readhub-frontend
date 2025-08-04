@@ -35,7 +35,6 @@ export default function NewsCard() {
   const [showDialog, setShowDialog] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
-
   useEffect(() => {
     const storedToken = localStorage.getItem("jwt");
     setToken(storedToken);
@@ -102,6 +101,35 @@ export default function NewsCard() {
       toast(`Error refreshing news: ${error}`);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleNewsPrediction = async (id: string) => {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/ai/chat/futureNews",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ id, selectedCountry }),
+        }
+      );
+
+      if (!response.ok) {
+        const errData = await response.json();
+        console.error("Error from server:", errData.message);
+        // Optional: show this error in UI
+        return;
+      }
+
+      const data = await response.json();
+      console.log("Future article:", data.futureArticle);
+      // Optional: update your UI state here with data.futureArticle
+    } catch (error) {
+      console.error("Request failed:", error);
+      // Optional: show fallback UI message
     }
   };
 
@@ -197,32 +225,45 @@ export default function NewsCard() {
       {isLoading && <TopLoadingBar duration={15000} />}
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between flex-wrap gap-4 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between flex-wrap gap-3 mb-4">
+        {/* Category buttons + refresh */}
         <div className="flex flex-wrap gap-2">
           {newsCategories.map((cat) => (
             <Button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={getButtonClass(selectedCategory === cat.id)}
+              className={`rounded-full text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 transition-all duration-100 ${
+                selectedCategory === cat.id
+                  ? "bg-blue-600 text-white scale-95"
+                  : "bg-gray-200 text-gray-700"
+              }`}
             >
               {cat.name}
             </Button>
           ))}
           <Button
-            className="rounded-full px-6 py-3 font-semibold bg-gray-200 text-gray-700"
+            className="rounded-full text-xs sm:text-sm px-3 py-1.5 sm:px-6 sm:py-3 font-medium bg-gray-200 text-gray-700"
             onClick={handleRefreshNews}
             disabled={isLoading}
             aria-label="Refresh news"
           >
-            <RefreshCcw className={`${isLoading ? "animate-spin" : ""}`} />
+            <RefreshCcw
+              className={`${isLoading ? "animate-spin" : ""} w-4 h-4`}
+            />
           </Button>
         </div>
-        <div className="flex gap-2 flex-wrap">
+
+        {/* Country buttons */}
+        <div className="flex flex-wrap">
           {newsCountries.map((country) => (
             <Button
               key={country.id}
               onClick={() => setSelectedCountry(country.id)}
-              className={getButtonClass(selectedCountry === country.id)}
+              className={`rounded-none text-xs sm:text-sm px-3 sm:px-4 sm:py-2 transition-all duration-100 ${
+                selectedCountry === country.id
+                  ? "bg-blue-600 text-white scale-90"
+                  : "bg-gray-200 text-gray-700"
+              }`}
               aria-pressed={selectedCountry === country.id}
             >
               {country.tag}
@@ -232,6 +273,7 @@ export default function NewsCard() {
       </div>
 
       {/* Articles */}
+
       <NewsCardItems
         filteredArticles={articles}
         onAskAi={handleAskAi}

@@ -104,35 +104,6 @@ export default function NewsCard() {
     }
   };
 
-  const handleNewsPrediction = async (id: string) => {
-    try {
-      const response = await fetch(
-        "http://localhost:5000/api/ai/chat/futureNews",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ id, selectedCountry }),
-        }
-      );
-
-      if (!response.ok) {
-        const errData = await response.json();
-        console.error("Error from server:", errData.message);
-        // Optional: show this error in UI
-        return;
-      }
-
-      const data = await response.json();
-      console.log("Future article:", data.futureArticle);
-      // Optional: update your UI state here with data.futureArticle
-    } catch (error) {
-      console.error("Request failed:", error);
-      // Optional: show fallback UI message
-    }
-  };
-
   const handleAskAi = async (id: string) => {
     setAiResponse("");
     setAiLoading(true);
@@ -171,11 +142,6 @@ export default function NewsCard() {
     const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
     return new Date(dateOriginal) > fourHoursAgo;
   };
-
-  const getButtonClass = (active: boolean) =>
-    `px-4 py-2 rounded-full transition-all duration-100 ${
-      active ? "bg-blue-600 text-white scale-95" : "bg-gray-200 text-gray-700"
-    }`;
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8">

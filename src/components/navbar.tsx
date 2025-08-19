@@ -29,6 +29,7 @@ export default function Navbar() {
 
   const handleLogout = () => {
     logout(); // Clear Zustand store
+    localStorage.removeItem("jwt");
     router.push("/");
 
     toast("Logged out successfully!");

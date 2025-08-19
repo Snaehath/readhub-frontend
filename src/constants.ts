@@ -34,22 +34,23 @@ export const avatarOptions = [
 ];
 
 export const booksCategories = [
-    { id: "history", name: "History" },
-    { id: "business", name: "Business" },
-    { id: "health", name: "Health" },
-    { id: "sports", name: "Sports" },
-    { id: "science", name: "Science" },
-    { id: "horror", name: "Horror" },
-    { id: "children", name: "Children" },
-    { id: "cooking", name: "Cooking" },
-  ];
+  { id: "history", name: "History" },
+  { id: "business", name: "Business" },
+  { id: "health", name: "Health" },
+  { id: "sports", name: "Sports" },
+  { id: "science", name: "Science" },
+  { id: "horror", name: "Horror" },
+  { id: "children", name: "Children" },
+  { id: "cooking", name: "Cooking" },
+];
 
-  export const suggestions = [
-    "Summarize the latest news",
-    "Today's top news in india",
-    "Latest news in India",
-    "Children's books",
-    "Horror books",
-    "What's trending in technology?",
-    "Give me a fun fact from today's news",
-  ];
+export const suggestions = [
+  "🌍 What’s the biggest story in the world right now?",
+  "📰 Give me today’s news in 60 seconds",
+  "📈 Tell me one big business headline",
+  "Any important updates from India?",
+  "💻 What’s trending in tech today?",
+  "good children’s books.",
+  " Recommend me a great books.",
+  "Must-read horror books",
+];

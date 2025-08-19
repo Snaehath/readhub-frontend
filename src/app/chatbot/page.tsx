@@ -1,102 +1,30 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import rehypeExternalLinks from "rehype-external-links";
-import { ChatMessage } from "@/types";
 import { suggestions } from "@/constants";
+import { useChat } from "@/lib/hooks/useChat";
 
 export default function ChatbotPage() {
-  const [userMessage, setUserMessage] = useState("");
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
-  const [loading, setLoading] = useState(false);
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("jwt");
-    setToken(storedToken);
+    setToken(localStorage.getItem("jwt"));
   }, []);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { chatHistory, sendMessage, clearChat, loading, messagesEndRef } =
+    useChat(token);
 
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [chatHistory]);
+  const [userMessage, setUserMessage] = useState("");
 
-  useEffect(() => {
-    const stored = localStorage.getItem("chatHistory");
-    if (stored) {
-      setChatHistory(JSON.parse(stored));
-    }
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
-  }, [chatHistory]);
-
-  const sendMessage = async (messageOverride?: string) => {
-    const messageToSend = messageOverride ?? userMessage;
-    if (!messageToSend.trim()) return;
-    if (!token) {
-      setChatHistory([
-        ...chatHistory,
-        {
-          sender: "bot" as const,
-          message: "🔒 Please log in to use the AI assistant.",
-        },
-      ]);
-      return;
-    }
-
-    const updatedHistory: ChatMessage[] = [
-      ...chatHistory,
-      { sender: "user" as const, message: messageToSend },
-    ];
-    setChatHistory(updatedHistory);
+  const hnadleSendMessage = (message: string) => {
+    sendMessage(message);
     setUserMessage("");
-    setLoading(true);
-
-    try {
-      const res = await fetch("https://readhub-backend.onrender.com/api/ai/chat", {
-        //local testing --- " http://localhost:5000/api/ai/chat" ---
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ userMessage: messageToSend }),
-      });
-
-      const data = await res.json();
-      const reply = data?.reply?.trim() || "No response.";
-
-      setChatHistory([
-        ...updatedHistory,
-        { sender: "bot" as const, message: reply },
-      ]);
-    } catch (error) {
-      console.error("Chat error:", error);
-      setChatHistory([
-        ...updatedHistory,
-        {
-          sender: "bot" as const,
-          message: "Something went wrong. Please try again.",
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const clearChat = () => {
-    localStorage.removeItem("chatHistory");
-    setChatHistory([]);
   };
 
   return (
@@ -106,18 +34,16 @@ export default function ChatbotPage() {
         Ask anything about the latest news!
       </p>
 
-      <div
-        className="mb-4 border rounded-md p-3 h-[400px] overflow-y-auto bg-background"
-        aria-live="polite"
-      >
+      {/* Chat history */}
+      <div className="mb-4 border rounded-md p-3 h-[400px] overflow-y-auto bg-background">
         <div className="space-y-4">
           {chatHistory.map((chat, idx) => (
             <Card
               key={idx}
               className={`${
                 chat.sender === "user"
-                  ? "bg-blue-50 dark:bg-blue-900 ml-auto text-right"
-                  : "bg-gray-100 dark:bg-gray-800 text-left"
+                  ? "bg-blue-200 dark:bg-blue-800 ml-auto text-right"
+                  : "bg-gray-200 dark:bg-gray-800 text-left"
               } max-w-sm`}
             >
               <CardContent className="p-3 text-sm whitespace-pre-line">
@@ -148,40 +74,38 @@ export default function ChatbotPage() {
         </div>
       </div>
 
+      {/* Input + Send */}
       <div className="flex items-center gap-2 mb-2">
         <Input
           placeholder="Ask something like 'Summarize the news'"
           value={userMessage}
           onChange={(e) => setUserMessage(e.target.value)}
           disabled={loading}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") sendMessage();
-          }}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage(userMessage)}
         />
-        <Button onClick={() => sendMessage()} disabled={loading}>
+        <Button onClick={() => hnadleSendMessage(userMessage)} disabled={loading}>
           Send
         </Button>
       </div>
 
-      {/* 🔹 Suggestions Section */}
+      {/* Suggestions */}
       <div className="mb-4">
         <p className="text-sm text-muted-foreground mb-2">Try one of these:</p>
         <div className="flex flex-wrap gap-2">
           {suggestions.map((text, i) => (
-            <Button
+            <button
               key={i}
-              variant="outline"
-              size="sm"
-              className="text-xs"
-              onClick={() => sendMessage(text)}
+              className="px-3 py-1 text-xs bg-gray-200 dark:bg-gray-700 rounded-full hover:bg-gray-300"
+              onClick={() => hnadleSendMessage(text)}
               disabled={loading}
             >
               {text}
-            </Button>
+            </button>
           ))}
         </div>
       </div>
 
+      {/* Clear Chat */}
       <div className="text-right">
         <Button
           variant="ghost"

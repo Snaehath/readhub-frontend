@@ -41,7 +41,6 @@ export const booksCategories = [
   { id: "science", name: "Science" },
   { id: "horror", name: "Horror" },
   { id: "children", name: "Children" },
-  { id: "cooking", name: "Cooking" },
 ];
 
 export const suggestions = [

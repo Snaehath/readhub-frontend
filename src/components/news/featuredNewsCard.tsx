@@ -7,9 +7,9 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "./ui/card";
+} from "../ui/card";
 import { CalendarIcon } from "lucide-react";
-import { Badge } from "./ui/badge";
+import { Badge } from "../ui/badge";
 
 export default function FeaturedNewsCard({
   article,
@@ -19,6 +19,7 @@ export default function FeaturedNewsCard({
   return (
     <Card className="overflow-hidden rounded-lg shadow p-0">
       <div className="relative h-64 w-full p-2">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
           alt={article.title}

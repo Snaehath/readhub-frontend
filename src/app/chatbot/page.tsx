@@ -22,9 +22,12 @@ export default function ChatbotPage() {
 
   const [userMessage, setUserMessage] = useState("");
 
-  const hnadleSendMessage = (message: string) => {
+  const handleSendMessage = (message: string) => {
     sendMessage(message);
     setUserMessage("");
+  };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUserMessage(e.target.value);
   };
 
   return (
@@ -79,11 +82,14 @@ export default function ChatbotPage() {
         <Input
           placeholder="Ask something like 'Summarize the news'"
           value={userMessage}
-          onChange={(e) => setUserMessage(e.target.value)}
+          onChange={(e) => handleChange(e)}
           disabled={loading}
           onKeyDown={(e) => e.key === "Enter" && sendMessage(userMessage)}
         />
-        <Button onClick={() => hnadleSendMessage(userMessage)} disabled={loading}>
+        <Button
+          onClick={() => handleSendMessage(userMessage)}
+          disabled={loading}
+        >
           Send
         </Button>
       </div>
@@ -96,7 +102,7 @@ export default function ChatbotPage() {
             <button
               key={i}
               className="px-3 py-1 text-xs bg-gray-200 dark:bg-gray-700 rounded-full hover:bg-gray-300"
-              onClick={() => hnadleSendMessage(text)}
+              onClick={() => handleSendMessage(text)}
               disabled={loading}
             >
               {text}

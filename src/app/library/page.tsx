@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function LibraryPage() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -39,7 +40,7 @@ export default function LibraryPage() {
       try {
         let query = `https://openlibrary.org/search.json?q=${
           debouncedSearchQuery || "all"
-        }&lang=en&limit=${debouncedSearchQuery?"4":"15"}`;
+        }&lang=en&limit=${debouncedSearchQuery ? "4" : "15"}`;
 
         if (selectedCategory && selectedCategory !== "general") {
           query += `&subject=${selectedCategory}`;
@@ -97,22 +98,25 @@ export default function LibraryPage() {
           value={searchQuery}
           onChange={handleBookSearch}
           aria-label="Search books"
-          className="p-2 w-full sm:w-1/2 lg:w-1/4 hover:border-black"
+          className="p-2 w-full sm:w-1/4 hover:border-black"
         />
 
-        <select
+        <Select
           value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          aria-label="Select book category"
-          className="mb-4 p-2 border rounded w-32"
+          onValueChange={(value) => setSelectedCategory(value)}
         >
-          <option value="general">All</option>
-          {booksCategories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="mb-4 w-32 p-2 border cursor-pointer">
+            <SelectValue placeholder="All" />
+          </SelectTrigger>
+          <SelectContent >
+            <SelectItem className="cursor-pointer" value="general">All</SelectItem>
+            {booksCategories.map((category) => (
+              <SelectItem key={category.id} value={category.id}  className="cursor-pointer">
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Loading Dialog */}

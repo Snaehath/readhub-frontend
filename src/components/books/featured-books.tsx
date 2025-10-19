@@ -17,6 +17,7 @@ export default async function FeaturedBooks() {
       {featuredBooks.map((book,i) => (
         <Card key={i} className="overflow-hidden flex flex-col">
           <div className="relative h-64 w-full">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
               src={book.urlToImage}
               alt={book.title}

@@ -1,3 +1,5 @@
+import { Category } from "./types";
+
 export const newsCategories = [
   { id: "all", name: "All" },
   { id: "technology", name: "Technology" },
@@ -8,6 +10,16 @@ export const newsCategories = [
   { id: "science", name: "Science" },
   { id: "entertainment", name: "Entertainment" },
 ];
+
+export const CATEGORY_COLORS:Record<Category, string> = {
+  technology: "bg-blue-100 text-blue-800 border-blue-300",
+  sports: "bg-green-100 text-green-800 border-green-300",
+  science: "bg-purple-100 text-purple-800 border-purple-300",
+  health: "bg-red-100 text-red-800 border-red-300",
+  business: "bg-yellow-100 text-yellow-800 border-yellow-300",
+  politics: "bg-orange-100 text-orange-800 border-orange-300",
+  entertainment: "bg-pink-100 text-pink-800 border-pink-300",
+};
 
 export const newsCountries = [
   { id: "us", name: "USA", tag: "US" },

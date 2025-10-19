@@ -1,4 +1,7 @@
 "use client";
+import Link from "next/link";
+import { BookOpen, Newspaper } from "lucide-react";
+
 import {
   Card,
   CardContent,
@@ -7,9 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import { BookOpen, Newspaper } from "lucide-react";
 import { Button } from "./ui/button";
-import Link from "next/link";
+import Image from "next/image";
 
 export default function HomeContent() {
   return (
@@ -18,7 +20,7 @@ export default function HomeContent() {
         <span className="flex justify-center items-center gap-2 mb-2">
           <h1 className="text-4xl font-bold tracking-tight">ReadHub</h1>
           <span className="w-15 h-10">
-            <img src="Flippingbook.gif" alt="ReadHub logo" />
+            <Image src="/Flippingbook.gif" alt="ReadHub logo" width={100} height={100}/>
           </span>
         </span>
         <p className="text-xl text-muted-foreground">

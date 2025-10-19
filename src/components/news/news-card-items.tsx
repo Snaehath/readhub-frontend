@@ -1,15 +1,16 @@
 import { CalendarIcon, BotMessageSquare } from "lucide-react";
-import { Badge } from "./ui/badge";
+import { Badge } from "../ui/badge";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "./ui/card";
-import { NewsArticle } from "@/types";
+} from "../ui/card";
+import { Category, NewsArticle } from "@/types";
 import Link from "next/link";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
+import { CATEGORY_COLORS } from "@/constants";
 
 interface NewsCardItemsProps {
   filteredArticles: NewsArticle[];
@@ -31,6 +32,7 @@ export default function NewsCardItems({
             className="flex gap-4 p-2 rounded-md shadow hover:shadow-md transition"
           >
             <div className="w-24 h-24 flex-shrink-0 relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
                 onError={(e) => {
@@ -98,6 +100,7 @@ export default function NewsCardItems({
                   </div>
                 </div>
               )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
                 alt="news thumbnail"
@@ -109,19 +112,24 @@ export default function NewsCardItems({
             </div>
             <CardHeader className="p-4 pt-0 pb-0">
               <div className="flex flex-wrap gap-2 mb-2">
-                {article.category.map((cat, i) => (
-                  <Badge
-                    key={`${cat}-${i}`}
-                    className="rounded-full px-3 py-1 text-xs font-semibold"
-                  >
-                    {cat}
-                  </Badge>
-                ))}
+                {article.category.map((cat, i) => {
+                  const colorClass = CATEGORY_COLORS[cat as Category];
+                  return (
+                    <Badge
+                      variant={"outline"}
+                      key={`${cat}-${i}`}
+                      className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${colorClass}`}
+                    >
+                      {cat}
+                    </Badge>
+                  );
+                })}
                 <Badge
-                  className="ml-auto px-3 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800 flex items-center cursor-pointer hover:bg-indigo-200 active:scale-95 active:bg-indigo-300 transition-transform duration-150"
+                  className="ml-auto px-3 py-1 text-xs font-semibold rounded-full bg-indigo-600 text-white flex items-center cursor-pointer hover:bg-indigo-700 active:scale-95 transition-transform duration-150"
                   onClick={() => onAskAi(article.id)}
                   aria-label="Ask AI"
-                  title="Ask AI"
+                  variant="outline"
+                  title="Get Insights from AI"
                 >
                   Ask AI <BotMessageSquare className="w-4 h-4 ml-1" />
                 </Badge>

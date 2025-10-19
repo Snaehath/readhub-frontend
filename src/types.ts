@@ -48,3 +48,12 @@ export type BookCopy = {
   gutenbergId: number;
   tag: string;
 };
+
+export type Category =
+  | "technology"
+  | "sports"
+  | "science"
+  | "health"
+  | "business"
+  | "politics"
+  | "entertainment";

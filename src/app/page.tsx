@@ -1,5 +1,5 @@
-import FeaturedNews from "@/components/featured-news";
-import FeaturedBooks from "@/components/featured-books";
+import FeaturedNews from "@/components/news/featured-news";
+import FeaturedBooks from "@/components/books/featured-books";
 import HomeContent from "@/components/homeContent";
 export const dynamic = "force-dynamic";
 

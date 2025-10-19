@@ -5,8 +5,8 @@ import { RefreshCcw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 import { toast } from "sonner";
-import { Button } from "./ui/button";
-import TopLoadingBar from "./topLoadBar";
+import { Button } from "../ui/button";
+import TopLoadingBar from "../topLoadBar";
 import NewsCardItems from "./news-card-items";
 
 import {
@@ -16,7 +16,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "./ui/dialog";
+} from "../ui/dialog";
 
 import { NewsArticle } from "@/types";
 import { newsCategories, newsCountries } from "@/constants";
@@ -117,7 +117,7 @@ export default function NewsCard() {
 
     try {
       const res = await fetch(
-        "https://readhub-backend.onrender.com/api/ai/chat",
+        "http://localhost:5000/api/ai/chat", //https://readhub-backend.onrender.com/api/ai/chat
         {
           method: "POST",
           headers: {
@@ -220,20 +220,20 @@ export default function NewsCard() {
         </div>
 
         {/* Country buttons */}
-        <div className="flex flex-wrap">
+        <div className="flex bg-gray-200 rounded-full p-1 w-max">
           {newsCountries.map((country) => (
-            <Button
+            <div
               key={country.id}
               onClick={() => setSelectedCountry(country.id)}
-              className={`rounded-none text-xs sm:text-sm px-3 sm:px-4 sm:py-2 transition-all duration-100 ${
+              className={`cursor-pointer px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                 selectedCountry === country.id
-                  ? "bg-blue-600 text-white scale-90"
-                  : "bg-gray-200 text-gray-700"
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700"
               }`}
               aria-pressed={selectedCountry === country.id}
             >
               {country.tag}
-            </Button>
+            </div>
           ))}
         </div>
       </div>

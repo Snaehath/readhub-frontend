@@ -10,13 +10,13 @@ function delay(ms: number) {
 }
 
 // Dynamically load NewsCard (no SSR)
-const NewsCard = dynamic(() => import("./news-card"), {
+const NewsCard = dynamic(() => import("./news/news-card"), {
   loading: () => <CardsSkeleton />,
   ssr: false,
 });
 
 // Dynamically load BookCard with 2s delay (no SSR)
-const BookCard = dynamic(() => delay(2000).then(() => import("./book-card")), {
+const BookCard = dynamic(() => delay(2000).then(() => import("./books/book-card")), {
   loading: () => <BooksSkeleton />,
   ssr: false,
 });

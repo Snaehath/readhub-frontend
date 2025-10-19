@@ -47,7 +47,7 @@ export async function getNewsPaginated(
       content: article.content,
       url: article.url,
       urlToImage: article.urlToImage,
-      publishedAt: new Date(article.publishedAt).toLocaleString(),
+      publishedAt: article.publishedAt,
       dateOriginal: article.publishedAt,
       source: article.source ?? { name: "Unknown" },
       category: article.category ?? [],

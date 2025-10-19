@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search } from "lucide-react";
 
 export default function LibraryPage() {
   const [books, setBooks] = useState<Book[]>([]);
@@ -88,17 +89,18 @@ export default function LibraryPage() {
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-4">Library</h2>
+    <div className="p-4">
+      <h2 className="text-2xl font-bold mb-4">🏛️ Library</h2>
 
-      <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mb-4">
+      <div className="flex flex-col sm:flex-row gap-4 mb-4">
         <Input
           type="text"
+          startIcon={<Search className="w-4 h-4" />}
           placeholder="Search for books..."
           value={searchQuery}
           onChange={handleBookSearch}
           aria-label="Search books"
-          className="p-2 w-full sm:w-1/4 hover:border-black"
+          className="sm:w-1/4"
         />
 
         <Select

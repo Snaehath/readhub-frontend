@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { RefreshCcw } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { RefreshCcw, Search } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 import { toast } from "sonner";
@@ -21,8 +21,15 @@ import {
 import { NewsArticle } from "@/types";
 import { newsCategories, newsCountries } from "@/constants";
 import { getNewsPaginated } from "@/lib/data";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Input } from "../ui/input";
+import { differenceInHours } from "date-fns";
 
 export default function NewsCard() {
+  // hooks
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedCountry, setSelectedCountry] = useState("us");
   const [articles, setArticles] = useState<NewsArticle[]>([]);
@@ -34,6 +41,9 @@ export default function NewsCard() {
   const [aiLoading, setAiLoading] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [token, setToken] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>(
+    searchParams.get("query")?.toLocaleLowerCase() ?? ""
+  );
 
   useEffect(() => {
     const storedToken = localStorage.getItem("jwt");
@@ -117,7 +127,7 @@ export default function NewsCard() {
 
     try {
       const res = await fetch(
-        "http://localhost:5000/api/ai/chat", //https://readhub-backend.onrender.com/api/ai/chat
+        "https://readhub-backend.onrender.com/api/ai/chat", //https://readhub-backend.onrender.com/api/ai/chat
         {
           method: "POST",
           headers: {
@@ -138,9 +148,31 @@ export default function NewsCard() {
     }
   };
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    if (searchQuery) {
+      params.set("query", searchQuery.toLowerCase());
+    } else {
+      params.delete("query");
+    }
+
+    // Replace the URL without scrolling
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    router.replace(newUrl, { scroll: false });
+  }, [router, searchQuery]);
+
+  // filter News based on search
+  const filteredNews = useMemo(() => {
+    if (!articles) return [];
+    return articles.filter((article) =>
+      article.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [articles, searchQuery]);
+
   const isLatest = (dateOriginal: string) => {
-    const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
-    return new Date(dateOriginal) > fourHoursAgo;
+    const hoursAgo = differenceInHours(new Date(), new Date(dateOriginal));
+    return hoursAgo <= 2;
   };
 
   return (
@@ -191,7 +223,7 @@ export default function NewsCard() {
       {isLoading && <TopLoadingBar duration={15000} />}
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between flex-wrap gap-3 mb-4">
+      <div className="flex flex-col md:flex-row md:items-center sm:justify-between flex-wrap gap-3 mb-4">
         {/* Category buttons + refresh */}
         <div className="flex flex-wrap gap-2">
           {newsCategories.map((cat) => (
@@ -220,34 +252,43 @@ export default function NewsCard() {
         </div>
 
         {/* Country buttons */}
-        <div className="flex bg-gray-200 rounded-full p-1 w-max">
-          {newsCountries.map((country) => (
-            <div
-              key={country.id}
-              onClick={() => setSelectedCountry(country.id)}
-              className={`cursor-pointer px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                selectedCountry === country.id
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-700"
-              }`}
-              aria-pressed={selectedCountry === country.id}
-            >
-              {country.tag}
-            </div>
-          ))}
+        <div className="flex items-center gap-2">
+          <Input
+            type="text"
+            startIcon={<Search className="w-4 h-4" />}
+            placeholder={"Search News..."}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <div className="flex bg-gray-200 rounded-full p-1">
+            {newsCountries.map((country) => (
+              <div
+                key={country.id}
+                onClick={() => setSelectedCountry(country.id)}
+                className={`cursor-pointer px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                  selectedCountry === country.id
+                    ? "bg-blue-600 text-white"
+                    : "text-gray-700"
+                }`}
+                aria-pressed={selectedCountry === country.id}
+              >
+                {country.tag}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Articles */}
 
       <NewsCardItems
-        filteredArticles={articles}
+        filteredArticles={filteredNews}
         onAskAi={handleAskAi}
         isLatest={isLatest}
       />
 
       {/* No Results */}
-      {articles.length === 0 && !isLoading && (
+      {filteredNews.length === 0 && !isLoading && (
         <div className="text-center text-gray-500 mt-6">
           No articles found for this category.
         </div>

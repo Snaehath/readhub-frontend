@@ -8,8 +8,8 @@ export default async function NewsPage() {
 
 
   return (
-    <div className="p-4">
-      <h2 className="text-3xl font-bold mb-6 ml-8">📰 Latest News</h2>
+    <div className="p-2">
+      <h2 className="text-3xl font-bold mb-4 ml-8">📰 Latest News</h2>
       <Suspense fallback={<CardSkeleton />}>
         <NewsCardLoader />
       </Suspense>

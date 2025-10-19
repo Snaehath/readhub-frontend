@@ -28,7 +28,7 @@ export default function HomeContent() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-4xl mx-auto">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -46,7 +46,7 @@ export default function HomeContent() {
             </p>
           </CardContent>
           <CardFooter>
-            <Button asChild className="w-full">
+            <Button asChild >
               <Link href="/news">Browse News</Link>
             </Button>
           </CardFooter>
@@ -69,7 +69,7 @@ export default function HomeContent() {
             </p>
           </CardContent>
           <CardFooter>
-            <Button asChild className="w-full">
+            <Button asChild >
               <Link href="/library">Browse E-Books</Link>
             </Button>
           </CardFooter>

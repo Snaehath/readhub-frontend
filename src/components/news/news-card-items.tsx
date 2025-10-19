@@ -11,6 +11,9 @@ import { Category, NewsArticle } from "@/types";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { CATEGORY_COLORS } from "@/constants";
+import ToolTip from "../ui/custom/tooltip";
+import { formatDate, formatDistanceToNow } from "date-fns";
+import Typography from "../ui/custom/typography";
 
 interface NewsCardItemsProps {
   filteredArticles: NewsArticle[];
@@ -92,26 +95,26 @@ export default function NewsCardItems({
             key={i}
             className="overflow-hidden hover:shadow-lg hover:shadow-gray-500/50 p-0"
           >
-            <div className="relative h-64 w-full p-2 pb-0">
-              {isLatest(article.dateOriginal) && (
-                <div className="absolute top-0 left-0 overflow-hidden w-24 h-24">
-                  <div className="absolute transform -rotate-45 bg-red-500 text-white text-[10px] font-bold py-1 px-0.5 left-[-30px] top-[18px] w-[100px] text-center shadow-md">
-                    Latest
+            <CardHeader className="p-0">
+              <div className="relative h-64 w-full">
+                {isLatest(article.dateOriginal) && (
+                  <div className="absolute top-0 left-0 overflow-hidden w-24 h-24">
+                    <div className="absolute transform -rotate-45 bg-red-500 text-white text-[10px] font-bold py-1 px-0.5 left-[-30px] top-[18px] w-[100px] text-center shadow-md">
+                      Latest
+                    </div>
                   </div>
-                </div>
-              )}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
-                alt="news thumbnail"
-                onError={(e) => {
-                  e.currentTarget.src = "/ReadHub_PlaceHolder.png";
-                }}
-                className="object-cover w-full h-full rounded-md "
-              />
-            </div>
-            <CardHeader className="p-4 pt-0 pb-0">
-              <div className="flex flex-wrap gap-2 mb-2">
+                )}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
+                  alt="news thumbnail"
+                  onError={(e) => {
+                    e.currentTarget.src = "/ReadHub_PlaceHolder.png";
+                  }}
+                  className="object-cover w-full h-full "
+                />
+              </div>
+              <div className="flex flex-wrap gap-2 mb-2 p-2 pt-0 pb-0">
                 {article.category.map((cat, i) => {
                   const colorClass = CATEGORY_COLORS[cat as Category];
                   return (
@@ -134,20 +137,28 @@ export default function NewsCardItems({
                   Ask AI <BotMessageSquare className="w-4 h-4 ml-1" />
                 </Badge>
               </div>
-              <CardTitle className="text-lg line-clamp-2 p-0">
+              <CardTitle className="text-lg line-clamp-2 p-2 pt-0 pb-0">
                 {article.title}
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-0 pb-0">
-              <p className="text-sm text-muted-foreground line-clamp-3 text-justify">
+            <CardContent className="p-2 pt-0 pb-0 line-clamp-2">
+              <Typography variant="small" color="muted">
                 {article.description || "No description available."}
-              </p>
+              </Typography>
             </CardContent>
-            <CardFooter className="p-4 pt-0 flex justify-between pb-2">
-              <div className="flex items-center text-xs">
-                <CalendarIcon className="mr-1 h-3 w-3" />
-                {article.publishedAt.split(",")[0]}
-              </div>
+            <CardFooter className="p-4 pt-0 flex justify-between">
+              <ToolTip
+                content={formatDistanceToNow(new Date(article.publishedAt), {
+                  addSuffix: true,
+                })}
+              >
+                <div className="flex items-center">
+                  <CalendarIcon className="mr-1 h-4 w-4" />
+                  <Typography variant="small" color="muted">
+                    {formatDate(new Date(article.publishedAt), "MMMM d, yyyy")}
+                  </Typography>
+                </div>
+              </ToolTip>
               <Link
                 href={article.url}
                 target="_blank"

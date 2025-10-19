@@ -183,7 +183,7 @@ export default function NewsCard() {
           <DialogHeader>
             <DialogTitle>AI Summary</DialogTitle>
             <DialogDescription>
-              Insight and explanation of the selected news.
+              Insight and explanation of the news.
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[400px] overflow-y-auto whitespace-pre-wrap text-sm text-muted-foreground">

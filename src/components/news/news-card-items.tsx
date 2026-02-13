@@ -1,4 +1,4 @@
-import { CalendarIcon, BotMessageSquare } from "lucide-react";
+import { CalendarIcon, Sparkles, Zap } from "lucide-react";
 import { Badge } from "../ui/badge";
 import {
   Card,
@@ -80,7 +80,7 @@ export default function NewsCardItems({
                 title="Toggle Future AI insights"
               >
                 {futureToggles[article.id] ? "Future ON" : "Future AI"}
-                <BotMessageSquare className="w-4 h-4 ml-1" />
+                <Zap className="w-4 h-4 ml-1" />
               </Button>
             </div>
             <div className="flex flex-wrap gap-2 mb-2 p-2 pt-0 pb-0">
@@ -97,13 +97,13 @@ export default function NewsCardItems({
                 );
               })}
               <Badge
-                className="ml-auto px-3 py-1 text-xs font-semibold rounded-full bg-indigo-600 text-white flex items-center cursor-pointer hover:bg-indigo-700 active:scale-95 transition-transform duration-150"
+                className="ml-auto px-3 py-1 text-xs font-semibold rounded-full bg-linear-to-r from-violet-500 to-purple-500 text-white flex items-center cursor-pointer hover:from-violet-600 hover:to-purple-600 active:scale-95 transition-all duration-150 shadow-sm"
                 onClick={() => onAskAi(article.id)}
                 aria-label="Ask AI"
                 variant="outline"
                 title="Get Insights from AI"
               >
-                Ask AI <BotMessageSquare className="w-4 h-4 ml-1" />
+                Ask AI <Sparkles className="w-4 h-4 ml-1" />
               </Badge>
             </div>
             <CardTitle className="text-lg line-clamp-2 p-2 pt-0 pb-0">

@@ -11,19 +11,19 @@ export const newsCategories = [
   { id: "entertainment", name: "Entertainment" },
 ];
 
-export const CATEGORY_COLORS:Record<Category, string> = {
-  technology: "bg-blue-100 text-blue-800 border-blue-300",
-  sports: "bg-green-100 text-green-800 border-green-300",
-  science: "bg-purple-100 text-purple-800 border-purple-300",
-  health: "bg-red-100 text-red-800 border-red-300",
-  business: "bg-yellow-100 text-yellow-800 border-yellow-300",
-  politics: "bg-orange-100 text-orange-800 border-orange-300",
-  entertainment: "bg-pink-100 text-pink-800 border-pink-300",
+export const CATEGORY_COLORS: Record<Category, string> = {
+  technology: "bg-blue-500 text-white border-blue-600",
+  sports: "bg-emerald-500 text-white border-emerald-600",
+  science: "bg-purple-500 text-white border-purple-600",
+  health: "bg-rose-500 text-white border-rose-600",
+  business: "bg-amber-500 text-white border-amber-600",
+  politics: "bg-orange-500 text-white border-orange-600",
+  entertainment: "bg-pink-500 text-white border-pink-600",
 };
 
 export const newsCountries = [
-  { id: "us", name: "USA", tag: "US" ,icon:"/country_icons/us_icon.png"},
-  { id: "in", name: "INDIA", tag: "IN",icon:"/country_icons/india_icon.png" },
+  { id: "us", name: "USA", tag: "US", icon: "/country_icons/us_icon.png" },
+  { id: "in", name: "INDIA", tag: "IN", icon: "/country_icons/india_icon.png" },
 ];
 
 export const avatarOptions = [

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { RefreshCcw, Search } from "lucide-react";
+import { RefreshCcw, Search, ChevronDown, ChevronUp } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
 
@@ -277,10 +277,22 @@ export default function NewsCard() {
             <Badge
               variant="outline"
               onClick={() => setShowAll(true)}
-              className="rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all duration-150 flex items-center justify-center"
+              className="rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all duration-150 flex items-center justify-center gap-1"
               aria-label="Show all categories"
             >
-              ...
+              More
+              <ChevronDown className="w-3 h-3" />
+            </Badge>
+          )}
+          {showAll && newsCategories.length > MAX_CATEGORIES && (
+            <Badge
+              variant="outline"
+              onClick={() => setShowAll(false)}
+              className="rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all duration-150 flex items-center justify-center gap-1"
+              aria-label="Show less categories"
+            >
+              Less
+              <ChevronUp className="w-3 h-3" />
             </Badge>
           )}
 

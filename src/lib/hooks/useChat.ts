@@ -4,7 +4,7 @@ import { ChatMessage } from "@/types";
 export function useChat(token: string | null) {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -13,7 +13,8 @@ export function useChat(token: string | null) {
   }, []);
 
   useEffect(() => {
-    if (chatHistory.length) localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+    if (chatHistory.length)
+      localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
@@ -35,7 +36,10 @@ export function useChat(token: string | null) {
     setLoading(true);
 
     try {
-      const res = await fetch("https://readhub-backend.onrender.com/api/ai/chat", {  //https://readhub-backend.onrender.com/api/ai/chat
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        "https://readhub-backend.onrender.com/api";
+      const res = await fetch(`${baseUrl}/ai/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

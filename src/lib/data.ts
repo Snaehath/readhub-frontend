@@ -15,7 +15,7 @@ export async function getNewsPaginated(
   page: number = 1,
   limit: number = 12,
   category: string = "all",
-  country: string = "us" 
+  country: string = "us",
 ): Promise<PaginatedNewsResponse> {
   try {
     const params = new URLSearchParams({
@@ -27,10 +27,13 @@ export async function getNewsPaginated(
       params.append("category", category);
     }
 
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      "https://readhub-backend.onrender.com/api";
     const endpoint =
       country === "in"
-        ? "https://readhub-backend.onrender.com/api/news/newIn/pagination"
-        : "https://readhub-backend.onrender.com/api/news/new/pagination";
+        ? `${baseUrl}/news/newIn/pagination`
+        : `${baseUrl}/news/new/pagination`;
 
     const res = await fetch(`${endpoint}?${params.toString()}`);
 
@@ -40,18 +43,20 @@ export async function getNewsPaginated(
 
     const data = await res.json();
 
-    const formattedNews: NewsArticle[] = data.articles.map((article:NewsArticle) => ({
-      id: article._id.toString(),
-      title: article.title,
-      description: article.description,
-      content: article.content,
-      url: article.url,
-      urlToImage: article.urlToImage,
-      publishedAt: article.publishedAt,
-      dateOriginal: article.publishedAt,
-      source: article.source ?? { name: "Unknown" },
-      category: article.category ?? [],
-    }));
+    const formattedNews: NewsArticle[] = data.articles.map(
+      (article: NewsArticle) => ({
+        id: article._id.toString(),
+        title: article.title,
+        description: article.description,
+        content: article.content,
+        url: article.url,
+        urlToImage: article.urlToImage,
+        publishedAt: article.publishedAt,
+        dateOriginal: article.publishedAt,
+        source: article.source ?? { name: "Unknown" },
+        category: article.category ?? [],
+      }),
+    );
 
     return {
       news: formattedNews,

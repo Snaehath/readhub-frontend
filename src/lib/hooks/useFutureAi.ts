@@ -16,17 +16,17 @@ export function useFutureAi(token: string | null, selectedCountry: string) {
     }
 
     try {
-      const res = await fetch(
-        "https://readhub-backend.onrender.com/api/ai/futureNews",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ userMessage: { id, selectedCountry } }),
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        "https://readhub-backend.onrender.com/api";
+      const res = await fetch(`${baseUrl}/ai/futureNews`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({ userMessage: { id, selectedCountry } }),
+      });
 
       const data = await res.json();
       setFutureAiArticle(data?.futureArticle?.trim() || "No response.");

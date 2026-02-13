@@ -24,23 +24,23 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "https://readhub-backend.onrender.com/api/user/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, password }),
-        }
-      );
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        "https://readhub-backend.onrender.com/api";
+      const response = await fetch(`${baseUrl}/user/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || "Login failed");
       }
-      localStorage.setItem("jwt", data.token)
+      localStorage.setItem("jwt", data.token);
       setUser(data.user);
       toast.success("Logged in successfully!");
       router.push("/");

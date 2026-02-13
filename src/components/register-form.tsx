@@ -32,16 +32,16 @@ export default function RegisterForm() {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "https://readhub-backend.onrender.com/api/user/adduser",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, username, password, avatar }),
-        }
-      );
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        "https://readhub-backend.onrender.com/api";
+      const response = await fetch(`${baseUrl}/user/adduser`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, username, password, avatar }),
+      });
 
       const data = await response.json();
 

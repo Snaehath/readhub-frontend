@@ -46,11 +46,11 @@ export default function NewsCard() {
   const [aiLoading, setAiLoading] = useState<boolean>(false);
   const [showDialog, setShowDialog] = useState<boolean>(false);
   const [futureToggles, setFutureToggles] = useState<Record<string, boolean>>(
-    {}
+    {},
   );
   const [token, setToken] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>(
-    searchParams.get("query")?.toLocaleLowerCase() ?? ""
+    searchParams.get("query")?.toLocaleLowerCase() ?? "",
   );
 
   const MAX_CATEGORIES = 4;
@@ -69,7 +69,7 @@ export default function NewsCard() {
           page,
           12,
           selectedCategory,
-          selectedCountry
+          selectedCountry,
         );
 
         if (page === 1) {
@@ -102,19 +102,18 @@ export default function NewsCard() {
     try {
       setIsLoading(true);
 
-      const responseUS = await fetch(
-        "https://readhub-backend.onrender.com/api/news/fetch-categories/us"
-      );
-      const responseIN = await fetch(
-        "https://readhub-backend.onrender.com/api/news/fetch-categories/in"
-      );
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        "https://readhub-backend.onrender.com/api";
+      const responseUS = await fetch(`${baseUrl}/news/fetch-categories/us`);
+      const responseIN = await fetch(`${baseUrl}/news/fetch-categories/in`);
 
       await delay(1000);
 
       if (!responseUS.ok) toast(`HTTP error (US): ${responseUS.status}`);
       if (!responseIN.ok) toast(`HTTP error (IN): ${responseIN.status}`);
 
-      if (responseUS.ok && responseIN.ok) toast("Latest news updated");
+      if (responseUS.ok && responseIN.ok) toast.success("Latest news updated");
 
       setPage(1);
     } catch (error) {
@@ -136,22 +135,22 @@ export default function NewsCard() {
     }
 
     try {
-      const res = await fetch(
-        "https://readhub-backend.onrender.com/api/ai/chat", //https://readhub-backend.onrender.com/api/ai/chat
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ userMessage: { id, selectedCountry } }),
-        }
-      );
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        "https://readhub-backend.onrender.com/api";
+      const res = await fetch(`${baseUrl}/ai/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userMessage: { id, selectedCountry } }),
+      });
       const data = await res.json();
       setAiResponse(data?.reply?.trim() || "No response.");
     } catch (error) {
       setAiResponse(
-        `An error occurred while processing your request: ${error}`
+        `An error occurred while processing your request: ${error}`,
       );
     } finally {
       setAiLoading(false);
@@ -195,7 +194,7 @@ export default function NewsCard() {
   const filteredNews = useMemo(() => {
     if (!articles) return [];
     return articles.filter((article) =>
-      article.title.toLowerCase().includes(searchQuery.toLowerCase())
+      article.title.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [articles, searchQuery]);
 

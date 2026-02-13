@@ -13,7 +13,7 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from "@/components/ui/drawer";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeToggle } from "@/components/misc/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUserStore } from "@/lib/store/userStore";
 import { toast } from "sonner";

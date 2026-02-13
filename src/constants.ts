@@ -22,8 +22,8 @@ export const CATEGORY_COLORS:Record<Category, string> = {
 };
 
 export const newsCountries = [
-  { id: "us", name: "USA", tag: "US" },
-  { id: "in", name: "INDIA", tag: "IN" },
+  { id: "us", name: "USA", tag: "US" ,icon:"/country_icons/us_icon.png"},
+  { id: "in", name: "INDIA", tag: "IN",icon:"/country_icons/india_icon.png" },
 ];
 
 export const avatarOptions = [

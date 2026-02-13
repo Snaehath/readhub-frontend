@@ -2,8 +2,8 @@
 
 import { Input } from "@/components/ui/input";
 import { useEffect, useState, Suspense } from "react";
-import { CardSkeleton } from "@/components/skeletons";
-import { BooksCardLoader } from "@/components/card-loader";
+import { CardSkeleton } from "@/components/misc/skeletons";
+import { BooksCardLoader } from "@/components/misc/card-loader";
 import { Book } from "@/types";
 import { booksCategories } from "@/constants";
 

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { RefreshCcw, Search } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import Image from "next/image";
 
+// custom
 import { toast } from "sonner";
 import { Button } from "../ui/button";
-import TopLoadingBar from "../topLoadBar";
+import TopLoadingBar from "../misc/topLoadBar";
 import NewsCardItems from "./news-card-items";
 
 import {
@@ -17,33 +19,41 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-
 import { NewsArticle } from "@/types";
 import { newsCategories, newsCountries } from "@/constants";
 import { getNewsPaginated } from "@/lib/data";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "../ui/input";
 import { differenceInHours } from "date-fns";
+import { useFutureAi } from "@/lib/hooks/useFutureAi";
+import { Badge } from "../ui/badge";
 
 export default function NewsCard() {
   // hooks
   const searchParams = useSearchParams();
   const router = useRouter();
+  const futureAiRef = useRef<HTMLDivElement>(null);
 
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [selectedCountry, setSelectedCountry] = useState("us");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedCountry, setSelectedCountry] = useState<string>("us");
   const [articles, setArticles] = useState<NewsArticle[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState<number>(1);
+  const [hasMore, setHasMore] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showAll, setShowAll] = useState<boolean>(false);
 
-  const [aiResponse, setAiResponse] = useState("");
-  const [aiLoading, setAiLoading] = useState(false);
-  const [showDialog, setShowDialog] = useState(false);
+  const [aiResponse, setAiResponse] = useState<string>("");
+  const [aiLoading, setAiLoading] = useState<boolean>(false);
+  const [showDialog, setShowDialog] = useState<boolean>(false);
+  const [futureToggles, setFutureToggles] = useState<Record<string, boolean>>(
+    {}
+  );
   const [token, setToken] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>(
     searchParams.get("query")?.toLocaleLowerCase() ?? ""
   );
+
+  const MAX_CATEGORIES = 4;
 
   useEffect(() => {
     const storedToken = localStorage.getItem("jwt");
@@ -148,6 +158,25 @@ export default function NewsCard() {
     }
   };
 
+  const {
+    loading: futureLoading,
+    futureAiArticle,
+    error: aiError,
+    fetchFutureAi,
+    resetFutureAi,
+  } = useFutureAi(token, selectedCountry);
+
+  const handleFutureAi = (id: string) => fetchFutureAi(id);
+
+  useEffect(() => {
+    if (futureLoading && futureAiRef.current) {
+      futureAiRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [futureLoading]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
@@ -169,6 +198,10 @@ export default function NewsCard() {
       article.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [articles, searchQuery]);
+
+  const categoriesToShow = showAll
+    ? newsCategories
+    : newsCategories.slice(0, MAX_CATEGORIES);
 
   const isLatest = (dateOriginal: string) => {
     const hoursAgo = differenceInHours(new Date(), new Date(dateOriginal));
@@ -225,22 +258,35 @@ export default function NewsCard() {
       {/* Filters */}
       <div className="flex flex-col md:flex-row md:items-center sm:justify-between flex-wrap gap-3 mb-4">
         {/* Category buttons + refresh */}
-        <div className="flex flex-wrap gap-2">
-          {newsCategories.map((cat) => (
-            <Button
+        <div className="flex flex-wrap items-center gap-2">
+          {categoriesToShow.map((cat) => (
+            <Badge
+              variant="outline"
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`rounded-full text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 transition-all duration-100 ${
+              className={`rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 transition-all duration-150 flex items-center justify-center ${
                 selectedCategory === cat.id
                   ? "bg-blue-600 text-white scale-95"
-                  : "bg-gray-200 text-gray-700"
+                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
               }`}
+              aria-pressed={selectedCategory === cat.id}
             >
               {cat.name}
-            </Button>
+            </Badge>
           ))}
+          {!showAll && newsCategories.length > MAX_CATEGORIES && (
+            <Badge
+              variant="outline"
+              onClick={() => setShowAll(true)}
+              className="rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all duration-150 flex items-center justify-center"
+              aria-label="Show all categories"
+            >
+              ...
+            </Badge>
+          )}
+
           <Button
-            className="rounded-full text-xs sm:text-sm px-3 py-1.5 sm:px-6 sm:py-3 font-medium bg-gray-200 text-gray-700"
+            className="rounded-full text-xs sm:text-sm px-3 py-1.5 sm:px-6 sm:py-3 font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all duration-150"
             onClick={handleRefreshNews}
             disabled={isLoading}
             aria-label="Refresh news"
@@ -259,19 +305,26 @@ export default function NewsCard() {
             placeholder={"Search News..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="rounded-full"
           />
-          <div className="flex bg-gray-200 rounded-full p-1">
+          <div className="flex items-center bg-gray-200 rounded-full p-1 gap-2">
             {newsCountries.map((country) => (
               <div
                 key={country.id}
                 onClick={() => setSelectedCountry(country.id)}
-                className={`cursor-pointer px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                className={`flex gap-2 items-center justify-center cursor-pointer px-5 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                   selectedCountry === country.id
                     ? "bg-blue-600 text-white"
                     : "text-gray-700"
                 }`}
                 aria-pressed={selectedCountry === country.id}
               >
+                <Image
+                  src={country.icon}
+                  alt={country.name}
+                  width={20}
+                  height={20}
+                />
                 {country.tag}
               </div>
             ))}
@@ -284,8 +337,62 @@ export default function NewsCard() {
       <NewsCardItems
         filteredArticles={filteredNews}
         onAskAi={handleAskAi}
+        askFutureAi={handleFutureAi}
         isLatest={isLatest}
+        futureToggles={futureToggles}
+        setFutureToggles={setFutureToggles}
       />
+      {/* Future AI */}
+      {futureLoading || futureAiArticle ? (
+        <div
+          ref={futureAiRef}
+          className="mt-6 bg-gray-50 border rounded-md p-4"
+        >
+          <h3 className="text-lg font-semibold mb-2">🔮 Future AI Insight</h3>
+
+          {futureLoading ? (
+            <div className="flex items-center gap-2 py-4 text-sm text-gray-600">
+              <svg
+                className="w-5 h-5 animate-spin text-indigo-500"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8v8H4z"
+                />
+              </svg>
+              <span>Generating Future AI insight...</span>
+            </div>
+          ) : (
+            <ReactMarkdown>{futureAiArticle}</ReactMarkdown>
+          )}
+
+          {aiError && <p className="text-red-500 mt-2">{aiError}</p>}
+
+          <div className="mt-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                resetFutureAi(); // clears AI article
+                setFutureToggles({}); // resets all toggles
+              }}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {/* No Results */}
       {filteredNews.length === 0 && !isLoading && (

@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+.antigravity.md
 
 # debug
 npm-debug.log*

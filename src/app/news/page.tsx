@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { CardSkeleton } from "@/components/skeletons";
-import { NewsCardLoader } from "@/components/card-loader";
+import { CardSkeleton } from "@/components/misc/skeletons";
+import { NewsCardLoader } from "@/components/misc/card-loader";
 
 export const dynamic = "force-dynamic";
 

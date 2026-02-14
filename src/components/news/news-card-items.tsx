@@ -70,7 +70,7 @@ export default function NewsCardItems({
               <Button
                 onClick={() => handleFutureToggle(article.id)}
                 className={`absolute top-2 right-2 flex items-center gap-1 px-3 py-1.5 
-      text-xs font-semibold rounded-full shadow-md transition-all
+      text-xs font-semibold rounded-full shadow-md transition-all cursor-pointer
       ${
         futureToggles[article.id]
           ? "bg-emerald-600 text-white hover:bg-emerald-700"

@@ -10,7 +10,9 @@ export function useFutureAi(token: string | null, selectedCountry: string) {
     setError(null);
 
     if (!token) {
-      setError("🔒 Please log in to use AI features.");
+      setError(
+        "Authentication Required: Please sign in to access Future AI insights.",
+      );
       setLoading(false);
       return;
     }

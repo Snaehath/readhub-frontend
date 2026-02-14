@@ -1,9 +1,17 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { RefreshCcw, Search, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  RefreshCcw,
+  Search,
+  ChevronDown,
+  ChevronUp,
+  Lock,
+  Zap,
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
+import Link from "next/link";
 
 // custom
 import { toast } from "sonner";
@@ -133,7 +141,6 @@ export default function NewsCard() {
     setShowDialog(true);
 
     if (!token) {
-      setAiResponse("🔒 Please log in to use AI features.");
       setAiLoading(false);
       return;
     }
@@ -223,7 +230,27 @@ export default function NewsCard() {
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[400px] overflow-y-auto whitespace-pre-wrap text-sm text-muted-foreground">
-            {aiLoading ? (
+            {!token ? (
+              <div className="flex flex-col items-center justify-center py-6 text-center gap-4">
+                <div className="bg-indigo-50 dark:bg-indigo-950/30 p-4 rounded-full">
+                  <Lock className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <div className="space-y-2 px-6">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    AI Features are Locked
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Sign in to your ReadHub account to unlock intelligent news
+                    summaries and deep analysis powered by AI.
+                  </p>
+                </div>
+                <Button asChild className="rounded-full px-8 cursor-pointer">
+                  <Link href="/login" onClick={() => setShowDialog(false)}>
+                    Sign In to Unlock
+                  </Link>
+                </Button>
+              </div>
+            ) : aiLoading ? (
               <div className="flex items-center gap-2 py-4">
                 <svg
                   className="w-5 h-5 animate-spin text-indigo-500"
@@ -358,15 +385,20 @@ export default function NewsCard() {
         setFutureToggles={setFutureToggles}
       />
       {/* Future AI */}
-      {futureLoading || futureAiArticle ? (
+      {futureLoading || futureAiArticle || aiError ? (
         <div
           ref={futureAiRef}
-          className="mt-6 bg-gray-50 border rounded-md p-4"
+          className="mt-6 bg-gray-50 dark:bg-zinc-900 border rounded-xl p-6 shadow-sm transition-all duration-300"
         >
-          <h3 className="text-lg font-semibold mb-2">🔮 Future AI Insight</h3>
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Zap className="w-5 h-5 text-indigo-500" />
+              Future AI Insight
+            </h3>
+          </div>
 
           {futureLoading ? (
-            <div className="flex items-center gap-2 py-4 text-sm text-gray-600">
+            <div className="flex items-center gap-3 py-8 text-sm text-muted-foreground">
               <svg
                 className="w-5 h-5 animate-spin text-indigo-500"
                 viewBox="0 0 24 24"
@@ -386,13 +418,44 @@ export default function NewsCard() {
                   d="M4 12a8 8 0 018-8v8H4z"
                 />
               </svg>
-              <span>Generating Future AI insight...</span>
+              <span className="animate-pulse">
+                Generating Future AI insight...
+              </span>
+            </div>
+          ) : aiError ? (
+            <div className="flex flex-col items-center justify-center py-6 text-center gap-4">
+              {aiError.includes("Authentication Required") ? (
+                <>
+                  <div className="bg-indigo-50 dark:bg-indigo-950/30 p-4 rounded-full">
+                    <Lock className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                  </div>
+                  <div className="space-y-2 px-6">
+                    <h4 className="text-lg font-semibold text-foreground">
+                      Feature Locked
+                    </h4>
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                      Sign in to your ReadHub account to unlock intelligent news
+                      summaries and deep analysis powered by AI.
+                    </p>
+                  </div>
+                  <Button
+                    asChild
+                    className="rounded-full px-8 cursor-pointer mt-2"
+                  >
+                    <Link href="/login">Sign In to Unlock</Link>
+                  </Button>
+                </>
+              ) : (
+                <div className="p-4 border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 rounded-lg text-red-600 dark:text-red-400 text-sm">
+                  {aiError}
+                </div>
+              )}
             </div>
           ) : (
-            <ReactMarkdown>{futureAiArticle}</ReactMarkdown>
+            <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed text-muted-foreground">
+              <ReactMarkdown>{futureAiArticle}</ReactMarkdown>
+            </div>
           )}
-
-          {aiError && <p className="text-red-500 mt-2">{aiError}</p>}
 
           <div className="mt-4">
             <Button

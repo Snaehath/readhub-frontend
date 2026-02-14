@@ -419,7 +419,12 @@ export default function NewsCard() {
       {/* Load More */}
       {hasMore && (
         <div className="flex justify-center mt-6">
-          <Button onClick={() => setPage((prev) => prev + 1)}>Load More</Button>
+          <Button
+            className="cursor-pointer"
+            onClick={() => setPage((prev) => prev + 1)}
+          >
+            Load More
+          </Button>
         </div>
       )}
     </div>

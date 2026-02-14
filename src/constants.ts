@@ -20,13 +20,13 @@ export const NEWS_CATEGORY_COLORS: Record<string, string> = {
 };
 
 export const BOOK_CATEGORY_COLORS: Record<string, string> = {
-  history: "bg-stone-200 text-stone-500 border-stone-600",
-  horror: "bg-zinc-200 text-zinc-600 border-zinc-700",
-  children: "bg-yellow-200 text-yellow-500 border-yellow-600",
-  business: "bg-blue-200 text-blue-500 border-blue-600",
-  health: "bg-green-200 text-green-500 border-green-600",
-  sports: "bg-orange-200 text-orange-500 border-orange-600",
-  science: "bg-indigo-200 text-indigo-500 border-indigo-600",
+  history: "bg-stone-100 text-stone-500 border-stone-600",
+  horror: "bg-zinc-100 text-zinc-600 border-zinc-700",
+  children: "bg-yellow-100 text-yellow-500 border-yellow-600",
+  business: "bg-blue-100 text-blue-500 border-blue-600",
+  health: "bg-green-100 text-green-500 border-green-600",
+  sports: "bg-orange-100 text-orange-500 border-orange-600",
+  science: "bg-indigo-100 text-indigo-500 border-indigo-600",
 };
 
 export const newsCountries = [

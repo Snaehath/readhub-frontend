@@ -41,6 +41,7 @@ export default function NewsCard() {
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showAll, setShowAll] = useState<boolean>(false);
+  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
 
   const [aiResponse, setAiResponse] = useState<string>("");
   const [aiLoading, setAiLoading] = useState<boolean>(false);
@@ -88,7 +89,7 @@ export default function NewsCard() {
     };
 
     fetchNews();
-  }, [page, selectedCountry, selectedCategory]);
+  }, [page, selectedCountry, selectedCategory, refreshTrigger]);
 
   // Reset pagination when country or category changes
   useEffect(() => {
@@ -113,7 +114,10 @@ export default function NewsCard() {
       if (!responseUS.ok) toast(`HTTP error (US): ${responseUS.status}`);
       if (!responseIN.ok) toast(`HTTP error (IN): ${responseIN.status}`);
 
-      if (responseUS.ok && responseIN.ok) toast.success("Latest news updated");
+      if (responseUS.ok && responseIN.ok) {
+        toast.success("Latest news updated");
+        setRefreshTrigger((prev) => prev + 1);
+      }
 
       setPage(1);
     } catch (error) {

@@ -10,7 +10,7 @@ import {
 import { Category, NewsArticle } from "@/types";
 import Link from "next/link";
 import { Button } from "../ui/button";
-import { CATEGORY_COLORS } from "@/constants";
+import { NEWS_CATEGORY_COLORS } from "@/constants";
 import ToolTip from "../ui/custom/tooltip";
 import { formatDate, formatDistanceToNow } from "date-fns";
 import Typography from "../ui/custom/typography";
@@ -85,7 +85,7 @@ export default function NewsCardItems({
             </div>
             <div className="flex flex-wrap gap-2 mb-2 p-2 pt-0 pb-0">
               {article.category.map((cat, i) => {
-                const colorClass = CATEGORY_COLORS[cat as Category];
+                const colorClass = NEWS_CATEGORY_COLORS[cat as Category];
                 return (
                   <Badge
                     variant={"outline"}

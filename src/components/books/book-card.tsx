@@ -4,13 +4,19 @@ import { BookOpen } from "lucide-react";
 
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Book } from "@/types";
+import { Category, Book } from "@/types";
+import { BOOK_CATEGORY_COLORS } from "@/constants";
+import Typography from "../ui/custom/typography";
 
 interface BookCardProps {
   book: Book;
 }
 
 export default function BookCard({ book }: BookCardProps) {
+  const categoryColor =
+    BOOK_CATEGORY_COLORS[book.tag as Category] ||
+    "bg-gray-200 text-gray-700 border-gray-300";
+
   return (
     <>
       <ul className="flex flex-col gap-4 sm:hidden">
@@ -63,7 +69,7 @@ export default function BookCard({ book }: BookCardProps) {
         </li>
       </ul>
       <Card className="overflow-hidden hidden sm:flex flex-col h-96 sm:w-auto hover:shadow-md hover:shadow-gray-500/50 ">
-        <div className="relative h-48 w-full">
+        <div className="relative h-48 w-full pb-2 pt-2">
           <img
             src={
               book.cover_edition_key
@@ -74,8 +80,13 @@ export default function BookCard({ book }: BookCardProps) {
             className="object-contain w-full h-full "
           />
         </div>
-        <CardHeader className="pl-3">
-          <Badge className="w-fit mb-1 text-xs">{book.tag.slice(0, 12)}</Badge>
+        <CardHeader className="pl-3 py-2">
+          <Badge
+            variant="outline"
+            className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${categoryColor}`}
+          >
+            <Typography variant="small">{book.tag.slice(0, 12)}</Typography>
+          </Badge>
           <CardTitle className="text-md line-clamp-1">{book.title}</CardTitle>
           <p className="text-xs text-muted-foreground">
             by {book.author_name[0] ?? "finding"}

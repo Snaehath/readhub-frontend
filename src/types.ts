@@ -56,4 +56,7 @@ export type Category =
   | "health"
   | "business"
   | "politics"
-  | "entertainment";
+  | "entertainment"
+  | "history"
+  | "horror"
+  | "children";

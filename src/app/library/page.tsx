@@ -14,16 +14,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Search, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function LibraryPage() {
   const [books, setBooks] = useState<Book[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("general");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [showAll, setShowAll] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  const MAX_CATEGORIES = 4;
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -43,7 +46,7 @@ export default function LibraryPage() {
           debouncedSearchQuery || "all"
         }&lang=en&limit=${debouncedSearchQuery ? "4" : "15"}`;
 
-        if (selectedCategory && selectedCategory !== "general") {
+        if (selectedCategory && selectedCategory !== "all") {
           query += `&subject=${selectedCategory}`;
         }
 
@@ -51,7 +54,7 @@ export default function LibraryPage() {
 
         if (!res.ok) {
           throw new Error(
-            `Failed to fetch books: ${res.status} ${res.statusText}`
+            `Failed to fetch books: ${res.status} ${res.statusText}`,
           );
         }
 
@@ -85,40 +88,66 @@ export default function LibraryPage() {
 
   const handleBookSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setSelectedCategory("general");
+    setSelectedCategory("all");
   };
+
+  const categoriesToShow = showAll
+    ? booksCategories
+    : booksCategories.slice(0, MAX_CATEGORIES);
 
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">🏛️ Library</h2>
 
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
-        <Input
-          type="text"
-          startIcon={<Search className="w-4 h-4" />}
-          placeholder="Search for books..."
-          value={searchQuery}
-          onChange={handleBookSearch}
-          aria-label="Search books"
-          className="sm:w-1/4"
-        />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-wrap items-center gap-2">
+          {categoriesToShow.map((cat) => (
+            <Badge
+              variant="outline"
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 transition-all duration-150 flex items-center justify-center ${
+                selectedCategory === cat.id
+                  ? "bg-stone-600 text-white scale-95"
+                  : "bg-stone-100 text-stone-700 hover:bg-stone-200"
+              }`}
+            >
+              {cat.name}
+            </Badge>
+          ))}
+          {!showAll && booksCategories.length > MAX_CATEGORIES && (
+            <Badge
+              variant="outline"
+              onClick={() => setShowAll(true)}
+              className="rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-stone-100 text-stone-700 hover:bg-stone-200 transition-all duration-150 flex items-center justify-center gap-1"
+            >
+              More
+              <ChevronDown className="w-3 h-3" />
+            </Badge>
+          )}
+          {showAll && booksCategories.length > MAX_CATEGORIES && (
+            <Badge
+              variant="outline"
+              onClick={() => setShowAll(false)}
+              className="rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-stone-100 text-stone-700 hover:bg-stone-200 transition-all duration-150 flex items-center justify-center gap-1"
+            >
+              Less
+              <ChevronUp className="w-3 h-3" />
+            </Badge>
+          )}
+        </div>
 
-        <Select
-          value={selectedCategory}
-          onValueChange={(value) => setSelectedCategory(value)}
-        >
-          <SelectTrigger className="mb-4 w-32 p-2 border cursor-pointer">
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
-          <SelectContent >
-            <SelectItem className="cursor-pointer" value="general">All</SelectItem>
-            {booksCategories.map((category) => (
-              <SelectItem key={category.id} value={category.id}  className="cursor-pointer">
-                {category.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="w-full sm:w-1/3 md:w-1/4">
+          <Input
+            type="text"
+            startIcon={<Search className="w-4 h-4" />}
+            placeholder="Search for books..."
+            value={searchQuery}
+            onChange={handleBookSearch}
+            aria-label="Search books"
+            className="rounded-full w-full"
+          />
+        </div>
       </div>
 
       {/* Loading Dialog */}

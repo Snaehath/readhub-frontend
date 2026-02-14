@@ -35,7 +35,9 @@ export async function getNewsPaginated(
         ? `${baseUrl}/news/newIn/pagination`
         : `${baseUrl}/news/new/pagination`;
 
-    const res = await fetch(`${endpoint}?${params.toString()}`);
+    const res = await fetch(`${endpoint}?${params.toString()}`, {
+      cache: "no-store",
+    });
 
     if (!res.ok) {
       throw new Error(`Failed to fetch news for ${country}`);

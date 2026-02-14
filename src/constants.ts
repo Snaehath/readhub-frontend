@@ -1,5 +1,3 @@
-import { Category } from "./types";
-
 export const newsCategories = [
   { id: "all", name: "All" },
   { id: "technology", name: "Technology" },
@@ -11,14 +9,24 @@ export const newsCategories = [
   { id: "entertainment", name: "Entertainment" },
 ];
 
-export const CATEGORY_COLORS: Record<Category, string> = {
-  technology: "bg-blue-500 text-white border-blue-600",
-  sports: "bg-emerald-500 text-white border-emerald-600",
-  science: "bg-purple-500 text-white border-purple-600",
-  health: "bg-rose-500 text-white border-rose-600",
-  business: "bg-amber-500 text-white border-amber-600",
-  politics: "bg-orange-500 text-white border-orange-600",
-  entertainment: "bg-pink-500 text-white border-pink-600",
+export const NEWS_CATEGORY_COLORS: Record<string, string> = {
+  technology: "bg-blue-100 text-blue-500 border-blue-600",
+  sports: "bg-emerald-100 text-emerald-500 border-emerald-600",
+  science: "bg-purple-100 text-purple-500 border-purple-600",
+  health: "bg-rose-100 text-rose-500 border-rose-600",
+  business: "bg-amber-100 text-amber-500 border-amber-600",
+  politics: "bg-orange-100 text-orange-500 border-orange-600",
+  entertainment: "bg-pink-100 text-pink-500 border-pink-600",
+};
+
+export const BOOK_CATEGORY_COLORS: Record<string, string> = {
+  history: "bg-stone-200 text-stone-500 border-stone-600",
+  horror: "bg-zinc-200 text-zinc-600 border-zinc-700",
+  children: "bg-yellow-200 text-yellow-500 border-yellow-600",
+  business: "bg-blue-200 text-blue-500 border-blue-600",
+  health: "bg-green-200 text-green-500 border-green-600",
+  sports: "bg-orange-200 text-orange-500 border-orange-600",
+  science: "bg-indigo-200 text-indigo-500 border-indigo-600",
 };
 
 export const newsCountries = [
@@ -46,6 +54,7 @@ export const avatarOptions = [
 ];
 
 export const booksCategories = [
+  { id: "all", name: "All" },
   { id: "history", name: "History" },
   { id: "business", name: "Business" },
   { id: "health", name: "Health" },

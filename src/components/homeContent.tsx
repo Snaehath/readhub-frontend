@@ -20,7 +20,12 @@ export default function HomeContent() {
         <span className="flex justify-center items-center gap-2 mb-2">
           <h1 className="text-4xl font-bold tracking-tight">ReadHub</h1>
           <span className="w-15 h-10">
-            <Image src="/Flippingbook.gif" alt="ReadHub logo" width={100} height={100}/>
+            <Image
+              src="/home_images/Flippingbook.gif"
+              alt="ReadHub logo"
+              width={100}
+              height={100}
+            />
           </span>
         </span>
         <p className="text-xl text-muted-foreground">
@@ -46,7 +51,7 @@ export default function HomeContent() {
             </p>
           </CardContent>
           <CardFooter>
-            <Button asChild >
+            <Button asChild>
               <Link href="/news">Browse News</Link>
             </Button>
           </CardFooter>
@@ -69,7 +74,7 @@ export default function HomeContent() {
             </p>
           </CardContent>
           <CardFooter>
-            <Button asChild >
+            <Button asChild>
               <Link href="/library">Browse E-Books</Link>
             </Button>
           </CardFooter>

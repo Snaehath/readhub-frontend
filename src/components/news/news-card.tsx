@@ -119,17 +119,27 @@ export default function NewsCard() {
 
       await delay(1000);
 
-      if (!responseUS.ok) toast(`HTTP error (US): ${responseUS.status}`);
-      if (!responseIN.ok) toast(`HTTP error (IN): ${responseIN.status}`);
+      if (!responseUS.ok) {
+        toast.error(`Failed to fetch US news. Please try again later.`);
+      }
+      if (!responseIN.ok) {
+        toast.error(`Failed to fetch India news. Please try again later.`);
+      }
 
       if (responseUS.ok && responseIN.ok) {
-        toast.success("Latest news updated");
+        toast.success("✨ Latest news updated successfully!");
         setRefreshTrigger((prev) => prev + 1);
+      } else if (!responseUS.ok || !responseIN.ok) {
+        toast.warning(
+          "Some news sources couldn't be updated. Showing cached news.",
+        );
       }
 
       setPage(1);
-    } catch (error) {
-      toast(`Error refreshing news: ${error}`);
+    } catch (_error) {
+      toast.error(
+        "Unable to refresh news. Please check your internet connection and try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -159,9 +169,15 @@ export default function NewsCard() {
       });
       const data = await res.json();
       setAiResponse(data?.reply?.trim() || "No response.");
-    } catch (error) {
+    } catch (_error) {
       setAiResponse(
-        `An error occurred while processing your request: ${error}`,
+        `⚠️ Unable to generate AI summary. This could be due to:
+
+• Network connectivity issues
+• Server temporarily unavailable
+• Rate limit exceeded
+
+Please try again in a few moments.`,
       );
     } finally {
       setAiLoading(false);
@@ -222,16 +238,20 @@ export default function NewsCard() {
     <div className="w-full px-4 sm:px-6 lg:px-8">
       {/* AI Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>AI Summary</DialogTitle>
-            <DialogDescription>
-              Insight and explanation of the news.
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <Zap className="w-5 h-5 text-indigo-600" />
+              AI Summary
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              Intelligent analysis and insights powered by AI
             </DialogDescription>
           </DialogHeader>
-          <div className="max-h-[400px] overflow-y-auto whitespace-pre-wrap text-sm text-muted-foreground">
+
+          <div className="flex-1 overflow-y-auto pr-2 -mr-2">
             {!token ? (
-              <div className="flex flex-col items-center justify-center py-6 text-center gap-4">
+              <div className="flex flex-col items-center justify-center py-8 text-center gap-4">
                 <div className="bg-indigo-50 dark:bg-indigo-950/30 p-4 rounded-full">
                   <Lock className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                 </div>
@@ -251,34 +271,32 @@ export default function NewsCard() {
                 </Button>
               </div>
             ) : aiLoading ? (
-              <div className="flex items-center gap-2 py-4">
-                <svg
-                  className="w-5 h-5 animate-spin text-indigo-500"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8H4z"
-                  />
-                </svg>
-                <span>Analysing...</span>
+              <div className="flex flex-col items-center justify-center py-12 gap-4">
+                <div className="relative">
+                  <div className="w-16 h-16 border-4 border-indigo-100 dark:border-indigo-900 rounded-full"></div>
+                  <div className="absolute top-0 left-0 w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="text-base font-semibold text-foreground">
+                    Analyzing article...
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    AI is processing the content
+                  </p>
+                </div>
               </div>
             ) : (
               <ReactMarkdown>{aiResponse}</ReactMarkdown>
             )}
           </div>
-          <DialogFooter>
-            <Button onClick={() => setShowDialog(false)}>Close</Button>
+
+          <DialogFooter className="flex-shrink-0 mt-4">
+            <Button
+              onClick={() => setShowDialog(false)}
+              className="rounded-full px-6 cursor-pointer"
+            >
+              Close
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -328,14 +346,18 @@ export default function NewsCard() {
           )}
 
           <Button
-            className="rounded-full text-xs sm:text-sm px-3 py-1.5 sm:px-6 sm:py-3 font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all duration-150"
+            className="cursor-pointer rounded-full text-xs sm:text-sm px-4 py-1.5 sm:px-6 sm:py-3 font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
             onClick={handleRefreshNews}
             disabled={isLoading}
-            aria-label="Refresh news"
+            aria-label="Fetch latest news"
           >
             <RefreshCcw
               className={`${isLoading ? "animate-spin" : ""} w-4 h-4`}
             />
+            <span className="hidden sm:inline">
+              {isLoading ? "Updating..." : "Get Latest"}
+            </span>
+            <span className="sm:hidden">{isLoading ? "..." : "Latest"}</span>
           </Button>
         </div>
 

@@ -4,11 +4,7 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -61,6 +57,11 @@ export default function ProfilePage() {
       return;
     }
 
+    if (!user.id) {
+      toast.error("User ID is missing. Please log in again.");
+      return;
+    }
+
     setLoading(true);
     try {
       const baseUrl =
@@ -75,6 +76,7 @@ export default function ProfilePage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          userId: user.id,
           username: newUsername,
           avatar: newAvatar,
         }),

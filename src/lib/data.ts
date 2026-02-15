@@ -76,6 +76,39 @@ export async function getNewsPaginated(
     };
   }
 }
+
+export async function getTickerNews(
+  country: string = "us",
+): Promise<NewsArticle[]> {
+  try {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_API_BASE_URL ||
+      "https://readhub-backend.onrender.com/api";
+    const endpoint =
+      country === "in"
+        ? `${baseUrl}/news/newIn/pagination`
+        : `${baseUrl}/news/new/pagination`;
+
+    // Fetch more for ticker to ensure variety
+    const res = await fetch(`${endpoint}?page=1&limit=20`, {
+      cache: "no-store",
+    });
+
+    if (!res.ok) return [];
+
+    const data = await res.json();
+    return data.articles.map((article: NewsArticle) => ({
+      id: article._id.toString(),
+      title: article.title,
+      category: article.category ?? [],
+      publishedAt: article.publishedAt,
+    }));
+  } catch (error) {
+    console.error("Error fetching ticker news:", error);
+    return [];
+  }
+}
+
 export async function getFeaturedBooks() {
   try {
     const mongoClient = await client.connect();

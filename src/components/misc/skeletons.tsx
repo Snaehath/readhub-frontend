@@ -81,3 +81,22 @@ export function BooksSkeleton() {
     </div>
   );
 }
+
+export function AiInsightSkeleton() {
+  return (
+    <div className="space-y-4 py-2">
+      <div className="space-y-3 pt-2">
+        <div className="h-4 bg-indigo-100/50 dark:bg-indigo-900/20 rounded-md w-full animate-pulse"></div>
+        <div className="h-4 bg-indigo-100/50 dark:bg-indigo-900/20 rounded-md w-[90%] animate-pulse delay-75"></div>
+        <div className="h-4 bg-indigo-100/50 dark:bg-indigo-900/20 rounded-md w-[95%] animate-pulse delay-150"></div>
+        <div className="h-4 bg-indigo-100/50 dark:bg-indigo-900/20 rounded-md w-[85%] animate-pulse delay-300"></div>
+      </div>
+
+      <div className="flex items-center gap-1.5 pt-2">
+        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></span>
+      </div>
+    </div>
+  );
+}

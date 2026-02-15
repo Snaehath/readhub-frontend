@@ -9,16 +9,17 @@ import {
 } from "../ui/card";
 import { Category, NewsArticle } from "@/types";
 import Link from "next/link";
-import { Button } from "../ui/button";
 import { NEWS_CATEGORY_COLORS } from "@/constants";
 import ToolTip from "../ui/custom/tooltip";
 import { formatDate, formatDistanceToNow } from "date-fns";
 import Typography from "../ui/custom/typography";
+import { Button } from "../ui/button";
 
 interface NewsCardItemsProps {
   filteredArticles: NewsArticle[];
   onAskAi: (id: string) => void;
   askFutureAi: (id: string) => void;
+  resetFutureAi: () => void;
   isLatest: (publishedAt: string) => boolean;
   futureToggles: Record<string, boolean>;
   setFutureToggles: React.Dispatch<
@@ -30,16 +31,20 @@ export default function NewsCardItems({
   filteredArticles,
   onAskAi,
   askFutureAi,
+  resetFutureAi,
   isLatest,
   futureToggles,
   setFutureToggles,
 }: NewsCardItemsProps) {
-  const handleFutureToggle = (id: string) => {
-    const isToggledOn = !futureToggles[id];
-    setFutureToggles((prev) => ({ ...prev, [id]: isToggledOn }));
-
-    if (isToggledOn) {
+  const handleFutureToggle = (id: string, checked: boolean) => {
+    if (checked) {
+      // Turn off all others and turn on this one
+      setFutureToggles({ [id]: true });
       askFutureAi(id);
+    } else {
+      // Just turn off this one
+      setFutureToggles((prev) => ({ ...prev, [id]: false }));
+      resetFutureAi();
     }
   };
   return (
@@ -50,10 +55,10 @@ export default function NewsCardItems({
           className="overflow-hidden hover:shadow-lg hover:shadow-gray-500/50 p-0"
         >
           <CardHeader className="p-0">
-            <div className="relative h-64 w-full">
+            <div className="relative h-64 w-full overflow-hidden">
               {isLatest(article.dateOriginal) && (
-                <div className="absolute top-0 left-0 overflow-hidden w-24 h-24">
-                  <div className="absolute transform -rotate-45 bg-red-500 text-white text-[10px] font-bold py-1 px-0.5 left-[-30px] top-[18px] w-[100px] text-center shadow-md">
+                <div className="absolute top-0 left-0 z-20 pointer-events-none">
+                  <div className="absolute top-3 -left-7 w-28 -rotate-45 bg-linear-to-r from-red-600 to-orange-500 text-white text-xs Capitalize py-1 text-center shadow-lg border-y border-white/20">
                     Latest
                   </div>
                 </div>
@@ -68,7 +73,9 @@ export default function NewsCardItems({
                 className="object-cover w-full h-full "
               />
               <Button
-                onClick={() => handleFutureToggle(article.id)}
+                onClick={() =>
+                  handleFutureToggle(article.id, !futureToggles[article.id])
+                }
                 className={`absolute top-2 right-2 flex items-center gap-1 px-3 py-1.5 
       text-xs font-semibold rounded-full shadow-md transition-all cursor-pointer
       ${

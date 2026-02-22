@@ -60,3 +60,26 @@ export type Category =
   | "history"
   | "horror"
   | "children";
+
+export type AIStory = {
+  title: string;
+  authorName: string;
+  genre: string;
+  subject: string;
+  index: string;
+  tableOfContents: {
+    chapterNumber: number;
+    title: string;
+  }[];
+  chapters: {
+    chapterNumber: number;
+    title: string;
+    content: string;
+  }[];
+  currentChapterCount: number;
+};
+
+export type StoryResponse = {
+  message: string;
+  story: AIStory;
+};

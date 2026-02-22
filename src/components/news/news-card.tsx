@@ -110,6 +110,58 @@ export default function NewsCard() {
     new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleRefreshNews = async () => {
+    // 🛡️ GUARDRAILS: Rate Limiting
+    const now = Date.now();
+    const isGuest = !token;
+
+    if (isGuest) {
+      const guestRefreshData = JSON.parse(
+        localStorage.getItem("guest_refresh_stats") ||
+          '{"count": 0, "firstClick": 0}',
+      );
+
+      // Check if 24h window has passed to reset
+      if (now - guestRefreshData.firstClick > 24 * 60 * 60 * 1000) {
+        guestRefreshData.count = 0;
+        guestRefreshData.firstClick = now;
+      }
+
+      if (guestRefreshData.count >= 3) {
+        const hoursLeft = Math.ceil(
+          (24 * 60 * 60 * 1000 - (now - guestRefreshData.firstClick)) /
+            (1000 * 60 * 60),
+        );
+        toast.error(
+          `Guest limit reached! Please sign in to get more updates or try again in ${hoursLeft} hours.`,
+        );
+        return;
+      }
+
+      // Update guest stats
+      guestRefreshData.count += 1;
+      localStorage.setItem(
+        "guest_refresh_stats",
+        JSON.stringify(guestRefreshData),
+      );
+    } else {
+      // Authenticated User: 5-minute cooldown
+      const lastAuthRefresh = parseInt(
+        localStorage.getItem("last_auth_refresh") || "0",
+      );
+      const cooldownPeriod = 5 * 60 * 1000;
+
+      if (now - lastAuthRefresh < cooldownPeriod) {
+        const minsLeft = Math.ceil(
+          (cooldownPeriod - (now - lastAuthRefresh)) / 60000,
+        );
+        toast.warning(
+          `Please wait ${minsLeft} minute${minsLeft > 1 ? "s" : ""} before refreshing again. Stay updated with the ticker!`,
+        );
+        return;
+      }
+      localStorage.setItem("last_auth_refresh", now.toString());
+    }
+
     try {
       setIsLoading(true);
 
@@ -138,8 +190,7 @@ export default function NewsCard() {
       }
 
       setPage(1);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_error) {
+    } catch {
       toast.error(
         "Unable to refresh news. Please check your internet connection and try again.",
       );
@@ -172,7 +223,7 @@ export default function NewsCard() {
       });
       const data = await res.json();
       setAiResponse(data?.reply?.trim() || "No response.");
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error) {
       setAiResponse(
         `⚠️ Unable to generate AI summary. This could be due to:

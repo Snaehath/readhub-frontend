@@ -239,9 +239,6 @@ export default function ChatbotPage() {
       <div className="mt-auto px-2 pt-4 relative bg-background/80 backdrop-blur-md">
         <div className="bg-white dark:bg-zinc-800 border-2 border-zinc-100 dark:border-zinc-700 rounded-2xl p-2 shadow-2xl focus-within:border-indigo-500/50 focus-within:ring-4 focus-within:ring-indigo-500/10 transition-all duration-300">
           <div className="flex items-center gap-2">
-            <div className="hidden sm:flex items-center justify-center w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800/50">
-              <Sparkles className="w-5 h-5 text-indigo-500" />
-            </div>
             <Input
               placeholder="Ask me anything..."
               value={userMessage}

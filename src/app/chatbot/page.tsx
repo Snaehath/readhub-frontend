@@ -17,7 +17,6 @@ import {
   Lock,
   User,
   MessageSquare,
-  ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 import { useUserStore } from "@/lib/store/userStore";
@@ -58,29 +57,22 @@ export default function ChatbotPage() {
 
   if (!token) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] p-6">
-        <div className="max-w-md w-full bg-card border rounded-2xl p-8 shadow-xl text-center space-y-6">
-          <div className="bg-indigo-50 dark:bg-indigo-950/30 w-20 h-20 rounded-full flex items-center justify-center mx-auto shadow-inner">
-            <Lock className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
-          </div>
-          <div className="space-y-2">
-            <h2 className="text-2xl font-bold tracking-tight">
-              AI Chat is Locked
-            </h2>
-            <p className="text-muted-foreground">
-              Sign in to your ReadHub account to chat with our intelligent AI
-              assistant about news, books, and more.
-            </p>
-          </div>
-          <Button
-            asChild
-            className="w-full rounded-full h-12 text-lg font-medium shadow-lg hover:shadow-indigo-500/20 transition-all cursor-pointer"
-          >
-            <Link href="/login">
-              Explore Now <ArrowRight className="ml-2 w-5 h-5" />
-            </Link>
-          </Button>
+      <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
+        <div className="bg-indigo-50 dark:bg-indigo-950/30 p-6 rounded-full mb-4 relative group">
+          <div className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full transition-all opacity-0" />
+          <Lock className="w-8 h-8 text-indigo-600 dark:text-indigo-400 relative z-10" />
         </div>
+        <h1 className="text-2xl font-bold mb-3">Exclusive Content</h1>
+        <p className="text-muted-foreground text-sm max-w-sm mb-6 leading-relaxed">
+          Sign in to your ReadHub account to unlock your AI assistant. Chat with
+          our intelligent assistant about news, books, and more.
+        </p>
+        <Button
+          asChild
+          className="rounded-full px-6 py-3 h-auto text-base font-bold shadow-lg transition-all hover:shadow-xl active:scale-95"
+        >
+          <Link href="/login">Login to Start Chatting</Link>
+        </Button>
       </div>
     );
   }

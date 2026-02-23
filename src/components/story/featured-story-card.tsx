@@ -9,7 +9,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, ArrowRight, BookOpen } from "lucide-react";
+import { Sparkles, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Typography from "@/components/ui/custom/typography";
@@ -88,7 +88,6 @@ export default function FeaturedStorySection() {
             className="font-semibold text-muted-foreground group-hover:text-foreground flex items-center gap-1"
           >
             Explore All
-            <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
           </Typography>
         </Link>
       </div>
@@ -113,9 +112,13 @@ export default function FeaturedStorySection() {
               <div className="relative z-10 text-center">
                 <Badge
                   variant="outline"
-                  className="mb-3 uppercase text-[10px] tracking-[0.2em] font-black border-2 border-primary/20 bg-background/50"
+                  className={`mb-3 uppercase text-[10px] tracking-[0.2em] font-black border-2 bg-background/50 ${
+                    story.isCompleted
+                      ? "border-emerald-500/50 text-emerald-600 dark:text-emerald-400"
+                      : "border-primary/20"
+                  }`}
                 >
-                  Original Series
+                  {story.isCompleted ? "Completed Series" : "Original Series"}
                 </Badge>
                 <Typography
                   variant="h3"
@@ -136,12 +139,16 @@ export default function FeaturedStorySection() {
             <div className="md:col-span-3 p-6 flex flex-col justify-center">
               <CardHeader className="p-0 mb-3">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  <div
+                    className={`w-1.5 h-1.5 rounded-full animate-pulse ${story.isCompleted ? "bg-emerald-500" : "bg-primary"}`}
+                  />
                   <Typography
                     variant="small"
                     className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground"
                   >
-                    Chapter {story.currentChapterCount}
+                    {story.isCompleted
+                      ? `Complete Collection (${story.currentChapterCount} Chapters)`
+                      : `Chapter ${story.currentChapterCount} • Ongoing`}
                   </Typography>
                 </div>
                 <Typography

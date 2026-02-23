@@ -77,9 +77,15 @@ export type AIStory = {
     content: string;
   }[];
   currentChapterCount: number;
+  isCompleted?: boolean;
 };
 
 export type StoryResponse = {
   message: string;
   story: AIStory;
+};
+
+export type AllStoriesResponse = {
+  message: string;
+  stories: AIStory[];
 };

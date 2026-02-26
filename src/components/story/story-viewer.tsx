@@ -18,17 +18,20 @@ import { Button } from "@/components/ui/button";
 import Typography from "@/components/ui/custom/typography";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import StoryReview from "./story-review";
 
 interface StoryViewerProps {
   story: AIStory;
   backUrl?: string;
   backText?: string;
+  onStoryUpdate?: (updatedStory: AIStory) => void;
 }
 
 export default function StoryViewer({
   story,
   backUrl,
   backText,
+  onStoryUpdate,
 }: StoryViewerProps) {
   const [selectedChapter, setSelectedChapter] = useState<{
     chapterNumber: number;
@@ -282,6 +285,15 @@ export default function StoryViewer({
               </p>
             </CardContent>
           </Card>
+
+          {story.isCompleted && (
+            <StoryReview
+              storyId={story.id || story.index}
+              initialRating={story.rating}
+              initialReview={story.review}
+              onSuccess={onStoryUpdate}
+            />
+          )}
         </div>
 
         {/* Main Content - Chapter Grid */}

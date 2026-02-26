@@ -78,6 +78,7 @@ export default function StoryArchivePage() {
         story={story}
         backUrl="/story"
         backText="Back to Collection"
+        onStoryUpdate={(updated) => setStory(updated)}
       />
     </div>
   );

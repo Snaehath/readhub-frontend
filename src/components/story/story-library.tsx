@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { AIStory, AllStoriesResponse } from "@/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, List } from "lucide-react";
+import { BookOpen, List, Star } from "lucide-react";
 import Link from "next/link";
 import Typography from "@/components/ui/custom/typography";
 
@@ -87,12 +87,20 @@ export default function StoryLibrary() {
               </div>
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between mb-2">
-                  <Badge
-                    variant="outline"
-                    className="text-[9px] uppercase tracking-widest border-emerald-500/30 text-emerald-600 bg-emerald-500/5"
-                  >
-                    Completed
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className="text-[9px] uppercase tracking-widest border-emerald-500/30 text-emerald-600 bg-emerald-500/5"
+                    >
+                      Completed
+                    </Badge>
+                    {story.rating && (
+                      <div className="flex items-center gap-0.5 text-[10px] font-black text-amber-500">
+                        <Star className="w-2.5 h-2.5 fill-amber-500" />
+                        {story.rating}
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-bold">
                     <List className="w-3 h-3" />
                     {story.currentChapterCount} Chapters

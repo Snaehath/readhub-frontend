@@ -100,7 +100,12 @@ export default function StoryPage() {
 
   return (
     <div className="container mx-auto pb-20">
-      {story && <StoryViewer story={story} />}
+      {story && (
+        <StoryViewer
+          story={story}
+          onStoryUpdate={(updated) => setStory(updated)}
+        />
+      )}
       {!story && (
         <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
           <Typography

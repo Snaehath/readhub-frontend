@@ -25,6 +25,7 @@ interface StoryViewerProps {
   backUrl?: string;
   backText?: string;
   onStoryUpdate?: (updatedStory: AIStory) => void;
+  onReaderToggle?: (isReading: boolean) => void;
 }
 
 export default function StoryViewer({
@@ -32,12 +33,24 @@ export default function StoryViewer({
   backUrl,
   backText,
   onStoryUpdate,
+  onReaderToggle,
 }: StoryViewerProps) {
-  const [selectedChapter, setSelectedChapter] = useState<{
+  const [selectedChapter, setSelectedChapterState] = useState<{
     chapterNumber: number;
     title: string;
     content: string;
   } | null>(null);
+
+  const setSelectedChapter = (
+    chapter: {
+      chapterNumber: number;
+      title: string;
+      content: string;
+    } | null,
+  ) => {
+    setSelectedChapterState(chapter);
+    if (onReaderToggle) onReaderToggle(!!chapter);
+  };
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
 
@@ -128,7 +141,7 @@ export default function StoryViewer({
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto px-4 py-12 sm:px-8">
       {backUrl && (
         <Button variant="ghost" asChild className="mb-8 gap-2 group">
           <Link href={backUrl}>
@@ -205,15 +218,14 @@ export default function StoryViewer({
             className="flex items-center gap-1.5 px-4 py-1.5 bg-background shadow-sm border"
           >
             <BookOpen className="w-3.5 h-3.5 text-violet-500" />
-            {story.currentChapterCount} / {story.tableOfContents?.length || 9}{" "}
-            Chapters
+            {story.currentChapterCount} / {story.maxChapters} Chapters
           </Badge>
         </div>
       </div>
 
-      <div className="grid gap-12 lg:grid-cols-4">
+      <div className="grid gap-12 sm:grid-cols-4">
         {/* Sidebar */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="sm:col-span-1 space-y-6">
           <Card className="border-none bg-background/60 backdrop-blur-xl shadow-2xl shadow-blue-500/5 overflow-hidden">
             <div className="h-2 bg-linear-to-r from-blue-500 to-indigo-500" />
             <CardHeader className="pb-3">
@@ -272,7 +284,7 @@ export default function StoryViewer({
                 >
                   {story.isCompleted
                     ? "100%"
-                    : `${Math.round((story.currentChapterCount / (story.tableOfContents?.length || 9)) * 100)}%`}
+                    : `${Math.round((story.currentChapterCount / (story.maxChapters || 9)) * 100)}%`}
                 </span>
               </div>
               <div className="w-full bg-gray-100 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
@@ -281,7 +293,7 @@ export default function StoryViewer({
                   style={{
                     width: story.isCompleted
                       ? "100%"
-                      : `${(story.currentChapterCount / (story.tableOfContents?.length || 9)) * 100}%`,
+                      : `${(story.currentChapterCount / (story.maxChapters || 9)) * 100}%`,
                   }}
                 />
               </div>
@@ -295,9 +307,9 @@ export default function StoryViewer({
         </div>
 
         {/* Main Content - Chapter Grid */}
-        <div className="lg:col-span-3">
+        <div className="sm:col-span-3">
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {story.chapters
                 ?.slice(
                   (currentPage - 1) * itemsPerPage,
@@ -354,7 +366,7 @@ export default function StoryViewer({
                 </Button>
                 <div className="text-xs font-black text-muted-foreground uppercase tracking-widest">
                   Page {currentPage} of{" "}
-                  {Math.ceil(story.chapters.length / itemsPerPage)}
+                  {Math.ceil((story.chapters?.length || 0) / itemsPerPage)}
                 </div>
                 <Button
                   variant="outline"
@@ -362,14 +374,14 @@ export default function StoryViewer({
                   onClick={() =>
                     setCurrentPage((prev) =>
                       Math.min(
-                        Math.ceil(story.chapters.length / itemsPerPage),
+                        Math.ceil((story.chapters?.length || 0) / itemsPerPage),
                         prev + 1,
                       ),
                     )
                   }
                   disabled={
                     currentPage ===
-                    Math.ceil(story.chapters.length / itemsPerPage)
+                    Math.ceil((story.chapters?.length || 0) / itemsPerPage)
                   }
                   className="rounded-full px-4 font-bold border-blue-200 text-blue-600 hover:bg-blue-50 disabled:opacity-30"
                 >

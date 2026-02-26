@@ -1,8 +1,8 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { cn } from "@/lib/utils";
 
 interface InputProps extends React.ComponentProps<"input"> {
-  startIcon?: React.ReactNode
+  startIcon?: React.ReactNode;
 }
 
 function Input({ className, type, startIcon, ...props }: InputProps) {
@@ -21,12 +21,12 @@ function Input({ className, type, startIcon, ...props }: InputProps) {
           startIcon ? "pl-10" : "", // add padding if icon exists
           "focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
           "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
-          className
+          className,
         )}
         {...props}
       />
     </div>
-  )
+  );
 }
 
-export { Input }
+export { Input };

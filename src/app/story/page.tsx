@@ -13,6 +13,7 @@ import Typography from "@/components/ui/custom/typography";
 export default function StoryPage() {
   const [story, setStory] = useState<AIStory | null | "unauthorized">(null);
   const [loading, setLoading] = useState(true);
+  const [isReading, setIsReading] = useState(false);
 
   useEffect(() => {
     const fetchStory = async () => {
@@ -43,7 +44,21 @@ export default function StoryPage() {
           }
         } else {
           const data: StoryResponse = await res.json();
-          setStory(data.story);
+          let currentStory = data.story;
+
+          // If we got a story and it's not being initialized, fetch full content
+          if (currentStory && !data.isInitializing) {
+            const fullRes = await fetch(`${baseUrl}/story/${currentStory.id}`, {
+              headers,
+              cache: "no-store",
+            });
+            if (fullRes.ok) {
+              const fullData = await fullRes.json();
+              currentStory = fullData.story;
+            }
+          }
+
+          setStory(currentStory);
         }
       } catch (error) {
         console.error("Error fetching story:", error);
@@ -93,6 +108,7 @@ export default function StoryPage() {
             <StoryViewer
               story={story}
               onStoryUpdate={(updated) => setStory(updated)}
+              onReaderToggle={(reading) => setIsReading(reading)}
             />
           )}
           {!story && (
@@ -115,9 +131,8 @@ export default function StoryPage() {
         </>
       )}
 
-      {/* Show library only if loading, unauthorized, or no active story to keep focus on chapters when ready */}
-      {(loading || story === "unauthorized" || !story) && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {!isReading && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-8 mt-20">
           <StoryLibrary />
         </div>
       )}

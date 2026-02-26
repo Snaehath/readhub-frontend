@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AIStory, AllStoriesResponse } from "@/types";
+import { StorySummary, AllStoriesResponse } from "@/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, List, Star } from "lucide-react";
@@ -9,7 +9,7 @@ import Link from "next/link";
 import Typography from "@/components/ui/custom/typography";
 
 export default function StoryLibrary() {
-  const [stories, setStories] = useState<AIStory[]>([]);
+  const [stories, setStories] = useState<StorySummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function StoryLibrary() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {[1, 2, 3].map((i) => (
           <Card key={i} className="h-64 animate-pulse bg-muted/20" />
         ))}
@@ -68,7 +68,7 @@ export default function StoryLibrary() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {stories.map((story) => (
           <Link
             href={`/story/${story.index}`}

@@ -94,9 +94,9 @@ export default function FeaturedStorySection() {
 
       <Link href="/story" className="block group">
         <Card className="overflow-hidden border shadow-sm transition-colors hover:bg-muted/50">
-          <div className="grid md:grid-cols-5">
+          <div className="grid sm:grid-cols-5">
             {/* Typographic Header Block */}
-            <div className="md:col-span-2 relative h-44 md:h-auto bg-linear-to-br from-blue-600/15 via-indigo-600/5 to-violet-600/15 flex items-center justify-center p-8 border-r overflow-hidden">
+            <div className="sm:col-span-2 relative h-44 sm:h-auto bg-linear-to-br from-blue-600/15 via-indigo-600/5 to-violet-600/15 flex items-center justify-center p-8 border-r overflow-hidden">
               {/* Background Decorative Icon */}
               <div className="absolute -top-4 -right-4 p-4 opacity-20 transform scale-125">
                 <BookOpen
@@ -122,7 +122,7 @@ export default function FeaturedStorySection() {
                 </Badge>
                 <Typography
                   variant="h3"
-                  className="text-2xl md:text-3xl font-black tracking-tight leading-tight mb-2"
+                  className="text-2xl sm:text-3xl font-black tracking-tight leading-tight mb-2"
                 >
                   {story.title}
                 </Typography>
@@ -136,7 +136,7 @@ export default function FeaturedStorySection() {
             </div>
 
             {/* Content Preview */}
-            <div className="md:col-span-3 p-6 flex flex-col justify-center">
+            <div className="sm:col-span-3 p-6 flex flex-col justify-center">
               <CardHeader className="p-0 mb-3">
                 <div className="flex items-center gap-2 mb-1.5">
                   <div

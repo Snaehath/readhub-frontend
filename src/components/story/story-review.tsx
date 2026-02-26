@@ -11,19 +11,12 @@ import { toast } from "sonner";
 
 interface StoryReviewProps {
   storyId: string;
-  initialRating?: number;
-  initialReview?: string;
   onSuccess?: (updatedStory: AIStory) => void;
 }
 
-export default function StoryReview({
-  storyId,
-  initialRating = 0,
-  initialReview = "",
-  onSuccess,
-}: StoryReviewProps) {
-  const [rating, setRating] = useState(initialRating);
-  const [review, setReview] = useState(initialReview);
+export default function StoryReview({ storyId, onSuccess }: StoryReviewProps) {
+  const [rating, setRating] = useState(0);
+  const [review, setReview] = useState("");
   const [hoveredRating, setHoveredRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,6 +45,8 @@ export default function StoryReview({
       if (res.ok) {
         const data = await res.json();
         toast.success("Feedback submitted! Thank you for sharing.");
+        setRating(0);
+        setReview("");
         if (onSuccess) onSuccess(data.story);
       } else {
         const errorData = await res.json();

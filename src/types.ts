@@ -79,8 +79,13 @@ export type AIStory = {
   id: string;
   currentChapterCount: number;
   isCompleted?: boolean;
-  rating?: number;
-  review?: string;
+  reviews?: {
+    userId: string;
+    rating: number;
+    review?: string;
+    createdAt: string;
+  }[];
+  averageRating?: number;
 };
 
 export type StoryResponse = {

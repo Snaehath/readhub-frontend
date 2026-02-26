@@ -114,6 +114,13 @@ export default function StoryViewer({
                 This chapter was crafted independently by our AI Agent.
               </Typography>
             </div>
+
+            <div className="w-full max-w-md mx-auto mt-12">
+              <StoryReview
+                storyId={story.id || story.index}
+                onSuccess={onStoryUpdate}
+              />
+            </div>
           </footer>
         </article>
       </div>
@@ -285,15 +292,6 @@ export default function StoryViewer({
               </p>
             </CardContent>
           </Card>
-
-          {story.isCompleted && (
-            <StoryReview
-              storyId={story.id || story.index}
-              initialRating={story.rating}
-              initialReview={story.review}
-              onSuccess={onStoryUpdate}
-            />
-          )}
         </div>
 
         {/* Main Content - Chapter Grid */}

@@ -88,18 +88,29 @@ export default function StoryLibrary() {
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Badge
-                      variant="outline"
-                      className="text-[9px] uppercase tracking-widest border-emerald-500/30 text-emerald-600 bg-emerald-500/5"
-                    >
-                      Completed
-                    </Badge>
-                    {story.rating && (
-                      <div className="flex items-center gap-0.5 text-[10px] font-black text-amber-500">
-                        <Star className="w-2.5 h-2.5 fill-amber-500" />
-                        {story.rating}
-                      </div>
+                    {story.isCompleted ? (
+                      <Badge
+                        variant="outline"
+                        className="text-[9px] uppercase tracking-widest border-emerald-500/30 text-emerald-600 bg-emerald-500/5"
+                      >
+                        Completed
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="text-[9px] uppercase tracking-widest border-amber-500/30 text-amber-600 bg-amber-500/5 flex items-center gap-1"
+                      >
+                        <div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />{" "}
+                        Ongoing
+                      </Badge>
                     )}
+                    {story.averageRating !== undefined &&
+                      story.averageRating > 0 && (
+                        <div className="flex items-center gap-0.5 text-[10px] font-black text-amber-500">
+                          <Star className="w-2.5 h-2.5 fill-amber-500" />
+                          {story.averageRating.toFixed(1)}
+                        </div>
+                      )}
                   </div>
                   <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-bold">
                     <List className="w-3 h-3" />

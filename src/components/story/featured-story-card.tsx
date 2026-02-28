@@ -13,6 +13,7 @@ import { Sparkles, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Typography from "@/components/ui/custom/typography";
+import { API_BASE_URL } from "@/constants";
 
 export default function FeaturedStorySection() {
   const [story, setStory] = useState<AIStory | null>(null);
@@ -21,27 +22,33 @@ export default function FeaturedStorySection() {
   useEffect(() => {
     const fetchStory = async () => {
       try {
-        const token = localStorage.getItem("jwt");
-        if (!token) {
-          setLoading(false);
-          return;
-        }
-
-        const baseUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL ||
-          "https://readhub-backend.onrender.com/api";
-
-        const res = await fetch(`${baseUrl}/story/myStory`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
+        // First fetch all stories to find a completed one
+        const allRes = await fetch(`${API_BASE_URL}/story/allStories`, {
           cache: "no-store",
         });
 
-        if (res.ok) {
-          const data = await res.json();
-          setStory(data.story);
+        if (allRes.ok) {
+          const allData = await allRes.json();
+          const stories = allData.stories || [];
+
+          // Filter for completed stories
+          const completedStories = stories.filter((s: any) => s.isCompleted);
+          const targetStory =
+            completedStories.length > 0 ? completedStories[0] : stories[0];
+
+          if (targetStory) {
+            // Fetch the full story details to get chapter content for preview
+            const storyId =
+              targetStory.index || targetStory._id || targetStory.id;
+            const res = await fetch(`${API_BASE_URL}/story/${storyId}`, {
+              cache: "no-store",
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              setStory(data.story);
+            }
+          }
         }
       } catch (error) {
         console.error("Error fetching featured story:", error);
@@ -67,7 +74,7 @@ export default function FeaturedStorySection() {
           </linearGradient>
         </defs>
       </svg>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center mb-6">
         <Typography
           variant="h2"
           className="text-xl font-bold tracking-tight flex items-center gap-2"
@@ -82,17 +89,9 @@ export default function FeaturedStorySection() {
             }}
           />
         </Typography>
-        <Link href="/story" className="group transition-colors">
-          <Typography
-            variant="small"
-            className="font-semibold text-muted-foreground group-hover:text-foreground flex items-center gap-1"
-          >
-            Explore All
-          </Typography>
-        </Link>
       </div>
 
-      <Link href="/story" className="block group">
+      <Link href={`/story/${story.index}`} className="block group">
         <Card className="overflow-hidden border shadow-sm transition-colors hover:bg-muted/50">
           <div className="grid sm:grid-cols-5">
             {/* Typographic Header Block */}

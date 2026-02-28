@@ -28,11 +28,9 @@ export default function Navbar() {
   const isActive = (path: string) => pathname === path;
 
   const handleLogout = () => {
-    logout(); // Clear Zustand store
-    localStorage.removeItem("jwt");
+    logout();
     router.push("/");
-
-    toast("Logged out successfully!");
+    toast.success("Logged out successfully!");
   };
 
   const isLoggedIn = !!user;

@@ -9,6 +9,7 @@ import { EyeClosed, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useUserStore } from "@/lib/store/userStore";
 import { toast } from "sonner";
+import { API_BASE_URL } from "@/constants";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
@@ -24,10 +25,7 @@ export default function LoginForm() {
     setLoading(true);
 
     try {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL ||
-        "https://readhub-backend.onrender.com/api";
-      const response = await fetch(`${baseUrl}/user/login`, {
+      const response = await fetch(`${API_BASE_URL}/user/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -4,11 +4,11 @@ import Link from "next/link";
 export default function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-4 text-center">
+      <div className="w-full max-w-md space-y-4">
         <RegisterForm />
         <Link
           href="/login"
-          className="block text-sm text-muted-foreground hover:text-primary transition"
+          className="block text-sm text-center text-muted-foreground hover:text-primary transition"
         >
           Existing user? Log in
         </Link>

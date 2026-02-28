@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUserStore } from "@/lib/store/userStore";
-import { avatarOptions } from "@/constants";
+import { API_BASE_URL, avatarOptions } from "@/constants";
 import { toast } from "sonner";
 import { Edit2, User as UserIcon } from "lucide-react";
 
@@ -64,12 +64,9 @@ export default function ProfilePage() {
 
     setLoading(true);
     try {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL ||
-        "https://readhub-backend.onrender.com/api";
       const token = localStorage.getItem("jwt");
 
-      const response = await fetch(`${baseUrl}/user/update`, {
+      const response = await fetch(`${API_BASE_URL}/user/update`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

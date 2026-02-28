@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EyeClosed, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { avatarOptions } from "@/constants";
+import { avatarOptions, API_BASE_URL } from "@/constants";
 
 export default function RegisterForm() {
   const [email, setEmail] = useState("");
@@ -32,10 +32,7 @@ export default function RegisterForm() {
     setLoading(true);
 
     try {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL ||
-        "https://readhub-backend.onrender.com/api";
-      const response = await fetch(`${baseUrl}/user/adduser`, {
+      const response = await fetch(`${API_BASE_URL}/user/adduser`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -76,7 +73,12 @@ export default function RegisterForm() {
       <CardContent>
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label
+              htmlFor="email"
+              className="text-sm font-medium text-muted-foreground block mb-1.5"
+            >
+              Email
+            </Label>
             <Input
               id="email"
               type="email"
@@ -90,7 +92,12 @@ export default function RegisterForm() {
           </div>
 
           <div>
-            <Label htmlFor="username">Username</Label>
+            <Label
+              htmlFor="username"
+              className="text-sm font-medium text-muted-foreground block mb-1.5"
+            >
+              Username
+            </Label>
             <Input
               id="username"
               autoComplete="username"
@@ -103,7 +110,9 @@ export default function RegisterForm() {
           </div>
 
           <div>
-            <Label>Select an Avatar</Label>
+            <Label className="text-sm font-medium text-muted-foreground block mb-1.5">
+              Select an Avatar
+            </Label>
             <div className="flex flex-wrap justify-center gap-4 mt-2">
               {avatarOptions.map((opt) => (
                 <button
@@ -131,7 +140,12 @@ export default function RegisterForm() {
           </div>
 
           <div>
-            <Label htmlFor="password">Password</Label>
+            <Label
+              htmlFor="password"
+              className="text-sm font-medium text-muted-foreground block mb-1.5"
+            >
+              Password
+            </Label>
             <div className="relative">
               <Input
                 id="password"
@@ -155,7 +169,12 @@ export default function RegisterForm() {
           </div>
 
           <div>
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label
+              htmlFor="confirmPassword"
+              className="text-sm font-medium text-muted-foreground block mb-1.5"
+            >
+              Confirm Password
+            </Label>
             <Input
               id="confirmPassword"
               type={showPassword ? "text" : "password"}

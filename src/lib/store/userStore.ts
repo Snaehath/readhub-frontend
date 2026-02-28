@@ -20,10 +20,13 @@ export const useUserStore = create<UserStore>()(
     (set) => ({
       user: null,
       setUser: (user) => set({ user }),
-      logout: () => set({ user: null }),
+      logout: () => {
+        set({ user: null });
+        localStorage.removeItem("jwt");
+      },
     }),
     {
       name: "user-storage", // save key in localStorage
-    }
-  )
+    },
+  ),
 );

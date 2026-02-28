@@ -7,6 +7,7 @@ import "./globals.css";
 import Navbar from "@/components/navbar";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthMonitor } from "@/components/auth/auth-monitor";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -30,6 +31,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div className="min-h-screen flex flex-col">
+            <AuthMonitor />
             <Navbar />
             <div className="flex-1">{children}</div>
             <Analytics />

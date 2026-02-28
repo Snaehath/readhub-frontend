@@ -74,3 +74,7 @@ export const suggestions = [
   " Recommend me a great books.",
   "Must-read horror books",
 ];
+
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "https://readhub-backend.onrender.com/api";

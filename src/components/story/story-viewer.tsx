@@ -19,6 +19,10 @@ import Typography from "@/components/ui/custom/typography";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import StoryReview from "./story-review";
+import { useUserStore } from "@/lib/store/userStore";
+import { API_BASE_URL } from "@/constants";
+import { toast } from "sonner";
+import { Wand2, Loader2 } from "lucide-react";
 
 interface StoryViewerProps {
   story: AIStory;
@@ -52,7 +56,55 @@ export default function StoryViewer({
     if (onReaderToggle) onReaderToggle(!!chapter);
   };
   const [currentPage, setCurrentPage] = useState(1);
+  const [isForcing, setIsForcing] = useState(false);
   const itemsPerPage = 3;
+  const { user } = useUserStore();
+  const isAdmin = user?.role === "admin";
+
+  const handleForceProgress = async () => {
+    if (isForcing) return;
+
+    setIsForcing(true);
+    try {
+      const token = localStorage.getItem("jwt");
+      const res = await fetch(`${API_BASE_URL}/story/myStory?force=true`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        let updatedStory = data.story;
+
+        // Fetch full content for the updated story
+        const fullRes = await fetch(
+          `${API_BASE_URL}/story/${updatedStory.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (fullRes.ok) {
+          const fullData = await fullRes.json();
+          updatedStory = fullData.story;
+        }
+
+        if (onStoryUpdate) onStoryUpdate(updatedStory);
+        toast.success("Narrative advanced successfully! (Admin Force)");
+      } else {
+        toast.error("Failed to advance narrative.");
+      }
+    } catch (err) {
+      console.error("Error forcing progress:", err);
+      toast.error("Error while communicating with the creative agent.");
+    } finally {
+      setIsForcing(false);
+    }
+  };
 
   if (selectedChapter) {
     return (
@@ -302,6 +354,28 @@ export default function StoryViewer({
                   ? "This narrative is fully realized. Explore the complete collection of chapters above."
                   : "Our AI crafts a new chapter every 24 hours to unfold this narrative."}
               </p>
+              {!story.isCompleted && isAdmin && (
+                <div className="pt-2 border-t mt-4">
+                  <Button
+                    onClick={handleForceProgress}
+                    disabled={isForcing}
+                    variant="outline"
+                    className="w-full text-xs font-black uppercase tracking-widest h-10 border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 transition-all gap-1.5"
+                  >
+                    {isForcing ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        Incubating...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-3.5 h-3.5" />
+                        Admin: Force Progress
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

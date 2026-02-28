@@ -190,10 +190,15 @@ export default function ProfilePage() {
                 <p className="text-muted-foreground font-medium text-sm">
                   {user.email}
                 </p>
-                <div className="pt-3">
+                <div className="pt-3 flex flex-wrap justify-center gap-2">
                   <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold rounded-full border border-indigo-100 dark:border-indigo-900/50 uppercase tracking-wider">
                     Member since {joinedDate}
                   </span>
+                  {user.role === "admin" && (
+                    <span className="px-3 py-1 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-[11px] font-bold rounded-full border border-amber-100 dark:border-amber-900/50 uppercase tracking-wider">
+                      Administrator
+                    </span>
+                  )}
                 </div>
               </div>
             )}

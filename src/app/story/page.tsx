@@ -9,6 +9,7 @@ import StoryViewer from "@/components/story/story-viewer";
 import StoryLibrary from "@/components/story/story-library";
 import { Lock } from "lucide-react";
 import Typography from "@/components/ui/custom/typography";
+import { API_BASE_URL } from "@/constants";
 
 export default function StoryPage() {
   const [story, setStory] = useState<AIStory | null | "unauthorized">(null);
@@ -19,9 +20,6 @@ export default function StoryPage() {
     const fetchStory = async () => {
       try {
         const token = localStorage.getItem("jwt");
-        const baseUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL ||
-          "https://readhub-backend.onrender.com/api";
 
         const headers: HeadersInit = {
           "Content-Type": "application/json",
@@ -31,7 +29,7 @@ export default function StoryPage() {
           headers["Authorization"] = `Bearer ${token}`;
         }
 
-        const res = await fetch(`${baseUrl}/story/myStory`, {
+        const res = await fetch(`${API_BASE_URL}/story/myStory`, {
           headers,
           cache: "no-store",
         });
@@ -48,10 +46,13 @@ export default function StoryPage() {
 
           // If we got a story and it's not being initialized, fetch full content
           if (currentStory && !data.isInitializing) {
-            const fullRes = await fetch(`${baseUrl}/story/${currentStory.id}`, {
-              headers,
-              cache: "no-store",
-            });
+            const fullRes = await fetch(
+              `${API_BASE_URL}/story/${currentStory.id}`,
+              {
+                headers,
+                cache: "no-store",
+              },
+            );
             if (fullRes.ok) {
               const fullData = await fullRes.json();
               currentStory = fullData.story;
@@ -84,22 +85,21 @@ export default function StoryPage() {
           </p>
         </div>
       ) : story === "unauthorized" ? (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+        <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
           <div className="bg-blue-50 dark:bg-blue-950/30 p-6 rounded-full mb-4 relative group">
-            <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full transition-all opacity-0" />
             <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400 relative z-10" />
           </div>
-          <h1 className="text-2xl font-bold mb-3">Exclusive Content</h1>
+          <h1 className="text-2xl font-bold mb-3">AI Serial Locked</h1>
           <p className="text-muted-foreground text-sm max-w-sm mb-6 leading-relaxed">
-            Sign in to your ReadHub account to unlock your story module. Witness
-            our advanced AI agent craft unique, imaginative narratives every
-            single day!
+            Login to witness your personalized daily chapters crafted by our AI
+            agent. In the meantime, you can still browse and read from our{" "}
+            <b>Original Library</b> below!
           </p>
           <Button
             asChild
             className="rounded-full px-6 py-3 h-auto text-base font-bold shadow-lg transition-all hover:shadow-xl active:scale-95"
           >
-            <Link href="/login">Login to Start Reading</Link>
+            <Link href="/login">Login to Unlock My Story</Link>
           </Button>
         </div>
       ) : (

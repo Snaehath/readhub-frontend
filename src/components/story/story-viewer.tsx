@@ -104,7 +104,7 @@ export default function StoryViewer({
           </header>
 
           <div className="prose dark:prose-invert max-w-none">
-            <div className="text-xl leading-[1.8] text-foreground/90 space-y-8 first-letter:text-7xl first-letter:font-black first-letter:mr-4 first-letter:float-left first-letter:leading-[1] first-letter:text-blue-600 font-serif">
+            <div className="text-xl leading-[1.8] text-foreground/90 space-y-8 first-letter:text-7xl first-letter:font-black first-letter:mr-4 first-letter:float-left first-letter:leading-[1] font-serif">
               {selectedChapter.content.split("\n\n").map((para, i) => (
                 <p key={i} className="mb-8">
                   {para}

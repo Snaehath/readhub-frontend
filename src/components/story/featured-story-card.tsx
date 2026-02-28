@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AIStory } from "@/types";
+import { AIStory, StorySummary } from "@/types";
 import {
   Card,
   CardContent,
@@ -32,7 +32,9 @@ export default function FeaturedStorySection() {
           const stories = allData.stories || [];
 
           // Filter for completed stories
-          const completedStories = stories.filter((s: any) => s.isCompleted);
+          const completedStories = stories.filter(
+            (s: StorySummary) => s.isCompleted,
+          );
           const targetStory =
             completedStories.length > 0 ? completedStories[0] : stories[0];
 

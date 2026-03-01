@@ -1,43 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { StorySummary, AllStoriesResponse } from "@/types";
+import { useState } from "react";
+import { AllStoriesResponse } from "@/types";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, List, Star } from "lucide-react";
 import Link from "next/link";
 import Typography from "@/components/ui/custom/typography";
+import Image from "next/image";
+
+import useSWR from "swr";
 
 export default function StoryLibrary() {
-  const [stories, setStories] = useState<StorySummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    const fetchStories = async () => {
-      try {
-        const baseUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL ||
-          "https://readhub-backend.onrender.com/api";
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "https://readhub-backend.onrender.com/api";
+  const coverBaseUrl = baseUrl.replace("/api", "") + "/covers";
 
-        const res = await fetch(`${baseUrl}/story/allStories`, {
-          cache: "no-store",
-        });
+  const { data, isLoading } = useSWR<AllStoriesResponse>(
+    `${baseUrl}/story/allStories`,
+  );
 
-        if (res.ok) {
-          const data: AllStoriesResponse = await res.json();
-          setStories(data.stories || []);
-        }
-      } catch (error) {
-        console.error("Error fetching all stories:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const stories = data?.stories || [];
 
-    fetchStories();
-  }, []);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
         {[1, 2, 3].map((i) => (
@@ -76,14 +64,28 @@ export default function StoryLibrary() {
             className="group"
           >
             <Card className="overflow-hidden h-full border shadow-sm transition-all hover:shadow-md hover:bg-muted/50">
-              <div className="h-32 relative bg-linear-to-br from-blue-600/10 via-indigo-600/5 to-violet-600/10 flex items-center justify-center p-6 border-b">
-                <BookOpen className="absolute -bottom-2 -right-2 w-16 h-16 opacity-5 rotate-12" />
-                <Typography
-                  variant="h3"
-                  className="text-lg font-black tracking-tight text-center line-clamp-2"
-                >
-                  {story.title}
-                </Typography>
+              <div className="h-44 relative overflow-hidden flex items-center justify-center border-b">
+                {!imageErrors[story.id] ? (
+                  <Image
+                    src={`${coverBaseUrl}/cover_${story.id}.jpg`}
+                    alt={story.title}
+                    fill
+                    className="object-cover transition-transform group-hover:scale-110 duration-700"
+                    onError={() =>
+                      setImageErrors((prev) => ({ ...prev, [story.id]: true }))
+                    }
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-linear-to-br from-blue-600/10 via-indigo-600/5 to-violet-600/10 flex items-center justify-center p-6">
+                    <BookOpen className="absolute -bottom-2 -right-2 w-16 h-16 opacity-5 rotate-12" />
+                    <Typography
+                      variant="h3"
+                      className="text-lg font-black tracking-tight text-center line-clamp-2"
+                    >
+                      {story.title}
+                    </Typography>
+                  </div>
+                )}
               </div>
               <CardHeader className="p-4 pb-2">
                 <div className="flex items-center justify-between mb-2">

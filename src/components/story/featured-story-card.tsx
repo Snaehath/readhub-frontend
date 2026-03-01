@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AIStory, StorySummary } from "@/types";
+import { useState } from "react";
+import { StorySummary, AllStoriesResponse } from "@/types";
 import {
   Card,
   CardContent,
@@ -9,60 +9,40 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, BookOpen } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
+import Image from "next/image";
+
+import useSWR from "swr";
 
 export default function FeaturedStorySection() {
-  const [story, setStory] = useState<AIStory | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
 
-  useEffect(() => {
-    const fetchStory = async () => {
-      try {
-        // First fetch all stories to find a completed one
-        const allRes = await fetch(`${API_BASE_URL}/story/allStories`, {
-          cache: "no-store",
-        });
+  const coverBaseUrl = API_BASE_URL.replace("/api", "") + "/covers";
 
-        if (allRes.ok) {
-          const allData = await allRes.json();
-          const stories = allData.stories || [];
+  // 1. Fetch all stories to find a featured one
+  const { data: allData, isLoading: allLoading } = useSWR<AllStoriesResponse>(
+    `${API_BASE_URL}/story/allStories`,
+  );
 
-          // Filter for completed stories
-          const completedStories = stories.filter(
-            (s: StorySummary) => s.isCompleted,
-          );
-          const targetStory =
-            completedStories.length > 0 ? completedStories[0] : stories[0];
+  const stories = allData?.stories || [];
+  const completedStories = stories.filter((s: StorySummary) => s.isCompleted);
+  const targetStory =
+    completedStories.length > 0 ? completedStories[0] : stories[0];
+  const targetStoryId = targetStory?.id || targetStory?.index;
 
-          if (targetStory) {
-            // Fetch the full story details to get chapter content for preview
-            const storyId =
-              targetStory.index || targetStory._id || targetStory.id;
-            const res = await fetch(`${API_BASE_URL}/story/${storyId}`, {
-              cache: "no-store",
-            });
+  // 2. Fetch full content for the identified featured story
+  const { data: fullData, isLoading: fullLoading } = useSWR(
+    targetStoryId ? `${API_BASE_URL}/story/${targetStoryId}` : null,
+  );
 
-            if (res.ok) {
-              const data = await res.json();
-              setStory(data.story);
-            }
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching featured story:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const story = fullData?.story;
+  const isLoading = allLoading || (targetStoryId && fullLoading);
 
-    fetchStory();
-  }, []);
-
-  if (loading || !story) return null;
+  if (isLoading || !story) return null;
 
   return (
     <section className="mb-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
@@ -96,40 +76,42 @@ export default function FeaturedStorySection() {
       <Link href={`/story/${story.index}`} className="block group">
         <Card className="overflow-hidden border shadow-sm transition-colors hover:bg-muted/50">
           <div className="grid sm:grid-cols-5">
-            {/* Typographic Header Block */}
-            <div className="sm:col-span-2 relative h-44 sm:h-auto bg-linear-to-br from-blue-600/15 via-indigo-600/5 to-violet-600/15 flex items-center justify-center p-8 border-r overflow-hidden">
-              {/* Background Decorative Icon */}
-              <div className="absolute -top-4 -right-4 p-4 opacity-20 transform scale-125">
-                <BookOpen
-                  className="w-32 h-32 rotate-12"
-                  style={{
-                    stroke: "url(#ai-gradient)",
-                    fill: "url(#ai-gradient)",
-                    fillOpacity: 0.05,
-                  }}
+            <div className="sm:col-span-2 relative h-56 sm:h-auto overflow-hidden border-r bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center p-8">
+              {!imageError ? (
+                <Image
+                  src={`${coverBaseUrl}/cover_${story.id}.jpg`}
+                  alt={story.title}
+                  fill
+                  className="object-cover transition-transform group-hover:scale-110 duration-700"
+                  onError={() => setImageError(true)}
                 />
-              </div>
+              ) : (
+                <div className="absolute inset-0 bg-linear-to-br from-blue-600/15 via-indigo-600/5 to-violet-600/15" />
+              )}
 
-              <div className="relative z-10 text-center">
+              {/* Overlay Content */}
+              <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent group-hover:from-black/90 transition-colors" />
+
+              <div className="relative z-10 text-center w-full px-4">
                 <Badge
                   variant="outline"
-                  className={`mb-3 uppercase text-[10px] tracking-[0.2em] font-black border-2 bg-background/50 ${
+                  className={`mb-3 uppercase text-[10px] tracking-[0.2em] font-black border-2 bg-background/20 backdrop-blur-md text-white ${
                     story.isCompleted
-                      ? "border-emerald-500/50 text-emerald-600 dark:text-emerald-400"
-                      : "border-primary/20"
+                      ? "border-emerald-500/50"
+                      : "border-white/20"
                   }`}
                 >
                   {story.isCompleted ? "Completed Series" : "Original Series"}
                 </Badge>
                 <Typography
                   variant="h3"
-                  className="text-2xl sm:text-3xl font-black tracking-tight leading-tight mb-2"
+                  className="text-2xl sm:text-3xl font-black tracking-tight leading-tight mb-2 text-white drop-shadow-lg"
                 >
                   {story.title}
                 </Typography>
                 <Typography
                   variant="small"
-                  className="font-black tracking-widest uppercase text-[10px] bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
+                  className="font-black tracking-widest uppercase text-[10px] text-blue-200 drop-shadow-md"
                 >
                   By {story.authorName}
                 </Typography>

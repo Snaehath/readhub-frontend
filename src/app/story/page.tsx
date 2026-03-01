@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AIStory, StoryResponse } from "@/types";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,66 +11,71 @@ import { Lock } from "lucide-react";
 import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
 
+import useSWR, { mutate } from "swr";
+
+const fetcherWithAuth = async (url: string) => {
+  const token = localStorage.getItem("jwt");
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(url, { headers });
+  if (!res.ok) {
+    const error = new Error(
+      "An error occurred while fetching the data.",
+    ) as Error & { status?: number };
+    error.status = res.status;
+    throw error;
+  }
+  return res.json();
+};
+
 export default function StoryPage() {
-  const [story, setStory] = useState<AIStory | null | "unauthorized">(null);
-  const [loading, setLoading] = useState(true);
   const [isReading, setIsReading] = useState(false);
 
-  useEffect(() => {
-    const fetchStory = async () => {
-      try {
-        const token = localStorage.getItem("jwt");
+  // 1. Fetch slim summary
+  const {
+    data: summaryData,
+    error: summaryError,
+    isLoading: summaryLoading,
+  } = useSWR<StoryResponse>(`${API_BASE_URL}/story/myStory`, fetcherWithAuth, {
+    revalidateOnFocus: false,
+  });
 
-        const headers: HeadersInit = {
-          "Content-Type": "application/json",
-        };
+  // 2. Fetch full content if summary is available and not initializing
+  const storyId = summaryData?.story?.id;
+  const shouldFetchFull = storyId && !summaryData.isInitializing;
 
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        }
+  const { data: fullData, isLoading: fullLoading } = useSWR<StoryResponse>(
+    shouldFetchFull ? `${API_BASE_URL}/story/${storyId}` : null,
+    fetcherWithAuth,
+    {
+      revalidateOnFocus: false,
+    },
+  );
 
-        const res = await fetch(`${API_BASE_URL}/story/myStory`, {
-          headers,
-          cache: "no-store",
-        });
+  const loading = summaryLoading || (shouldFetchFull && fullLoading);
 
-        if (!res.ok) {
-          if (res.status === 401) {
-            setStory("unauthorized");
-          } else {
-            setStory(null);
-          }
-        } else {
-          const data: StoryResponse = await res.json();
-          let currentStory = data.story;
+  const story =
+    summaryError?.status === 401
+      ? "unauthorized"
+      : fullData?.story || summaryData?.story || null;
 
-          // If we got a story and it's not being initialized, fetch full content
-          if (currentStory && !data.isInitializing) {
-            const fullRes = await fetch(
-              `${API_BASE_URL}/story/${currentStory.id}`,
-              {
-                headers,
-                cache: "no-store",
-              },
-            );
-            if (fullRes.ok) {
-              const fullData = await fullRes.json();
-              currentStory = fullData.story;
-            }
-          }
-
-          setStory(currentStory);
-        }
-      } catch (error) {
-        console.error("Error fetching story:", error);
-        setStory(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStory();
-  }, []);
+  const handleStoryUpdate = (updatedStory: AIStory) => {
+    // Optimistically update both endpoints if they match the ID
+    mutate(`${API_BASE_URL}/story/myStory`);
+    if (updatedStory.id) {
+      mutate(
+        `${API_BASE_URL}/story/${updatedStory.id}`,
+        { story: updatedStory },
+        false,
+      );
+    }
+  };
 
   return (
     <div className="container mx-auto pb-20">
@@ -107,7 +112,7 @@ export default function StoryPage() {
           {story && (
             <StoryViewer
               story={story}
-              onStoryUpdate={(updated) => setStory(updated)}
+              onStoryUpdate={handleStoryUpdate}
               onReaderToggle={(reading) => setIsReading(reading)}
             />
           )}

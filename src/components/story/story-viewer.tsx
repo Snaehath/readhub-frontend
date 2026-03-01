@@ -23,6 +23,7 @@ import { useUserStore } from "@/lib/store/userStore";
 import { API_BASE_URL } from "@/constants";
 import { toast } from "sonner";
 import { Wand2, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 interface StoryViewerProps {
   story: AIStory;
@@ -57,9 +58,12 @@ export default function StoryViewer({
   };
   const [currentPage, setCurrentPage] = useState(1);
   const [isForcing, setIsForcing] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const itemsPerPage = 3;
   const { user } = useUserStore();
   const isAdmin = user?.role === "admin";
+
+  const coverBaseUrl = API_BASE_URL.replace("/api", "") + "/covers";
 
   const handleForceProgress = async () => {
     if (isForcing) return;
@@ -219,59 +223,86 @@ export default function StoryViewer({
         </defs>
       </svg>
       {/* Header Section */}
-      <div className="relative mb-16 text-center animate-in fade-in slide-in-from-top-8 duration-700">
-        <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl" />
-        <div className="flex flex-col items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 text-blue-600 px-4 py-1"
-            >
-              <Sparkles
-                className="w-3 h-3 mr-2 inline"
-                style={{
-                  stroke: "url(#ai-story-gradient)",
-                  fill: "url(#ai-story-gradient)",
-                  fillOpacity: 0.2,
-                }}
-              />{" "}
-              AI Generated Original
-            </Badge>
-            {story.isCompleted && (
+      <div className="relative mb-16 animate-in fade-in slide-in-from-top-8 duration-700">
+        <div className="flex flex-col sm:flex-row gap-8 items-center sm:items-end">
+          {/* Cover Image */}
+          <div className="relative w-48 h-64 sm:w-64 sm:h-80 rounded-2xl overflow-hidden shadow-2xl border-4 border-background shrink-0 group">
+            {!imageError ? (
+              <Image
+                src={`${coverBaseUrl}/cover_${story.id}.jpg`}
+                alt={story.title}
+                fill
+                className="object-cover transition-transform group-hover:scale-110 duration-700"
+                onError={() => setImageError(true)}
+              />
+            ) : (
+              <div className="absolute inset-0 bg-linear-to-br from-blue-600/20 via-indigo-600/10 to-violet-600/210 flex items-center justify-center">
+                <BookOpen className="w-16 h-16 opacity-10" />
+              </div>
+            )}
+            <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+              <Sparkles className="w-5 h-5 text-white animate-pulse" />
+            </div>
+          </div>
+
+          <div className="flex-1 text-center sm:text-left space-y-6">
+            <div className="flex flex-col items-center sm:items-start gap-4">
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800 text-blue-600 px-4 py-1"
+                >
+                  <Sparkles
+                    className="w-3 h-3 mr-2 inline"
+                    style={{
+                      stroke: "url(#ai-story-gradient)",
+                      fill: "url(#ai-story-gradient)",
+                      fillOpacity: 0.2,
+                    }}
+                  />{" "}
+                  AI Generated Original
+                </Badge>
+                {story.isCompleted && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50 font-black uppercase tracking-widest text-[10px]"
+                  >
+                    Completed
+                  </Badge>
+                )}
+              </div>
+              <Typography
+                variant="h1"
+                className="text-4xl sm:text-5xl font-black tracking-tight leading-tight"
+              >
+                {story.title}
+              </Typography>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 text-sm font-medium">
               <Badge
                 variant="secondary"
-                className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/50 font-black uppercase tracking-widest text-[10px]"
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-background shadow-sm border"
               >
-                Completed
+                <User className="w-3.5 h-3.5 text-blue-500" />
+                {story.authorName}
               </Badge>
-            )}
+              <Badge
+                variant="secondary"
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-background shadow-sm border"
+              >
+                <Tag className="w-3.5 h-3.5 text-indigo-500" />
+                {story.genre}
+              </Badge>
+              <Badge
+                variant="secondary"
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-background shadow-sm border"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-violet-500" />
+                {story.currentChapterCount} / {story.maxChapters} Chapters
+              </Badge>
+            </div>
           </div>
-        </div>
-        <Typography variant="h1" className="mb-6">
-          {story.title}
-        </Typography>
-        <div className="flex flex-wrap items-center justify-center gap-4 text-sm font-medium">
-          <Badge
-            variant="secondary"
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-background shadow-sm border"
-          >
-            <User className="w-3.5 h-3.5 text-blue-500" />
-            {story.authorName}
-          </Badge>
-          <Badge
-            variant="secondary"
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-background shadow-sm border"
-          >
-            <Tag className="w-3.5 h-3.5 text-indigo-500" />
-            {story.genre}
-          </Badge>
-          <Badge
-            variant="secondary"
-            className="flex items-center gap-1.5 px-4 py-1.5 bg-background shadow-sm border"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-violet-500" />
-            {story.currentChapterCount} / {story.maxChapters} Chapters
-          </Badge>
         </div>
       </div>
 

@@ -11,6 +11,8 @@ import Image from "next/image";
 
 import useSWR from "swr";
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export default function StoryLibrary() {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
@@ -21,6 +23,7 @@ export default function StoryLibrary() {
 
   const { data, isLoading } = useSWR<AllStoriesResponse>(
     `${baseUrl}/story/allStories`,
+    fetcher,
   );
 
   const stories = data?.stories || [];

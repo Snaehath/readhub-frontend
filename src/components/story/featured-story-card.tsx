@@ -18,6 +18,8 @@ import Image from "next/image";
 
 import useSWR from "swr";
 
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 export default function FeaturedStorySection() {
   const [imageError, setImageError] = useState(false);
 
@@ -26,6 +28,7 @@ export default function FeaturedStorySection() {
   // 1. Fetch all stories to find a featured one
   const { data: allData, isLoading: allLoading } = useSWR<AllStoriesResponse>(
     `${API_BASE_URL}/story/allStories`,
+    fetcher,
   );
 
   const stories = allData?.stories || [];
@@ -37,6 +40,7 @@ export default function FeaturedStorySection() {
   // 2. Fetch full content for the identified featured story
   const { data: fullData, isLoading: fullLoading } = useSWR(
     targetStoryId ? `${API_BASE_URL}/story/${targetStoryId}` : null,
+    fetcher,
   );
 
   const story = fullData?.story;

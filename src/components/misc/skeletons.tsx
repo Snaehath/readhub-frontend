@@ -34,30 +34,31 @@ export function CardSkeleton() {
 
 export function BookCardSkeleton() {
   return (
-    <div className="relative overflow-hidden rounded-xl bg-white shadow-sm border">
-      {/* Shimmer overlay */}
-      <div className={` absolute inset-0`} />
-
-      {/* Cover Image Placeholder */}
-      <div className="h-72 w-full bg-gray-200" />
+    <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col h-full animate-pulse">
+      {/* Cover Image Placeholder with shimmer effect */}
+      <div className="relative h-72 w-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+      </div>
 
       {/* Content */}
-      <div className="p-4 space-y-2">
+      <div className="p-5 space-y-4 flex-1">
         {/* Tag */}
-        <div className="h-5 w-16 rounded-full bg-gray-200" />
+        <div className="h-5 w-20 rounded-full bg-zinc-100 dark:bg-zinc-800" />
 
         {/* Title (2 lines) */}
-        <div className="h-6 w-3/4 rounded-md bg-gray-200" />
-        <div className="h-6 w-1/2 rounded-md bg-gray-200" />
+        <div className="space-y-2">
+          <div className="h-4 w-full rounded-md bg-zinc-100 dark:bg-zinc-800" />
+          <div className="h-4 w-2/3 rounded-md bg-zinc-100 dark:bg-zinc-800" />
+        </div>
 
         {/* Author */}
-        <div className="h-4 w-1/3 rounded bg-gray-200" />
+        <div className="h-3 w-1/3 rounded bg-zinc-50 dark:bg-zinc-800/50" />
       </div>
 
       {/* Footer: "Read now" + icon */}
-      <div className="flex items-center justify-between px-4 pb-4">
-        <div className="h-4 w-16 rounded bg-gray-200" />
-        <div className="h-6 w-6 rounded-full bg-gray-200" />
+      <div className="flex items-center justify-between p-5 pt-0 mt-auto">
+        <div className="h-4 w-16 rounded bg-zinc-100 dark:bg-zinc-800" />
+        <div className="h-8 w-8 rounded-full bg-zinc-100 dark:bg-zinc-800" />
       </div>
     </div>
   );

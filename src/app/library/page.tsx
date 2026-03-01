@@ -2,18 +2,11 @@
 
 import { Input } from "@/components/ui/input";
 import { useEffect, useState, Suspense } from "react";
-import { CardSkeleton } from "@/components/misc/skeletons";
+import { BookCardSkeleton } from "@/components/misc/skeletons";
 import { BooksCardLoader } from "@/components/misc/card-loader";
 import { Book } from "@/types";
 import { booksCategories } from "@/constants";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
 
@@ -150,55 +143,41 @@ export default function LibraryPage() {
         </div>
       </div>
 
-      {/* Loading Dialog */}
-      <Dialog open={isLoading} onOpenChange={() => {}}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Loading books</DialogTitle>
-            <DialogDescription>
-              Please wait while we fetch the latest books for you.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-center py-6">
-            <svg
-              className="animate-spin h-8 w-8 text-blue-600"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              ></circle>
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-              ></path>
-            </svg>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Loading Skeletons */}
+      {isLoading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          {[...Array(10)].map((_, i) => (
+            <BookCardSkeleton key={i} />
+          ))}
+        </div>
+      )}
 
       {error && (
         <div className="text-center text-red-600 mb-4">Error: {error}</div>
       )}
 
       {!isLoading && !error && books.length === 0 && (
-        <div className="text-center text-gray-500 mb-4">No books found.</div>
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="bg-stone-100 p-6 rounded-full mb-4">
+            <Search className="w-8 h-8 text-stone-400" />
+          </div>
+          <h3 className="text-lg font-bold text-stone-800">No books found</h3>
+          <p className="text-muted-foreground max-w-xs mx-auto">
+            Try adjusting your search or category filters to find what
+            you&apos;re looking for.
+          </p>
+        </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {books.map((book) => (
-          <Suspense key={book.work_key} fallback={<CardSkeleton />}>
-            <BooksCardLoader book={book} />
-          </Suspense>
-        ))}
-      </div>
+      {!isLoading && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          {books.map((book) => (
+            <Suspense key={book.work_key} fallback={<BookCardSkeleton />}>
+              <BooksCardLoader book={book} />
+            </Suspense>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -68,6 +68,7 @@ export type StorySummary = {
   authorName: string;
   genre: string;
   subject: string;
+  synopsis?: string;
   currentChapterCount: number;
   maxChapters: number;
   isCompleted?: boolean;
@@ -85,6 +86,11 @@ export type AIStory = StorySummary & {
     title: string;
     content: string;
   }[];
+  characters?: {
+    name: string;
+    description: string;
+  }[];
+  worldBuilding?: string;
   reviews?: {
     userId: string;
     rating: number;

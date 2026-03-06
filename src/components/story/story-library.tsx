@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { AllStoriesResponse } from "@/types";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { BookOpen, List, Star } from "lucide-react";
 import Link from "next/link";
 import Typography from "@/components/ui/custom/typography";
@@ -59,87 +58,79 @@ export default function StoryLibrary() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 sm:gap-8">
         {stories.map((story) => (
           <Link
             href={`/story/${story.index}`}
             key={story.index}
             className="group"
           >
-            <Card className="overflow-hidden h-full border shadow-sm transition-all hover:shadow-md hover:bg-muted/50">
-              <div className="h-44 relative overflow-hidden flex items-center justify-center border-b">
+            <div className="relative flex flex-col h-full transition-all duration-500 hover:-translate-y-2">
+              {/* Book Cover Container */}
+              <div className="relative aspect-[2/3] w-full rounded-xl overflow-hidden shadow-lg group-hover:shadow-2xl transition-all duration-500 border-2 border-transparent group-hover:border-blue-500/20">
                 {!imageErrors[story.id] ? (
                   <Image
                     src={`${coverBaseUrl}/cover_${story.id}.jpg`}
                     alt={story.title}
                     fill
-                    className="object-cover transition-transform group-hover:scale-110 duration-700"
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
                     onError={() =>
                       setImageErrors((prev) => ({ ...prev, [story.id]: true }))
                     }
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-linear-to-br from-blue-600/10 via-indigo-600/5 to-violet-600/10 flex items-center justify-center p-6">
-                    <BookOpen className="absolute -bottom-2 -right-2 w-16 h-16 opacity-5 rotate-12" />
+                  <div className="absolute inset-0 bg-linear-to-br from-blue-600/20 via-indigo-600/10 to-violet-600/20 flex flex-col items-center justify-center p-4 text-center">
+                    <BookOpen className="w-12 h-12 mb-2 opacity-20 text-blue-600" />
                     <Typography
-                      variant="h3"
-                      className="text-lg font-black tracking-tight text-center line-clamp-2"
+                      variant="h4"
+                      className="text-sm font-black tracking-tight leading-tight line-clamp-3"
                     >
                       {story.title}
                     </Typography>
                   </div>
                 )}
+
+                {/* Rating Overlay */}
+                {story.averageRating !== undefined &&
+                  story.averageRating > 0 && (
+                    <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md rounded-md px-1.5 py-0.5 flex items-center gap-1">
+                      <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
+                      <span className="text-[10px] font-black text-white">
+                        {story.averageRating.toFixed(1)}
+                      </span>
+                    </div>
+                  )}
+
+                {/* Gradient Wash */}
+                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               </div>
-              <CardHeader className="p-4 pb-2">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    {story.isCompleted ? (
-                      <Badge
-                        variant="outline"
-                        className="text-[9px] uppercase tracking-widest border-emerald-500/30 text-emerald-600 bg-emerald-500/5"
-                      >
-                        Completed
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="outline"
-                        className="text-[9px] uppercase tracking-widest border-amber-500/30 text-amber-600 bg-amber-500/5 flex items-center gap-1"
-                      >
-                        <div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />{" "}
-                        Ongoing
-                      </Badge>
-                    )}
-                    {story.averageRating !== undefined &&
-                      story.averageRating > 0 && (
-                        <div className="flex items-center gap-0.5 text-[10px] font-black text-amber-500">
-                          <Star className="w-2.5 h-2.5 fill-amber-500" />
-                          {story.averageRating.toFixed(1)}
-                        </div>
-                      )}
-                  </div>
-                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-bold">
-                    <List className="w-3 h-3" />
-                    {story.currentChapterCount} Chapters
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
+
+              {/* Metadata */}
+              <div className="mt-4 px-1 space-y-1.5">
                 <Typography
-                  variant="p"
-                  className="text-xs text-muted-foreground line-clamp-2 italic mb-4"
+                  variant="h3"
+                  className="text-sm sm:text-base font-black tracking-tight line-clamp-1 group-hover:text-blue-600 transition-colors"
                 >
-                  &quot;{story.subject}&quot;
+                  {story.title}
                 </Typography>
-                <div className="flex items-center justify-end mt-auto">
-                  <Typography
-                    variant="small"
-                    className="text-[10px] font-bold text-primary"
-                  >
-                    By {story.authorName}
-                  </Typography>
+
+                <div className="flex items-center justify-between text-[10px] sm:text-xs">
+                  <span className="text-muted-foreground font-bold truncate pr-2">
+                    {story.authorName}
+                  </span>
+                  <div className="flex items-center gap-1 text-blue-600 font-black shrink-0">
+                    <List className="w-3 h-3" />
+                    <span>{story.currentChapterCount}</span>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+
+                {story.synopsis && (
+                  <p className="text-[10px] text-muted-foreground line-clamp-2 leading-relaxed italic opacity-0 group-hover:opacity-100 transition-opacity duration-500 h-0 group-hover:h-auto overflow-hidden">
+                    {story.synopsis}
+                  </p>
+                )}
+              </div>
+            </div>
           </Link>
         ))}
       </div>

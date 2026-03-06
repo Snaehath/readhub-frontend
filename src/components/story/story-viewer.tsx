@@ -5,7 +5,6 @@ import { AIStory } from "@/types";
 import {
   User,
   Tag,
-  Lightbulb,
   BookOpen,
   List,
   Sparkles,
@@ -57,6 +56,7 @@ export default function StoryViewer({
     if (onReaderToggle) onReaderToggle(!!chapter);
   };
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeTab, setActiveTab] = useState<"lore" | "chapters">("lore");
   const [isForcing, setIsForcing] = useState(false);
   const [imageError, setImageError] = useState(false);
   const itemsPerPage = 3;
@@ -72,6 +72,7 @@ export default function StoryViewer({
     try {
       const token = localStorage.getItem("jwt");
       const res = await fetch(`${API_BASE_URL}/story/myStory?force=true`, {
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -84,7 +85,7 @@ export default function StoryViewer({
 
         // Fetch full content for the updated story
         const fullRes = await fetch(
-          `${API_BASE_URL}/story/${updatedStory.id}`,
+          `${API_BASE_URL}/story/${updatedStory.id || updatedStory.index}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -102,11 +103,56 @@ export default function StoryViewer({
       } else {
         toast.error("Failed to advance narrative.");
       }
-    } catch (err) {
-      console.error("Error forcing progress:", err);
+    } catch (_err) {
+      console.error("Error forcing progress:", _err);
       toast.error("Error while communicating with the creative agent.");
     } finally {
       setIsForcing(false);
+    }
+  };
+
+  const [isAdvancing, setIsAdvancing] = useState(false);
+  const handleDailyProgress = async () => {
+    if (isAdvancing) return;
+    setIsAdvancing(true);
+
+    try {
+      const token = localStorage.getItem("jwt");
+      const res = await fetch(`${API_BASE_URL}/story/myStory`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const updatedSummary = data.story;
+
+        // Fetch full content
+        const fullRes = await fetch(
+          `${API_BASE_URL}/story/${updatedSummary.id || updatedSummary.index}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        if (fullRes.ok) {
+          const fullData = await fullRes.json();
+          if (onStoryUpdate) onStoryUpdate(fullData.story);
+        }
+
+        toast.success("The narrative agents have been summoned!");
+      } else {
+        toast.error("The agents are currently dormant.");
+      }
+    } catch {
+      toast.error("Communication interrupted.");
+    } finally {
+      setIsAdvancing(false);
     }
   };
 
@@ -306,192 +352,313 @@ export default function StoryViewer({
         </div>
       </div>
 
-      <div className="grid gap-12 sm:grid-cols-4">
-        {/* Sidebar */}
-        <div className="sm:col-span-1 space-y-6">
-          <Card className="border-none bg-background/60 backdrop-blur-xl shadow-2xl shadow-blue-500/5 overflow-hidden">
-            <div className="h-2 bg-linear-to-r from-blue-500 to-indigo-500" />
-            <CardHeader className="pb-3">
-              <Typography
-                variant="h4"
-                className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2"
-              >
-                <Lightbulb className="w-4 h-4 text-amber-500" />
-                The Premise
-              </Typography>
-            </CardHeader>
-            <CardContent>
-              <Typography
-                variant="p"
-                className="text-sm leading-relaxed text-foreground/80 font-medium italic"
-              >
-                &quot;{story.subject}&quot;
-              </Typography>
-            </CardContent>
-          </Card>
-
-          <Card className="border-none bg-background/60 backdrop-blur-xl shadow-2xl shadow-violet-500/5">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <List
-                    className={`w-4 h-4 ${story.isCompleted ? "text-emerald-500" : "text-violet-500"}`}
-                  />
-                  Status
-                </div>
-                {story.isCompleted ? (
-                  <Badge
-                    variant="outline"
-                    className="text-[9px] border-emerald-500/30 text-emerald-600 bg-emerald-500/5"
+      <div className="grid gap-12 lg:grid-cols-4">
+        {/* Sidebar - Hide if in Library mode */}
+        {!backUrl && (
+          <div className="lg:col-span-1 space-y-6">
+            <Card className="border-none bg-background/60 backdrop-blur-xl shadow-2xl shadow-violet-500/5 gap-0 py-4">
+              <CardHeader className="p-2">
+                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <List
+                      className={`w-4 h-4 ${story.isCompleted ? "text-emerald-500" : "text-violet-500"}`}
+                    />
+                    Status
+                  </div>
+                  {story.isCompleted ? (
+                    <Badge
+                      variant="outline"
+                      className="text-[9px] border-emerald-500/30 text-emerald-600 bg-emerald-500/5"
+                    >
+                      Finished
+                    </Badge>
+                  ) : (
+                    <Badge
+                      variant="outline"
+                      className="text-[9px] border-amber-500/30 text-amber-600 bg-amber-500/5 flex items-center gap-1"
+                    >
+                      <div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />{" "}
+                      Ongoing
+                    </Badge>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground font-medium">
+                    Progress
+                  </span>
+                  <span
+                    className={`font-bold ${story.isCompleted ? "text-emerald-600" : "text-blue-600"}`}
                   >
-                    Finished
-                  </Badge>
-                ) : (
-                  <Badge
-                    variant="outline"
-                    className="text-[9px] border-amber-500/30 text-amber-600 bg-amber-500/5 flex items-center gap-1"
-                  >
-                    <div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />{" "}
-                    Ongoing
-                  </Badge>
-                )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground font-medium">
-                  Progress
-                </span>
-                <span
-                  className={`font-bold ${story.isCompleted ? "text-emerald-600" : "text-blue-600"}`}
-                >
-                  {story.isCompleted
-                    ? "100%"
-                    : `${Math.round((story.currentChapterCount / (story.maxChapters || 9)) * 100)}%`}
-                </span>
-              </div>
-              <div className="w-full bg-gray-100 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all duration-1000 ${story.isCompleted ? "bg-emerald-500" : "bg-linear-to-r from-blue-500 to-violet-500"}`}
-                  style={{
-                    width: story.isCompleted
+                    {story.isCompleted
                       ? "100%"
-                      : `${(story.currentChapterCount / (story.maxChapters || 9)) * 100}%`,
-                  }}
-                />
-              </div>
-              <p className="text-[10px] text-muted-foreground italic leading-tight">
-                {story.isCompleted
-                  ? "This narrative is fully realized. Explore the complete collection of chapters above."
-                  : "Our AI crafts a new chapter every 24 hours to unfold this narrative."}
-              </p>
-              {!story.isCompleted && isAdmin && (
-                <div className="pt-2 border-t mt-4">
-                  <Button
-                    onClick={handleForceProgress}
-                    disabled={isForcing}
-                    variant="outline"
-                    className="w-full text-xs font-black uppercase tracking-widest h-10 border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 transition-all gap-1.5"
-                  >
-                    {isForcing ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        Incubating...
-                      </>
+                      : `${Math.round((story.currentChapterCount / (story.maxChapters || 9)) * 100)}%`}
+                  </span>
+                </div>
+                <div className="w-full bg-zinc-100 dark:bg-zinc-800 h-1.5 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-1000 ${story.isCompleted ? "bg-emerald-500" : "bg-linear-to-r from-blue-500 to-violet-500"}`}
+                    style={{
+                      width: story.isCompleted
+                        ? "100%"
+                        : `${(story.currentChapterCount / (story.maxChapters || 9)) * 100}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground italic leading-tight">
+                  {story.isCompleted
+                    ? "This narrative is fully realized. Explore the complete collection of chapters above."
+                    : "Our AI crafts a new chapter every 24 hours to unfold this narrative."}
+                </p>
+                {!story.isCompleted && (
+                  <div className="pt-2 border-t mt-4 space-y-3">
+                    {isAdmin ? (
+                      <Button
+                        onClick={handleForceProgress}
+                        disabled={isForcing}
+                        variant="outline"
+                        className="w-full text-xs font-black uppercase tracking-widest h-10 border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 transition-all gap-1.5"
+                      >
+                        {isForcing ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Writing...
+                          </>
+                        ) : (
+                          <>
+                            <Wand2 className="w-3.5 h-3.5" />
+                            Admin: Force Progress
+                          </>
+                        )}
+                      </Button>
                     ) : (
-                      <>
-                        <Wand2 className="w-3.5 h-3.5" />
-                        Admin: Force Progress
-                      </>
+                      <Button
+                        onClick={handleDailyProgress}
+                        disabled={isAdvancing}
+                        variant="outline"
+                        className="w-full text-xs font-black uppercase tracking-widest h-10 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all gap-1.5"
+                      >
+                        {isAdvancing ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            Summoning...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-3.5 h-3.5" />
+                            Summon New Chapter
+                          </>
+                        )}
+                      </Button>
                     )}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-        {/* Main Content - Chapter Grid */}
-        <div className="sm:col-span-3">
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {story.chapters
-                ?.slice(
-                  (currentPage - 1) * itemsPerPage,
-                  currentPage * itemsPerPage,
-                )
-                .map((chapter) => (
-                  <Card
-                    key={chapter.chapterNumber}
-                    className="group overflow-hidden border-none shadow-xl cursor-pointer flex flex-col bg-background/40 backdrop-blur-sm transition-all hover:bg-background/60"
-                    onClick={() => setSelectedChapter(chapter)}
+        {/* Main Content */}
+        <div className={backUrl ? "lg:col-span-4" : "lg:col-span-3"}>
+          <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-300">
+            {/* Tabs Navigation - ONLY IN STORY ID PAGE */}
+            {backUrl && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-6 border-b pb-8">
+                <div className="flex bg-zinc-100 dark:bg-zinc-900/50 p-1 rounded-[2rem] border border-zinc-200 dark:border-zinc-800">
+                  <button
+                    onClick={() => setActiveTab("lore")}
+                    className={`flex items-center gap-2 px-8 py-3 rounded-[1.8rem] text-xs font-black uppercase tracking-widest transition-all ${
+                      activeTab === "lore"
+                        ? "bg-white dark:bg-zinc-800 shadow-lg text-blue-600 border border-zinc-200 dark:border-zinc-700"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
                   >
-                    {/* Stylized Title Block (Replaces Image) */}
-                    <div className="h-48 relative overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center p-6 text-center">
-                      <div className="absolute inset-0 bg-linear-to-br from-blue-600/10 via-transparent to-violet-600/10 opacity-50" />
-                      <div className="absolute top-4 left-4 text-4xl font-black text-blue-500/40">
-                        0{chapter.chapterNumber}
-                      </div>
-                      <h3 className="relative z-10 text-xl font-black tracking-tight leading-tight bg-linear-to-br from-foreground to-foreground/60 bg-clip-text">
-                        {chapter.title}
-                      </h3>
-                    </div>
-
-                    <CardHeader className="p-4 pt-4">
-                      <div className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">
-                        Entry {chapter.chapterNumber}
-                      </div>
-                      <CardTitle className="text-sm font-bold line-clamp-1">
-                        {story.title}: Part {chapter.chapterNumber}
-                      </CardTitle>
-                    </CardHeader>
-
-                    <CardContent className="p-4 pt-0 pb-6 flex-1">
-                      <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed italic">
-                        {chapter.content}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-            </div>
-
-            {/* Pagination Controls */}
-            {story.chapters && story.chapters.length > itemsPerPage && (
-              <div className="flex items-center justify-center gap-4 pt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) => Math.max(1, prev - 1))
-                  }
-                  disabled={currentPage === 1}
-                  className="rounded-full px-4 font-bold border-blue-200 text-blue-600 hover:bg-blue-50 disabled:opacity-30"
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1" /> Previous
-                </Button>
-                <div className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  Page {currentPage} of{" "}
-                  {Math.ceil((story.chapters?.length || 0) / itemsPerPage)}
+                    <Sparkles
+                      className={`w-3.5 h-3.5 ${activeTab === "lore" ? "text-blue-500" : ""}`}
+                    />
+                    Lore & Setting
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("chapters")}
+                    className={`flex items-center gap-2 px-8 py-3 rounded-[1.8rem] text-xs font-black uppercase tracking-widest transition-all ${
+                      activeTab === "chapters"
+                        ? "bg-white dark:bg-zinc-800 shadow-lg text-blue-600 border border-zinc-200 dark:border-zinc-700"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <BookOpen
+                      className={`w-3.5 h-3.5 ${activeTab === "chapters" ? "text-blue-500" : ""}`}
+                    />
+                    Chapter Archives
+                  </button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentPage((prev) =>
-                      Math.min(
-                        Math.ceil((story.chapters?.length || 0) / itemsPerPage),
-                        prev + 1,
-                      ),
+              </div>
+            )}
+
+            {/* Content Rendering based on Tab */}
+            {(!backUrl || activeTab === "chapters") && (
+              <section className="animate-in fade-in duration-700">
+                <div className="flex items-center gap-4 mb-8">
+                  <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground whitespace-nowrap">
+                    Chapter Archives
+                  </h2>
+                  <div className="h-[1px] w-full bg-linear-to-r from-border/50 to-transparent" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  {story.chapters
+                    ?.slice(
+                      (currentPage - 1) * itemsPerPage,
+                      currentPage * itemsPerPage,
                     )
-                  }
-                  disabled={
-                    currentPage ===
-                    Math.ceil((story.chapters?.length || 0) / itemsPerPage)
-                  }
-                  className="rounded-full px-4 font-bold border-blue-200 text-blue-600 hover:bg-blue-50 disabled:opacity-30"
-                >
-                  Next <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
+                    .map((chapter) => (
+                      <Card
+                        key={chapter.chapterNumber}
+                        className="group overflow-hidden border-none shadow-xl cursor-pointer flex flex-col bg-background/40 backdrop-blur-sm transition-all hover:bg-background/60 gap-2"
+                        onClick={() => setSelectedChapter(chapter)}
+                      >
+                        {/* Stylized Title Block (Replaces Image) */}
+                        <div className="h-48 relative overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center p-6 text-center">
+                          <div className="absolute inset-0 bg-linear-to-br from-blue-600/10 via-transparent to-violet-600/10 opacity-50" />
+                          <div className="absolute top-4 left-4 text-4xl font-black text-blue-500/40">
+                            0{chapter.chapterNumber}
+                          </div>
+                          <h3 className="relative z-10 text-xl font-black tracking-tight leading-tight bg-linear-to-br from-foreground to-foreground/60 bg-clip-text">
+                            {chapter.title}
+                          </h3>
+                        </div>
+
+                        <CardHeader className="px-4 pt-4 pb-0">
+                          <div className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">
+                            Entry {chapter.chapterNumber}
+                          </div>
+                          <CardTitle className="text-sm font-bold line-clamp-1">
+                            {story.title}: Part {chapter.chapterNumber}
+                          </CardTitle>
+                        </CardHeader>
+
+                        <CardContent className="px-4 pt-0 pb-4 flex-1">
+                          <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed italic">
+                            {chapter.content}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {story.chapters && story.chapters.length > itemsPerPage && (
+                  <div className="flex items-center justify-center gap-4 pt-8">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(1, prev - 1))
+                      }
+                      disabled={currentPage === 1}
+                      className="rounded-full px-4 font-bold border-blue-200 text-blue-600 hover:bg-blue-50 disabled:opacity-30"
+                    >
+                      <ChevronLeft className="w-4 h-4 mr-1" /> Previous
+                    </Button>
+                    <div className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                      Page {currentPage} of{" "}
+                      {Math.ceil((story.chapters?.length || 0) / itemsPerPage)}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setCurrentPage((prev) =>
+                          Math.min(
+                            Math.ceil(
+                              (story.chapters?.length || 0) / itemsPerPage,
+                            ),
+                            prev + 1,
+                          ),
+                        )
+                      }
+                      disabled={
+                        currentPage ===
+                        Math.ceil((story.chapters?.length || 0) / itemsPerPage)
+                      }
+                      className="rounded-full px-4 font-bold border-blue-200 text-blue-600 hover:bg-blue-50 disabled:opacity-30"
+                    >
+                      Next <ChevronRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* 2. Synopsis Section - ONLY SHOW IN LORE TAB OR MAIN VIEW */}
+            {backUrl && activeTab === "lore" && (
+              <div className="space-y-24 animate-in fade-in duration-700">
+                <section>
+                  <div className="flex items-center gap-4 mb-8">
+                    <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground whitespace-nowrap">
+                      Synopsis
+                    </h2>
+                    <div className="h-[1px] w-full bg-linear-to-r from-border/50 to-transparent" />
+                  </div>
+                  <Typography
+                    variant="p"
+                    className="text-base sm:text-lg leading-relaxed text-foreground/80 italic font-medium max-w-4xl"
+                  >
+                    &ldquo;{story.synopsis || story.subject}&rdquo;
+                  </Typography>
+                </section>
+
+                {/* 3. Dramatis Personae Section */}
+                {story.characters && story.characters.length > 0 && (
+                  <section>
+                    <div className="flex items-center gap-4 mb-8">
+                      <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground whitespace-nowrap">
+                        Dramatis Personae
+                      </h2>
+                      <div className="h-[1px] w-full bg-linear-to-r from-border/50 to-transparent" />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {story.characters?.map((char, i) => (
+                        <div
+                          key={i}
+                          className="bg-zinc-50/50 dark:bg-zinc-900/20 border border-zinc-100 dark:border-zinc-800/50 rounded-[2rem] p-8 flex flex-col gap-4 transition-all hover:shadow-md hover:border-blue-500/20 group"
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-xl font-black text-foreground tracking-tight group-hover:text-blue-600 transition-colors">
+                              {char.name}
+                            </h3>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/40 text-right">
+                              Principal
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground leading-relaxed font-medium">
+                            {char.description}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {/* 4. World Setting Section */}
+                {story.worldBuilding && (
+                  <section>
+                    <div className="flex items-center gap-4 mb-8">
+                      <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground whitespace-nowrap">
+                        World Setting
+                      </h2>
+                      <div className="h-[1px] w-full bg-linear-to-r from-border/50 to-transparent" />
+                    </div>
+                    <div className="bg-orange-50/20 dark:bg-orange-950/5 border border-orange-100/30 dark:border-orange-900/10 rounded-[2.5rem] p-8 sm:p-14 shadow-sm">
+                      <Typography
+                        variant="p"
+                        className="text-sm sm:text-base leading-relaxed text-foreground/70 font-medium"
+                      >
+                        {story.worldBuilding}
+                      </Typography>
+                    </div>
+                  </section>
+                )}
               </div>
             )}
           </div>

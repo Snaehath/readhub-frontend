@@ -61,6 +61,7 @@ export default function StoryViewer({
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ storyId: story.id || story.index }),
       });
 
       if (res.ok) {

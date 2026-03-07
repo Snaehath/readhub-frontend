@@ -1,70 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { AIStory, StoryResponse } from "@/types";
 import { Sparkles, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import StoryViewer from "@/components/story/story-viewer";
 import StoryLibrary from "@/components/story/story-library";
 import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
 import { useUserStore } from "@/lib/store/userStore";
 import { toast } from "sonner";
-import { AllStoriesResponse } from "@/types";
-
 import useSWR, { mutate } from "swr";
+import { AllStoriesResponse } from "@/types";
+import { Input } from "@/components/ui/input";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const fetcherWithAuth = async (url: string) => {
-  const token = localStorage.getItem("jwt");
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const res = await fetch(url, { headers });
-  if (!res.ok) {
-    const error = new Error(
-      "An error occurred while fetching the data.",
-    ) as Error & { status?: number };
-    error.status = res.status;
-    throw error;
-  }
-  return res.json();
-};
-
 export default function StoryPage() {
-  const [isReading, setIsReading] = useState(false);
   const { user } = useUserStore();
   const [isTriggeing, setIsTriggeing] = useState(false);
+  const [suggestion, setSuggestion] = useState("");
 
-  // 1. Fetch discovery list from allStories (GET)
-  const { data: allData, isLoading: allStoriesLoading } =
-    useSWR<AllStoriesResponse>(`${API_BASE_URL}/story/allStories`, fetcher, {
-      revalidateOnFocus: false,
-    });
-
-  // Identify the active global story (the latest one that's not completed)
-  const activeStorySummary = allData?.stories?.find((s) => !s.isCompleted);
-  const storyId = activeStorySummary?.id;
-
-  // 2. Fetch full content if an active story is found (GET)
-  const { data: fullData } = useSWR<StoryResponse>(
-    storyId ? `${API_BASE_URL}/story/${storyId}` : null,
-    fetcherWithAuth,
-    {
-      revalidateOnFocus: false,
-    },
+  const { data: allData, isLoading } = useSWR<AllStoriesResponse>(
+    `${API_BASE_URL}/story/allStories`,
+    fetcher,
+    { revalidateOnFocus: false },
   );
 
-  const loading = allStoriesLoading;
-
-  const story = fullData?.story || activeStorySummary || null;
+  const hasOngoingStory = allData?.stories?.some((s) => !s.isCompleted);
 
   const handleJoinNarrative = async () => {
     if (!user) return;
@@ -77,12 +39,14 @@ export default function StoryPage() {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({ prompt: suggestion }),
       });
 
       if (res.ok) {
         toast.success("Joined the Narrative Hub!");
         toast.success("The narrative agents have been summoned!");
         mutate(`${API_BASE_URL}/story/allStories`);
+        setSuggestion("");
       } else {
         toast.error("The agents are currently dormant.");
       }
@@ -93,91 +57,81 @@ export default function StoryPage() {
     }
   };
 
-  const handleStoryUpdate = (updatedStory: AIStory) => {
-    // Optimistically update relevant cache entries
-    mutate(`${API_BASE_URL}/story/allStories`);
-    if (updatedStory.id) {
-      mutate(
-        `${API_BASE_URL}/story/${updatedStory.id}`,
-        { story: updatedStory },
-        false,
-      );
-    }
-  };
-
   return (
-    <div className="container mx-auto pb-20">
-      {loading ? (
-        <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
-            <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-blue-600 animate-pulse" />
+    <div className="container mx-auto pb-20 pt-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8">
+        {/* Call to Action Section (Logged out wrapper) */}
+        {!user ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-card/40 backdrop-blur-md rounded-[2.5rem] border border-border/50 shadow-sm mb-12">
+            <div className="bg-blue-50 dark:bg-blue-950/30 p-5 rounded-full mb-6 relative group">
+              <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400 relative z-10" />
+            </div>
+            <Typography variant="h2" className="text-3xl font-black mb-3">
+              AI Serial Locked
+            </Typography>
+            <Typography
+              variant="p"
+              className="text-muted-foreground text-base max-w-md mb-8 leading-relaxed"
+            >
+              Login to witness personalized daily chapters crafted by our AI
+              agents. Be the architect of your own epic.
+            </Typography>
+            <Button
+              asChild
+              className="rounded-full px-8 py-6 h-auto text-base font-bold shadow-lg transition-transform hover:scale-105 active:scale-95"
+            >
+              <Link href="/login">Login to Unlock My Story</Link>
+            </Button>
           </div>
-          <p className="text-muted-foreground animate-pulse font-medium">
-            Our AI agent is retrieving your masterpiece...
-          </p>
-        </div>
-      ) : !user ? (
-        <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
-          <div className="bg-blue-50 dark:bg-blue-950/30 p-6 rounded-full mb-4 relative group">
-            <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400 relative z-10" />
-          </div>
-          <h1 className="text-2xl font-bold mb-3">AI Serial Locked</h1>
-          <p className="text-muted-foreground text-sm max-w-sm mb-6 leading-relaxed">
-            Login to witness your personalized daily chapters crafted by our AI
-            agent. In the meantime, you can still browse and read from our{" "}
-            <b>Original Library</b> below!
-          </p>
-          <Button
-            asChild
-            className="rounded-full px-6 py-3 h-auto text-base font-bold shadow-lg transition-all hover:shadow-xl active:scale-95"
-          >
-            <Link href="/login">Login to Unlock My Story</Link>
-          </Button>
-        </div>
-      ) : (
-        <>
-          {story && (
-            <StoryViewer
-              story={story}
-              onStoryUpdate={handleStoryUpdate}
-              onReaderToggle={(reading) => setIsReading(reading)}
-            />
-          )}
-          {!story && (
-            <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+        ) : null}
+
+        <StoryLibrary />
+
+        {/* Forge New Story form, shown below library, only if logged in and no ongoing history */}
+        {user && !isLoading && !hasOngoingStory && (
+          <div className="mt-16 flex flex-col items-center justify-center py-10 px-6 sm:px-12 text-center bg-linear-to-br from-blue-600/5 via-indigo-600/5 to-violet-600/5 backdrop-blur-md rounded-[2.5rem] border border-blue-500/10 shadow-sm animate-in fade-in slide-in-from-bottom-6 duration-700">
+            <div className="mb-6 max-w-xl">
+              <Typography
+                variant="h2"
+                className="text-2xl font-black tracking-tight mb-2"
+              >
+                Shape the Next Epic
+              </Typography>
               <Typography
                 variant="p"
-                className="text-muted-foreground max-w-sm mb-6"
+                className="text-muted-foreground text-sm leading-relaxed"
               >
-                No global narrative has been initialized for today yet, or
-                we&apos;re between epics. Be the one to spark the creative
-                agents.
+                Our archive is fully updated. Suggest a core concept to trigger
+                the agents to write the next daily narrative.
               </Typography>
+            </div>
+
+            <div className="flex flex-col sm:flex-row w-full max-w-lg gap-3">
+              <Input
+                type="text"
+                placeholder="What should the agents write next?"
+                value={suggestion}
+                onChange={(e) => setSuggestion(e.target.value)}
+                className="rounded-full bg-background border border-muted-foreground/30 focus-visible:ring-blue-500 focus-visible:border-blue-500 px-6 h-12 flex-grow shadow-inner text-sm"
+              />
               <Button
                 onClick={handleJoinNarrative}
-                disabled={isTriggeing}
-                className="rounded-full px-8 py-4 h-auto text-base font-black uppercase tracking-widest shadow-xl transition-all hover:scale-105 active:scale-95 bg-linear-to-r from-blue-600 to-indigo-700 gap-2"
+                disabled={isTriggeing || !suggestion.trim()}
+                className="rounded-full px-8 h-12 font-bold shadow-md transition-all hover:scale-105 active:scale-95 bg-linear-to-r from-blue-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 gap-2 shrink-0 text-white"
               >
                 {isTriggeing ? (
-                  "Manifesting..."
+                  "Forging..."
                 ) : (
                   <>
-                    <Sparkles className="w-5 h-5 fill-white/20" />
-                    Forge New Story Arc
+                    <Sparkles className="w-4 h-4 fill-white/20" />
+                    Forge
                   </>
                 )}
               </Button>
             </div>
-          )}
-        </>
-      )}
-
-      {!isReading && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 mt-20">
-          <StoryLibrary />
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

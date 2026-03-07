@@ -61,7 +61,7 @@ export default function StoryReview({ storyId, onSuccess }: StoryReviewProps) {
   };
 
   return (
-    <Card className="border-none bg-background/60 backdrop-blur-xl shadow-2xl shadow-blue-500/5 overflow-hidden">
+    <Card className="border-none bg-background/60 backdrop-blur-xl shadow-2xl shadow-blue-500/5 overflow-hidden pb-0">
       <div className="h-2 bg-linear-to-r from-blue-600 via-indigo-600 to-violet-600" />
       <CardHeader className="pb-3 text-center">
         <Typography

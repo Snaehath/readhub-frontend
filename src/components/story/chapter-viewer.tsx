@@ -140,8 +140,8 @@ export default function ChapterViewer({
       </div>
 
       {/* Reader Content */}
-      <article className="max-w-3xl mx-auto px-4 py-16 sm:py-24">
-        <header className="mb-12 text-center">
+      <article className="max-w-6xl mx-auto px-4 py-14 sm:py-24">
+        <header className="mb-10 text-center">
           <Typography
             variant="small"
             className="text-blue-600 font-black text-xs uppercase tracking-[0.3em] mb-4 block"
@@ -163,8 +163,8 @@ export default function ChapterViewer({
           </div>
         </header>
 
-        <div className="prose dark:prose-invert max-w-none">
-          <div className="text-xl leading-[1.8] text-foreground/90 space-y-8 first-letter:text-7xl first-letter:font-black first-letter:mr-4 first-letter:float-left first-letter:leading-[1] font-serif">
+        <div className="prose dark:prose-invert">
+          <div className="text-xl leading-[1.8] text-foreground/90 first-letter:text-7xl first-letter:font-black first-letter:mr-4 first-letter:float-left first-letter:leading-[1] font-serif">
             {selectedChapter.content.split("\n\n").map((para, i) => (
               <p key={i} className="mb-8">
                 {para}
@@ -241,7 +241,7 @@ export default function ChapterViewer({
             </Typography>
           </div>
 
-          <div className="w-full max-w-md mx-auto mt-12">
+          <div className="w-full max-w-md mx-auto pb-0">
             <StoryReview
               storyId={story.id || story.index}
               onSuccess={(updatedStory) => setStory(updatedStory)}

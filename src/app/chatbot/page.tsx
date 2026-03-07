@@ -186,11 +186,13 @@ export default function ChatbotPage() {
                   <Card
                     className={`py-0 gap-0 border-0 shadow-md ${
                       chat.sender === "user"
-                        ? "bg-indigo-600 text-white rounded-2xl rounded-tr-none"
-                        : "bg-white dark:bg-zinc-800 text-foreground rounded-2xl rounded-tl-none border border-zinc-100 dark:border-zinc-700"
+                        ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none"
+                        : "bg-linear-to-br from-indigo-500 to-violet-600 text-white rounded-2xl rounded-tl-none"
                     }`}
                   >
-                    <CardContent className="p-3.5 px-4 text-sm leading-relaxed overflow-hidden prose dark:prose-invert prose-sm max-w-none prose-p:m-0 prose-headings:m-0">
+                    <CardContent
+                      className={`p-3.5 px-4 text-sm leading-relaxed overflow-hidden prose prose-sm max-w-none prose-p:m-0 prose-headings:m-0 ${chat.sender === "user" ? "dark:prose-invert" : "prose-invert"}`}
+                    >
                       <ReactMarkdown
                         rehypePlugins={[
                           rehypeRaw,
@@ -243,9 +245,9 @@ export default function ChatbotPage() {
               size="icon"
               onClick={handleSendMessage}
               disabled={loading || !userMessage.trim()}
-              className="rounded-xl w-11 h-11 shrink-0 cursor-pointer shadow-xl bg-indigo-600 hover:bg-indigo-700 hover:scale-105 active:scale-95 text-white transition-all duration-200 disabled:opacity-50 disabled:scale-100"
+              className="rounded-xl w-11 h-11 shrink-0 cursor-pointer shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:scale-100"
             >
-              <Send className="w-5 h-5 translate-x-0.5" />
+              <Send className="w-5 h-5" />
             </Button>
           </div>
         </div>

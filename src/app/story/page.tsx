@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Sparkles, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import StoryLibrary from "@/components/story/story-library";
+import { StoryLibraryLoader as StoryLibrary } from "@/components/misc/card-loader";
 import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
 import { useUserStore } from "@/lib/store/userStore";

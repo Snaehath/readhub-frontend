@@ -12,8 +12,12 @@ import { AuthMonitor } from "@/components/auth/auth-monitor";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ReadHub - News & E-Books",
-  description: "Your digital reading companion for news and e-books",
+  title: {
+    template: "%s | ReadHub",
+    default: "ReadHub | Your Digital Reading Companion",
+  },
+  description:
+    "Explore thousands of news articles, timeless e-books, and original AI-generated stories.",
 };
 
 export default function RootLayout({

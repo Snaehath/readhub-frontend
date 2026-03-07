@@ -567,7 +567,7 @@ Please try again in a few moments.`,
 
         {/* Load More */}
         {hasMore && (
-          <div className="flex justify-center mt-6">
+          <div className="flex justify-center mt-6 pb-12">
             <Button
               className="cursor-pointer"
               onClick={() => setPage((prev) => prev + 1)}

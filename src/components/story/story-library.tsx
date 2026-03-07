@@ -7,6 +7,7 @@ import { BookOpen, List, Star, Sparkles, ArrowRight, User } from "lucide-react";
 import Link from "next/link";
 import Typography from "@/components/ui/custom/typography";
 import Image from "next/image";
+import { StoriesSkeleton } from "@/components/misc/skeletons";
 
 import useSWR from "swr";
 
@@ -29,14 +30,9 @@ export default function StoryLibrary() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <Card
-            key={i}
-            className="aspect-[3/4] rounded-2xl animate-pulse bg-muted/30 border-none"
-          />
-        ))}
-      </div>
+      <section className="mt-20">
+        <StoriesSkeleton />
+      </section>
     );
   }
 

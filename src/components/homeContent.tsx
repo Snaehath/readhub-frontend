@@ -21,13 +21,6 @@ export default function HomeContent() {
           className="absolute inset-x-0 -top-20 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-40"
           aria-hidden="true"
         >
-          <div
-            className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#3b82f6] to-[#8b5cf6] opacity-10 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
-            style={{
-              clipPath:
-                "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
-            }}
-          />
         </div>
 
         <div className="text-center max-w-4xl mx-auto px-4 mb-20 space-y-8">
@@ -106,21 +99,21 @@ export default function HomeContent() {
           </Card>
 
           {/* AI Story Card (Colorful Exception) */}
-          <Card className="group relative overflow-hidden border-indigo-500/20 bg-indigo-50/30 dark:bg-indigo-950/20 backdrop-blur-xl hover:shadow-2xl hover:shadow-indigo-500/20 hover:-translate-y-2 transition-all duration-500">
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-pink-500/10 opacity-100" />
+          <Card className="group relative overflow-hidden border-border/50 bg-card/40 backdrop-blur-xl hover:shadow-2xl hover:shadow-black/5 hover:-translate-y-2 transition-all duration-500">
+            {/* <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-pink-500/10 opacity-100" /> */}
             <CardHeader className="relative z-10 pb-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4 text-white shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4 text-white shadow-lg transition-transform duration-500">
                 <Sparkles className="h-6 w-6" />
               </div>
               <CardTitle className="text-2xl font-black tracking-tight text-indigo-950 dark:text-indigo-100">
                 AI Epics
               </CardTitle>
-              <CardDescription className="text-base font-medium text-indigo-700/70 dark:text-indigo-300/70">
+              <CardDescription className="text-base font-medium">
                 Original autonomous narratives
               </CardDescription>
             </CardHeader>
             <CardContent className="relative z-10">
-              <p className="text-indigo-900/70 dark:text-indigo-200/70 leading-relaxed font-medium h-20">
+              <p className="text-muted-foreground leading-relaxed h-20">
                 Immerse yourself in fully-realized stories generated
                 continuously by our specialized AI author agents.
               </p>

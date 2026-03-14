@@ -1,4 +1,5 @@
 import { CalendarIcon, Sparkles, Zap } from "lucide-react";
+import { useState } from "react";
 import { Badge } from "../ui/badge";
 import {
   Card,
@@ -36,6 +37,12 @@ export default function NewsCardItems({
   futureToggles,
   setFutureToggles,
 }: NewsCardItemsProps) {
+  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
+
+  const handleImageLoad = (id: string) => {
+    setLoadedImages((prev) => ({ ...prev, [id]: true }));
+  };
+
   const handleFutureToggle = (id: string, checked: boolean) => {
     if (checked) {
       // Turn off all others and turn on this one
@@ -63,14 +70,23 @@ export default function NewsCardItems({
                   </div>
                 </div>
               )}
+              {!loadedImages[article.id] && (
+                <div className="absolute inset-0 z-10 bg-zinc-100 dark:bg-zinc-800 animate-pulse overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                </div>
+              )}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
                 alt="news thumbnail"
+                onLoad={() => handleImageLoad(article.id)}
                 onError={(e) => {
                   e.currentTarget.src = "/ReadHub_PlaceHolder.png";
+                  handleImageLoad(article.id);
                 }}
-                className="object-cover w-full h-full "
+                className={`object-cover w-full h-full transition-opacity duration-300 ${
+                  loadedImages[article.id] ? "opacity-100" : "opacity-0"
+                }`}
               />
               <Button
                 onClick={() =>

@@ -104,10 +104,10 @@ export default function StoryLibrary() {
                     {story.currentChapterCount} Ch.
                   </div>
                   {story.averageRating !== undefined &&
-                    story.averageRating > 0 && (
+                    Number(story.averageRating) > 0 && (
                       <div className="bg-black/60 backdrop-blur-md text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/10 shadow-lg">
                         <Star className="w-3 h-3 fill-amber-400" />
-                        {story.averageRating.toFixed(1)}
+                        {Number(story.averageRating).toFixed(1)}
                       </div>
                     )}
                 </div>

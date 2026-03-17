@@ -13,7 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import Typography from "@/components/ui/custom/typography";
 import { Badge } from "@/components/ui/badge";
-import StoryReview from "@/components/story/story-review";
 import Link from "next/link";
 
 interface ChapterViewerProps {
@@ -239,13 +238,6 @@ export default function ChapterViewer({
             <Typography variant="p">
               This chapter was crafted independently by our AI Agent.
             </Typography>
-          </div>
-
-          <div className="w-full max-w-md mx-auto pb-0">
-            <StoryReview
-              storyId={story.id || story.index}
-              onSuccess={(updatedStory) => setStory(updatedStory)}
-            />
           </div>
         </footer>
       </article>

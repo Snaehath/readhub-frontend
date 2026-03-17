@@ -10,8 +10,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowLeft,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
+import ReviewModal from "./review-modal";
 import { Button } from "@/components/ui/button";
 import Typography from "@/components/ui/custom/typography";
 import { Badge } from "@/components/ui/badge";
@@ -42,6 +44,15 @@ export default function StoryViewer({
   const itemsPerPage = 3;
   const { user } = useUserStore();
   const isAdmin = user?.role === "admin";
+
+  const [rating, setRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+
+  const showGenerationButton = !story.isCompleted && !!user;
+  const totalItems =
+    (story.chapters?.length || 0) + (showGenerationButton ? 1 : 0);
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
   const coverBaseUrl = API_BASE_URL.replace("/api", "") + "/covers";
 
@@ -102,6 +113,11 @@ export default function StoryViewer({
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleRate = (val: number) => {
+    setRating(val);
+    setIsReviewOpen(true);
   };
 
   return (
@@ -168,7 +184,7 @@ export default function StoryViewer({
                       fillOpacity: 0.2,
                     }}
                   />{" "}
-                  AI Generated Original
+                  ReadHub Original
                 </Badge>
                 {story.isCompleted && (
                   <Badge
@@ -209,6 +225,38 @@ export default function StoryViewer({
                 <BookOpen className="w-3.5 h-3.5 text-violet-500" />
                 {story.currentChapterCount} / {story.maxChapters} Chapters
               </Badge>
+
+              {/* Rating Section */}
+              <div className="flex items-center gap-1 bg-background/50 backdrop-blur-sm px-3 py-1.5 rounded-full border shadow-xs">
+                <div className="flex items-center gap-0.5 mr-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onMouseEnter={() => setHoveredRating(star)}
+                      onMouseLeave={() => setHoveredRating(0)}
+                      onClick={() => handleRate(star)}
+                      className="group transition-transform active:scale-95 focus:outline-hidden cursor-pointer"
+                    >
+                      <Star
+                        className={`w-4 h-4 transition-all ${
+                          star <=
+                          (hoveredRating ||
+                            rating ||
+                            Math.round(story.averageRating || 0))
+                            ? "text-amber-500 fill-amber-500"
+                            : "text-zinc-300 dark:text-zinc-700"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+                <span className="text-xs font-black text-foreground">
+                  {story.averageRating?.toFixed(1) || "0.0"}
+                </span>
+                <span className="text-xs text-muted-foreground font-bold uppercase">
+                  ({story.reviewCount || 0})
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -289,7 +337,7 @@ export default function StoryViewer({
                 ))}
 
               {/* Generate Chapter Button Card */}
-              {!story.isCompleted && user && (
+              {showGenerationButton && currentPage === totalPages && (
                 <Card
                   className="group overflow-hidden border-2 border-dashed border-blue-500/30 shadow-sm cursor-pointer flex flex-col items-center justify-center bg-blue-50/10 dark:bg-blue-900/10 transition-all hover:bg-blue-50/30 dark:hover:bg-blue-900/30 min-h-[16rem]"
                   onClick={handleGenerateChapter}
@@ -322,7 +370,7 @@ export default function StoryViewer({
             </div>
 
             {/* Pagination Controls */}
-            {story.chapters && story.chapters.length > itemsPerPage && (
+            {totalItems > itemsPerPage && (
               <div className="flex items-center justify-center gap-4 pt-8">
                 <Button
                   variant="outline"
@@ -336,24 +384,15 @@ export default function StoryViewer({
                   <ChevronLeft className="w-4 h-4 mr-1" /> Previous
                 </Button>
                 <div className="text-xs font-black text-muted-foreground uppercase tracking-widest">
-                  Page {currentPage} of{" "}
-                  {Math.ceil((story.chapters?.length || 0) / itemsPerPage)}
+                  Page {currentPage} of {totalPages}
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() =>
-                    setCurrentPage((prev) =>
-                      Math.min(
-                        Math.ceil((story.chapters?.length || 0) / itemsPerPage),
-                        prev + 1,
-                      ),
-                    )
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                   }
-                  disabled={
-                    currentPage ===
-                    Math.ceil((story.chapters?.length || 0) / itemsPerPage)
-                  }
+                  disabled={currentPage === totalPages}
                   className="rounded-full px-4 font-bold border-blue-200 text-blue-600 hover:bg-blue-50 disabled:opacity-30"
                 >
                   Next <ChevronRight className="w-4 h-4 ml-1" />
@@ -430,6 +469,17 @@ export default function StoryViewer({
           </TabsContent>
         </Tabs>
       </div>
+      <ReviewModal
+        isOpen={isReviewOpen}
+        onOpenChange={(open) => {
+          setIsReviewOpen(open);
+          if (!open) setRating(0);
+        }}
+        story={story}
+        rating={rating}
+        username={user?.username}
+        onSuccess={onStoryUpdate}
+      />
     </div>
   );
 }

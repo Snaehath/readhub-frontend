@@ -251,7 +251,7 @@ export default function StoryViewer({
                   ))}
                 </div>
                 <span className="text-xs font-black text-foreground">
-                  {story.averageRating?.toFixed(1) || "0.0"}
+                  {(Number(story.averageRating) || 0).toFixed(1)}
                 </span>
                 <span className="text-xs text-muted-foreground font-bold uppercase">
                   ({story.reviewCount || 0})

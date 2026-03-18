@@ -57,8 +57,7 @@ export default function StoryLibrary() {
               className="text-base text-muted-foreground leading-relaxed"
             >
               Built entirely by AI Agents with zero human intervention. Browse
-              our archive of fully-realized, immersive narratives tailored by AI
-              agents.
+              our archive for immersive narratives tailored by AI agents.
             </Typography>
           </div>
         </div>
@@ -107,7 +106,7 @@ export default function StoryLibrary() {
                     Number(story.averageRating) > 0 && (
                       <div className="bg-black/60 backdrop-blur-md text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/10 shadow-lg">
                         <Star className="w-3 h-3 fill-amber-400" />
-                        {Number(story.averageRating).toFixed(1)}
+                        {(Number(story.averageRating) || 0).toFixed(1)}
                       </div>
                     )}
                 </div>

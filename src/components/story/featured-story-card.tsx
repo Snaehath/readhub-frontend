@@ -2,14 +2,9 @@
 
 import { useState } from "react";
 import { StorySummary, AllStoriesResponse } from "@/types";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles } from "lucide-react";
+import { BookOpen, Sparkles, ArrowRight, Layout } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Typography from "@/components/ui/custom/typography";
@@ -22,6 +17,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function FeaturedStorySection() {
   const [imageError, setImageError] = useState(false);
+  const [retriedPng, setRetriedPng] = useState(false);
 
   const coverBaseUrl = API_BASE_URL.replace("/api", "") + "/covers";
 
@@ -34,7 +30,7 @@ export default function FeaturedStorySection() {
   const stories = allData?.stories || [];
   const completedStories = stories.filter((s: StorySummary) => s.isCompleted);
   const targetStory =
-    completedStories.length > 0 ? completedStories[0] : stories[0];
+    completedStories.length > 0 ? completedStories[0] : stories[1];
   const targetStoryId = targetStory?.id || targetStory?.index;
 
   // 2. Fetch full content for the identified featured story
@@ -49,7 +45,7 @@ export default function FeaturedStorySection() {
   if (isLoading || !story) return null;
 
   return (
-    <section className="mb-12 animate-in fade-in slide-in-from-bottom-6 duration-700">
+    <section className="mb-24 relative overflow-x-hidden">
       {/* AI Gradient Definition */}
       <svg width="0" height="0" className="absolute">
         <defs>
@@ -60,107 +56,180 @@ export default function FeaturedStorySection() {
           </linearGradient>
         </defs>
       </svg>
-      <div className="flex items-center mb-6">
-        <Typography
-          variant="h2"
-          className="text-xl font-bold tracking-tight flex items-center gap-2"
-        >
-          AI Serial{" "}
-          <Sparkles
-            className="w-5 h-5"
-            style={{
-              stroke: "url(#ai-gradient)",
-              fill: "url(#ai-gradient)",
-              fillOpacity: 0.1,
-            }}
-          />
-        </Typography>
+
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-black uppercase tracking-widest mb-1">
+            <Sparkles
+              className="w-4 h-4"
+              style={{
+                stroke: "url(#ai-gradient)",
+                fill: "url(#ai-gradient)",
+                fillOpacity: 0.1,
+              }}
+            />
+            AI Original
+          </div>
+          <Typography
+            variant="h2"
+            className="text-3xl sm:text-4xl font-black tracking-tight flex items-center gap-3 bg-linear-to-r from-foreground to-foreground/70 bg-clip-text"
+          >
+            AI Serial Spotlight
+          </Typography>
+        </div>
+        <Button variant="ghost" asChild className="rounded-full font-bold h-10">
+          <Link href="/library">
+            View All Series <ArrowRight className="w-4 h-4 ml-2" />
+          </Link>
+        </Button>
       </div>
 
-      <Link href={`/story/${story.index}`} className="block group">
-        <Card className="overflow-hidden border shadow-sm transition-colors hover:bg-muted/50">
-          <div className="grid sm:grid-cols-5">
-            <div className="sm:col-span-2 relative h-56 sm:h-auto overflow-hidden border-r bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center p-8">
+      <Link href={`/story/${story.index || story.id}`} className="block group">
+        <Card className="overflow-hidden border border-zinc-200/50 dark:border-zinc-800/50 shadow-2xl bg-background/40 backdrop-blur-xl transition-all duration-500 hover:shadow-blue-500/10 hover:border-blue-500/30 rounded-[2.5rem]">
+          <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[420px]">
+            {/* Left Column: Artistic Cover */}
+            <div className="lg:col-span-5 relative overflow-hidden bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center group/cover">
               {!imageError ? (
                 <Image
-                  src={`${coverBaseUrl}/cover_${story.id}.jpg`}
+                  src={
+                    retriedPng
+                      ? `${coverBaseUrl}/cover_${story.id}.png`
+                      : story.coverImage ||
+                        `${coverBaseUrl}/cover_${story.id}.jpg`
+                  }
                   alt={story.title}
                   fill
-                  className="object-cover transition-transform group-hover:scale-110 duration-700"
-                  onError={() => setImageError(true)}
+                  className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                  onError={() => {
+                    if (!retriedPng && !story.coverImage) setRetriedPng(true);
+                    else setImageError(true);
+                  }}
                 />
               ) : (
-                <div className="absolute inset-0 bg-linear-to-br from-blue-600/15 via-indigo-600/5 to-violet-600/15" />
+                <div className="absolute inset-0 bg-linear-to-br from-blue-600/20 via-indigo-600/10 to-violet-600/20" />
               )}
 
-              {/* Overlay Content */}
-              <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent group-hover:from-black/90 transition-colors" />
+              {/* High-quality overlay */}
+              <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent group-hover:from-black/95 transition-all duration-500" />
 
-              <div className="relative z-10 text-center w-full px-4">
+              <div className="relative z-10 p-12 text-center lg:text-left h-full flex flex-col justify-end w-full">
                 <Badge
                   variant="outline"
-                  className={`mb-3 uppercase text-[10px] tracking-[0.2em] font-black border-2 bg-background/20 backdrop-blur-md text-white ${
-                    story.isCompleted
-                      ? "border-emerald-500/50"
-                      : "border-white/20"
-                  }`}
+                  className="w-fit mb-6 uppercase text-[10px] tracking-[0.2em] font-black border-2 bg-white/10 backdrop-blur-md text-white border-white/20 mx-auto lg:mx-0"
                 >
-                  {story.isCompleted ? "Completed Series" : "Original Series"}
+                  {story.isCompleted ? "Completed" : "Active"}
                 </Badge>
                 <Typography
-                  variant="h3"
-                  className="text-2xl sm:text-3xl font-black tracking-tight leading-tight mb-2 text-white drop-shadow-lg"
+                  variant="h1"
+                  className="mb-4 text-white drop-shadow-2xl leading-[0.9]"
                 >
                   {story.title}
                 </Typography>
-                <Typography
-                  variant="small"
-                  className="font-black tracking-widest uppercase text-[10px] text-blue-200 drop-shadow-md"
-                >
-                  By {story.authorName}
-                </Typography>
+                <div className="flex items-center justify-center lg:justify-start gap-3 opacity-90">
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-blue-300">
+                    <Sparkles
+                      className="w-4 h-4"
+                      style={{
+                        stroke: "url(#ai-gradient)",
+                        fill: "url(#ai-gradient)",
+                        fillOpacity: 0.1,
+                      }}
+                    />
+                  </div>
+                  <Typography className="text-xs font-black tracking-widest uppercase text-blue-100 drop-shadow-md leading-none">
+                    Written by {story.authorName}
+                  </Typography>
+                </div>
+              </div>
+
+              {/* Corner Accent */}
+              <div className="absolute top-6 left-6 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
+                  <Sparkles className="w-6 h-6 text-amber-300 animate-pulse" />
+                </div>
               </div>
             </div>
 
-            {/* Content Preview */}
-            <div className="sm:col-span-3 p-6 flex flex-col justify-center">
-              <CardHeader className="p-0 mb-3">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <div
-                    className={`w-1.5 h-1.5 rounded-full animate-pulse ${story.isCompleted ? "bg-emerald-500" : "bg-primary"}`}
-                  />
-                  <Typography
-                    variant="small"
-                    className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground"
+            {/* Right Column: Narrative Details */}
+            <div className="lg:col-span-7 p-8 sm:p-14 flex flex-col justify-center gap-10 bg-linear-to-br from-transparent to-zinc-50/50 dark:to-zinc-900/50">
+              <div className="space-y-6">
+                <div className="flex flex-wrap items-center gap-4">
+                  <Badge
+                    variant="secondary"
+                    className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"
                   >
-                    {story.isCompleted
-                      ? `Complete Collection (${story.currentChapterCount} Chapters)`
-                      : `Chapter ${story.currentChapterCount} • Ongoing`}
+                    <Layout className="w-3 h-3 mr-2" />
+                    {story.genre}
+                  </Badge>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute -left-4 top-0 bottom-0 w-1 bg-blue-500 rounded-full" />
+                  <Typography
+                    variant="h4"
+                    className="text-2xl sm:text-3xl font-black italic tracking-tight leading-tight text-foreground/90 pl-4"
+                  >
+                    &ldquo;{story.subject}&rdquo;
                   </Typography>
                 </div>
-                <Typography
-                  variant="h4"
-                  className="text-lg font-bold italic leading-tight text-foreground/90"
-                >
-                  &quot;{story.subject}&quot;
-                </Typography>
-              </CardHeader>
 
-              <CardContent className="p-0 mb-4">
                 <Typography
-                  variant="p"
-                  className="text-sm text-muted-foreground leading-relaxed line-clamp-2 font-medium"
+                  variant="muted"
+                  className="leading-relaxed font-medium line-clamp-4"
                 >
-                  {story.chapters?.[story.chapters.length - 1]?.content ||
-                    "Your narrative journey is unfolding. New chapters are crafted daily by our AI agent."}
+                  {story.synopsis ||
+                    story.chapters?.[story.chapters.length - 1]?.content ||
+                    "An epic narrative journey forged by advanced AI agents, exploring original worlds and complex characters."}
                 </Typography>
-              </CardContent>
+              </div>
 
-              <CardFooter className="p-0">
-                <Button size="sm" className="rounded-md font-bold">
-                  Keep Reading
-                </Button>
-              </CardFooter>
+              <div className="flex flex-col sm:flex-row items-end justify-between gap-8 pt-8 border-t border-zinc-200/50 dark:border-zinc-800/50">
+                <div className="flex flex-wrap items-center gap-10">
+                  <div className="flex flex-col gap-2">
+                    <Typography
+                      variant="muted"
+                      className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80"
+                    >
+                      Status
+                    </Typography>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-2 h-2 rounded-full animate-pulse ${story.isCompleted ? "bg-emerald-500" : "bg-blue-500"}`}
+                      />
+                      <Typography
+                        className={`text-xs font-black uppercase tracking-widest leading-none ${story.isCompleted ? "text-emerald-500" : "text-blue-500"}`}
+                      >
+                        {story.isCompleted ? "Completed" : "Ongoing"}
+                      </Typography>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <Typography
+                      variant="muted"
+                      className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80"
+                    >
+                      Read Time
+                    </Typography>
+                    <div className="flex items-center gap-2">
+                      <BookOpen className="w-3.5 h-3.5 text-indigo-500" />
+                      <Typography className="text-xs font-black uppercase tracking-widest leading-none">
+                        {Math.ceil((story.chapters?.length || 1) * 8)} min read
+                      </Typography>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <Button
+                    variant="pureGhost"
+                    className="rounded-full font-black cursor-pointer"
+                  >
+                    Read Now
+                    <ArrowRight className="w-3.5 h-3.5 ml-2" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
         </Card>

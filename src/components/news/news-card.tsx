@@ -20,6 +20,8 @@ import TopLoadingBar from "../misc/topLoadBar";
 import NewsCardItems from "./news-card-items";
 import { AiInsightSkeleton } from "../misc/skeletons";
 import NewsTicker from "./news-ticker";
+import { ScrollArea } from "../ui/scroll-area";
+import Typography from "../ui/custom/typography";
 
 import {
   Dialog,
@@ -293,7 +295,7 @@ Please try again in a few moments.`,
     <>
       <NewsTicker country={selectedCountry} />
       <div className="w-full px-4 sm:px-6 lg:px-8">
-        <h2 className="text-3xl font-bold mb-4">📰 Latest News</h2>
+        <Typography variant="h2" className="mb-4">📰 Latest News</Typography>
         {/* AI Dialog */}
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
@@ -307,46 +309,50 @@ Please try again in a few moments.`,
               </DialogDescription>
             </DialogHeader>
 
-            <div className="flex-1 overflow-y-auto pr-2 -mr-2">
-              {!token ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center gap-4">
-                  <div className="bg-indigo-50 dark:bg-indigo-950/30 p-4 rounded-full">
-                    <Lock className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+            <ScrollArea className="flex-1 pr-4">
+              <div className="space-y-4">
+                {!token ? (
+                  <div className="flex flex-col items-center justify-center py-8 text-center gap-4">
+                    <div className="bg-indigo-50 dark:bg-indigo-950/30 p-4 rounded-full">
+                      <Lock className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div className="space-y-2 px-6">
+                      <Typography variant="h3">
+                        AI Features are Locked
+                      </Typography>
+                      <Typography variant="muted">
+                        Sign in to your ReadHub account to unlock intelligent news
+                        summaries and deep analysis powered by AI.
+                      </Typography>
+                    </div>
+                    <Button asChild className="rounded-full px-8 cursor-pointer">
+                      <Link href="/login" onClick={() => setShowDialog(false)}>
+                        Sign In to Unlock
+                      </Link>
+                    </Button>
                   </div>
-                  <div className="space-y-2 px-6">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      AI Features are Locked
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Sign in to your ReadHub account to unlock intelligent news
-                      summaries and deep analysis powered by AI.
-                    </p>
+                ) : aiLoading ? (
+                  <div className="flex flex-col items-center justify-center py-12 gap-4">
+                    <div className="relative">
+                      <div className="w-16 h-16 border-4 border-indigo-100 dark:border-indigo-900 rounded-full"></div>
+                      <div className="absolute top-0 left-0 w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                    <div className="text-center space-y-1">
+                      <Typography variant="small" className="font-semibold">
+                        Analyzing article...
+                      </Typography>
+                      <Typography variant="muted" className="text-xs">
+                        AI is processing the content
+                      </Typography>
+                    </div>
                   </div>
-                  <Button asChild className="rounded-full px-8 cursor-pointer">
-                    <Link href="/login" onClick={() => setShowDialog(false)}>
-                      Sign In to Unlock
-                    </Link>
-                  </Button>
-                </div>
-              ) : aiLoading ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-4">
-                  <div className="relative">
-                    <div className="w-16 h-16 border-4 border-indigo-100 dark:border-indigo-900 rounded-full"></div>
-                    <div className="absolute top-0 left-0 w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <div className="prose dark:prose-invert max-w-none prose-sm pb-4">
+                    <ReactMarkdown>{aiResponse}</ReactMarkdown>
                   </div>
-                  <div className="text-center space-y-1">
-                    <p className="text-base font-semibold text-foreground">
-                      Analyzing article...
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      AI is processing the content
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <ReactMarkdown>{aiResponse}</ReactMarkdown>
-              )}
-            </div>
+                )}
+              </div>
+            </ScrollArea>
 
             <DialogFooter className="flex-shrink-0 mt-4">
               <Button
@@ -458,7 +464,9 @@ Please try again in a few moments.`,
                     }}
                     title={country.name}
                   />
-                  <span className="tracking-wide uppercase">{country.tag}</span>
+                  <Typography variant="muted" className="tracking-wide uppercase font-bold text-inherit leading-none">
+                    {country.tag}
+                  </Typography>
                 </div>
               ))}
             </div>
@@ -483,10 +491,10 @@ Please try again in a few moments.`,
             className="mt-6 bg-gray-50 dark:bg-zinc-900 border rounded-xl p-6 shadow-sm transition-all duration-300"
           >
             <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
+              <Typography variant="h3" className="flex items-center gap-2">
                 <Zap className="w-5 h-5 text-indigo-500" />
                 Future AI Insight
-              </h3>
+              </Typography>
             </div>
 
             {futureLoading ? (
@@ -497,12 +505,12 @@ Please try again in a few moments.`,
                     <div className="absolute top-0 left-0 w-10 h-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-semibold text-foreground">
+                    <Typography variant="small" className="font-semibold">
                       AI is thinking...
-                    </p>
-                    <p className="text-xs text-muted-foreground">
+                    </Typography>
+                    <Typography variant="muted" className="text-xs">
                       Predicting trends and impacts
-                    </p>
+                    </Typography>
                   </div>
                 </div>
 
@@ -516,13 +524,13 @@ Please try again in a few moments.`,
                       <Lock className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
                     </div>
                     <div className="space-y-2 px-6">
-                      <h4 className="text-lg font-semibold text-foreground">
+                      <Typography variant="h3">
                         Feature Locked
-                      </h4>
-                      <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                      </Typography>
+                      <Typography variant="muted" className="max-w-md mx-auto">
                         Sign in to your ReadHub account to unlock intelligent
                         news summaries and deep analysis powered by AI.
-                      </p>
+                      </Typography>
                     </div>
                     <Button
                       asChild
@@ -560,9 +568,9 @@ Please try again in a few moments.`,
 
         {/* No Results */}
         {filteredNews.length === 0 && !isLoading && (
-          <div className="text-center text-gray-500 mt-6">
+          <Typography variant="muted" className="text-center mt-6">
             No articles found for this category.
-          </div>
+          </Typography>
         )}
 
         {/* Load More */}

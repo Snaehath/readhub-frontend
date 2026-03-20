@@ -5,15 +5,12 @@ export const dynamic = "force-dynamic";
 
 export default function Home() {
   return (
-    <main className="container mx-auto px-4 py-8">
+    <main className="container mx-auto px-4 py-12 space-y-24">
       <HomeContent />
 
       <FeaturedStorySection />
 
-      <section className="mb-12">
-        <h2 className="text-2xl font-bold mb-6">Featured News</h2>
-        <FeaturedNews />
-      </section>
+      <FeaturedNews />
     </main>
   );
 }

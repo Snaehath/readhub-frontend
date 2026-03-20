@@ -12,6 +12,7 @@ import { useUserStore } from "@/lib/store/userStore";
 import { API_BASE_URL, avatarOptions } from "@/constants";
 import { toast } from "sonner";
 import { Edit2, User as UserIcon } from "lucide-react";
+import Typography from "@/components/ui/custom/typography";
 
 export default function ProfilePage() {
   const { user, setUser } = useUserStore(); // Zustand store
@@ -39,10 +40,10 @@ export default function ProfilePage() {
           <UserIcon className="w-12 h-12 text-muted-foreground" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-xl font-semibold">User not found</h2>
-          <p className="text-muted-foreground">
+          <Typography variant="h3">User not found</Typography>
+          <Typography variant="muted">
             Please log in to view your profile.
-          </p>
+          </Typography>
         </div>
         <Button asChild>
           <a href="/login">Sign In</a>
@@ -184,20 +185,26 @@ export default function ProfilePage() {
               </div>
             ) : (
               <div className="text-center space-y-1">
-                <h2 className="text-2xl font-bold tracking-tight">
+                <Typography variant="h2" className="tracking-tight">
                   {user.username}
-                </h2>
-                <p className="text-muted-foreground font-medium text-sm">
+                </Typography>
+                <Typography variant="muted" className="font-medium text-sm">
                   {user.email}
-                </p>
+                </Typography>
                 <div className="pt-3 flex flex-wrap justify-center gap-2">
-                  <span className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold rounded-full border border-indigo-100 dark:border-indigo-900/50 uppercase tracking-wider">
+                  <Typography
+                    variant="muted"
+                    className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold rounded-full border border-indigo-100 dark:border-indigo-900/50 uppercase tracking-wider leading-none"
+                  >
                     Member since {joinedDate}
-                  </span>
+                  </Typography>
                   {user.role === "admin" && (
-                    <span className="px-3 py-1 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-[11px] font-bold rounded-full border border-amber-100 dark:border-amber-900/50 uppercase tracking-wider">
+                    <Typography
+                      variant="muted"
+                      className="px-3 py-1 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-[11px] font-bold rounded-full border border-amber-100 dark:border-amber-900/50 uppercase tracking-wider leading-none"
+                    >
                       Administrator
-                    </span>
+                    </Typography>
                   )}
                 </div>
               </div>

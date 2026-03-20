@@ -14,6 +14,7 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function StoryLibrary() {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [retriedPng, setRetriedPng] = useState<Record<string, boolean>>({});
 
   const baseUrl =
     process.env.NEXT_PUBLIC_API_BASE_URL ||
@@ -42,10 +43,10 @@ export default function StoryLibrary() {
       <div className="mb-10 sm:mb-14">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-3">
+            <Typography variant="muted" className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-3">
               <Sparkles className="w-3.5 h-3.5" />
               ReadHub Original
-            </div>
+            </Typography>
             <Typography
               variant="h2"
               className="text-3xl sm:text-4xl font-black tracking-tight mb-3"
@@ -76,13 +77,28 @@ export default function StoryLibrary() {
               <div className="relative aspect-[4/5] w-full overflow-hidden bg-muted/30">
                 {!imageErrors[story.id] ? (
                   <Image
-                    src={`${coverBaseUrl}/cover_${story.id}.jpg`}
+                    src={
+                      retriedPng[story.id]
+                        ? `${coverBaseUrl}/cover_${story.id}.png`
+                        : story.coverImage ||
+                          `${coverBaseUrl}/cover_${story.id}.jpg`
+                    }
                     alt={story.title}
                     fill
-                    className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
-                    onError={() =>
-                      setImageErrors((prev) => ({ ...prev, [story.id]: true }))
-                    }
+                    className="object-cover transition-transform duration-700 ease-out"
+                    onError={() => {
+                      if (!retriedPng[story.id] && !story.coverImage) {
+                        setRetriedPng((prev) => ({
+                          ...prev,
+                          [story.id]: true,
+                        }));
+                      } else {
+                        setImageErrors((prev) => ({
+                          ...prev,
+                          [story.id]: true,
+                        }));
+                      }
+                    }}
                   />
                 ) : (
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-indigo-600/5 to-violet-600/10 flex flex-col items-center justify-center p-6 text-center">
@@ -98,15 +114,24 @@ export default function StoryLibrary() {
 
                 {/* Always-on Tags (Top) */}
                 <div className="absolute top-3 inset-x-3 flex items-center justify-between z-10">
-                  <div className="bg-black/60 backdrop-blur-md text-white/90 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 border border-white/10 shadow-lg">
+                  <Typography variant="muted" className="bg-black/60 backdrop-blur-md text-white/90 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 border border-white/10 shadow-lg leading-none">
                     <List className="w-3 h-3 text-blue-400" />
                     {story.currentChapterCount} Ch.
-                  </div>
-                  {(story.averageRating !== undefined ? story.averageRating : (story.reviewCount && story.reviewCount > 0 ? (story.ratingSum || 0) / story.reviewCount : 0)) > 0 && (
-                    <div className="bg-black/60 backdrop-blur-md text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/10 shadow-lg">
+                  </Typography>
+                  {(story.averageRating !== undefined
+                    ? story.averageRating
+                    : story.reviewCount && story.reviewCount > 0
+                      ? (story.ratingSum || 0) / story.reviewCount
+                      : 0) > 0 && (
+                    <Typography variant="muted" className="bg-black/60 backdrop-blur-md text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/10 shadow-lg leading-none">
                       <Star className="w-3 h-3 fill-amber-400" />
-                      {(story.averageRating ?? (story.reviewCount && story.reviewCount > 0 ? (story.ratingSum || 0) / story.reviewCount : 0)).toFixed(1)}
-                    </div>
+                      {(
+                        story.averageRating ??
+                        (story.reviewCount && story.reviewCount > 0
+                          ? (story.ratingSum || 0) / story.reviewCount
+                          : 0)
+                      ).toFixed(1)}
+                    </Typography>
                   )}
                 </div>
 
@@ -116,17 +141,17 @@ export default function StoryLibrary() {
                 <div className="absolute inset-x-0 bottom-0 p-5 translate-y-8 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out flex flex-col justify-end z-20 h-full">
                   <div className="mt-auto">
                     {story.synopsis ? (
-                      <p className="text-white/80 text-sm line-clamp-4 mb-4 leading-relaxed font-medium drop-shadow-sm">
+                      <Typography variant="muted" className="text-white/80 text-sm line-clamp-4 mb-4 leading-relaxed font-medium drop-shadow-sm">
                         {story.synopsis}
-                      </p>
+                      </Typography>
                     ) : (
-                      <p className="text-white/50 text-sm italic mb-4">
+                      <Typography variant="muted" className="text-white/50 text-sm italic mb-4">
                         No synopsis available.
-                      </p>
+                      </Typography>
                     )}
-                    <span className="inline-flex items-center gap-2 text-xs font-bold bg-white text-black px-4 py-2 rounded-full shadow-lg hover:scale-105 transition-transform duration-300">
+                    <Typography variant="small" className="inline-flex items-center gap-2 text-xs font-bold bg-white text-black px-4 py-2 rounded-full shadow-lg hover:scale-105 transition-transform duration-300">
                       Read Now <ArrowRight className="w-3.5 h-3.5" />
-                    </span>
+                    </Typography>
                   </div>
                 </div>
               </div>
@@ -145,8 +170,8 @@ export default function StoryLibrary() {
                     <User className="w-3 h-3" />
                   </div>
                   <Typography
-                    variant="p"
-                    className="text-xs font-semibold truncate text-muted-foreground"
+                    variant="muted"
+                    className="text-xs font-semibold truncate"
                   >
                     {story.authorName}
                   </Typography>

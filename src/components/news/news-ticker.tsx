@@ -6,6 +6,7 @@ import { getTickerNews } from "@/lib/data";
 import { Category, NewsArticle } from "@/types";
 import { Loader2 } from "lucide-react";
 import { NEWS_CATEGORY_COLORS } from "@/constants";
+import Typography from "../ui/custom/typography";
 
 interface NewsTickerProps {
   country: string;
@@ -63,7 +64,7 @@ export default function NewsTicker({ country }: NewsTickerProps) {
     return (
       <div className="bg-blue-600 dark:bg-indigo-900 text-white py-2 shadow-sm flex justify-center items-center h-9">
         <Loader2 className="w-4 h-4 animate-spin mr-2" />
-        <span className="text-xs font-medium">Fetching highlights...</span>
+        <Typography variant="small" className="text-white">Fetching highlights...</Typography>
       </div>
     );
   }
@@ -90,14 +91,18 @@ export default function NewsTicker({ country }: NewsTickerProps) {
               key={`${article.id}-${index}`}
               className="flex items-center gap-4 mx-6 text-sm font-semibold tracking-tight"
             >
-              <span
-                className={`px-2.5 py-0.5 rounded-full text-xs capitalize tracking-tighter border shadow-sm ${colorClass}`}
+              <Typography
+                variant="muted"
+                className={`px-2.5 py-0.5 rounded-full text-xs capitalize tracking-tighter border shadow-sm leading-none ${colorClass}`}
               >
                 {category}
-              </span>
-              <span className="text-foreground/80 hover:text-blue-600 dark:hover:text-indigo-400 transition-colors cursor-default whitespace-nowrap">
+              </Typography>
+              <Typography
+                variant="small"
+                className="text-foreground/80 hover:text-blue-600 dark:hover:text-indigo-400 transition-colors cursor-default whitespace-nowrap"
+              >
                 {article.title}
-              </span>
+              </Typography>
               <div className="flex gap-1 items-center opacity-30">
                 <span className="w-1 h-1 rounded-full bg-foreground" />
                 <span className="w-1 h-1 rounded-full bg-foreground scale-75" />

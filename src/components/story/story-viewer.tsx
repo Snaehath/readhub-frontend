@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import useSWR from "swr";
 import { AIStory } from "@/types";
 import {
   User,
@@ -18,13 +19,15 @@ import ReviewModal from "./review-modal";
 import { Button } from "@/components/ui/button";
 import Typography from "@/components/ui/custom/typography";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserStore } from "@/lib/store/userStore";
 import { API_BASE_URL } from "@/constants";
 import { toast } from "sonner";
 import { Wand2, Loader2 } from "lucide-react";
 import Image from "next/image";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 interface StoryViewerProps {
   story: AIStory;
@@ -42,6 +45,7 @@ export default function StoryViewer({
   const [currentPage, setCurrentPage] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [retriedPng, setRetriedPng] = useState(false);
   const itemsPerPage = 3;
   const { user } = useUserStore();
   const isAdmin = user?.role === "admin";
@@ -49,29 +53,16 @@ export default function StoryViewer({
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
-  const [reviews, setReviews] = useState<AIStory["reviews"]>([]);
-  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const {
+    data: reviewsData,
+    isLoading: isLoadingReviews,
+    mutate: mutateReviews,
+  } = useSWR<{ reviews: AIStory["reviews"] }>(
+    `${API_BASE_URL}/story/${story.index || story.id}/reviews`,
+    fetcher,
+  );
 
-  const fetchReviews = useCallback(async () => {
-    setIsLoadingReviews(true);
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/story/${story.index || story.id}/reviews`,
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setReviews(data.reviews || []);
-      }
-    } catch (err) {
-      console.error("Error fetching reviews:", err);
-    } finally {
-      setIsLoadingReviews(false);
-    }
-  }, [story.id, story.index]);
-
-  useEffect(() => {
-    fetchReviews();
-  }, [fetchReviews]);
+  const reviews = reviewsData?.reviews || [];
 
   const showGenerationButton = !story.isCompleted && !!user;
   const totalItems =
@@ -147,10 +138,16 @@ export default function StoryViewer({
   return (
     <div className="max-w-7xl mx-auto px-4 py-12 sm:px-8">
       {backUrl && (
-        <Button variant="ghost" asChild className="mb-8 gap-2 group">
+        <Button
+          variant="ghost"
+          asChild
+          className="mb-8 gap-2 group cursor-pointer rounded-full"
+        >
           <Link href={backUrl}>
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            {backText || "Back"}
+            <Typography variant="small" className="font-bold">
+              {backText || "Back"}
+            </Typography>
           </Link>
         </Button>
       )}
@@ -177,11 +174,22 @@ export default function StoryViewer({
           <div className="relative w-48 h-64 sm:w-64 sm:h-80 rounded-2xl overflow-hidden shadow-2xl border-4 border-background shrink-0 group">
             {!imageError ? (
               <Image
-                src={`${coverBaseUrl}/cover_${story.id}.jpg`}
+                src={
+                  retriedPng
+                    ? `${coverBaseUrl}/cover_${story.id}.png`
+                    : story.coverImage ||
+                      `${coverBaseUrl}/cover_${story.id}.jpg`
+                }
                 alt={story.title}
                 fill
-                className="object-cover transition-transform group-hover:scale-110 duration-700"
-                onError={() => setImageError(true)}
+                className="object-cover"
+                onError={() => {
+                  if (!retriedPng && !story.coverImage) {
+                    setRetriedPng(true);
+                  } else {
+                    setImageError(true);
+                  }
+                }}
               />
             ) : (
               <div className="absolute inset-0 bg-linear-to-br from-blue-600/20 via-indigo-600/10 to-violet-600/210 flex items-center justify-center">
@@ -264,9 +272,14 @@ export default function StoryViewer({
                       <Star
                         className={`w-4 h-4 transition-all ${
                           star <=
-                            (hoveredRating ||
+                          (hoveredRating ||
                             rating ||
-                            Math.round(story.averageRating ?? (story.reviewCount && story.reviewCount > 0 ? (story.ratingSum || 0) / story.reviewCount : 0)))
+                            Math.round(
+                              story.averageRating ??
+                                (story.reviewCount && story.reviewCount > 0
+                                  ? (story.ratingSum || 0) / story.reviewCount
+                                  : 0),
+                            ))
                             ? "text-amber-500 fill-amber-500"
                             : "text-zinc-300 dark:text-zinc-700"
                         }`}
@@ -274,12 +287,20 @@ export default function StoryViewer({
                     </button>
                   ))}
                 </div>
-                <span className="text-xs font-black text-foreground">
-                  {(story.averageRating ?? (story.reviewCount && story.reviewCount > 0 ? (story.ratingSum || 0) / story.reviewCount : 0)).toFixed(1)}
-                </span>
-                <span className="text-xs text-muted-foreground font-bold uppercase">
+                <Typography variant="small" className="text-xs font-black">
+                  {(
+                    story.averageRating ??
+                    (story.reviewCount && story.reviewCount > 0
+                      ? (story.ratingSum || 0) / story.reviewCount
+                      : 0)
+                  ).toFixed(1)}
+                </Typography>
+                <Typography
+                  variant="muted"
+                  className="text-xs font-bold uppercase"
+                >
                   ({story.reviewCount || 0})
-                </span>
+                </Typography>
               </div>
             </div>
           </div>
@@ -320,9 +341,12 @@ export default function StoryViewer({
             className="animate-in fade-in duration-700 mt-8"
           >
             <div className="flex items-center gap-4 mb-8">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground whitespace-nowrap">
+              <Typography
+                variant="muted"
+                className="text-[10px] font-black uppercase tracking-[0.4em] whitespace-nowrap leading-none"
+              >
                 Chapter Archives
-              </h2>
+              </Typography>
               <div className="h-[1px] w-full bg-linear-to-r from-border/50 to-transparent" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -344,24 +368,33 @@ export default function StoryViewer({
                         <div className="absolute top-4 left-4 text-4xl font-black text-blue-500/40">
                           0{chapter.chapterNumber}
                         </div>
-                        <h3 className="relative z-10 text-xl font-black tracking-tight leading-tight bg-linear-to-br from-foreground to-foreground/60 bg-clip-text">
+                        <Typography
+                          variant="h3"
+                          className="relative z-10 text-xl font-black tracking-tight leading-tight bg-linear-to-br from-foreground to-foreground/60 bg-clip-text"
+                        >
                           {chapter.title}
-                        </h3>
+                        </Typography>
                       </div>
 
                       <CardHeader className="px-4 pt-4 pb-0">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1">
+                        <Typography
+                          variant="muted"
+                          className="text-[10px] font-black uppercase tracking-widest text-blue-600 mb-1 leading-none"
+                        >
                           Entry {chapter.chapterNumber}
-                        </div>
-                        <CardTitle className="text-sm font-bold line-clamp-1">
+                        </Typography>
+                        <Typography className="text-sm font-bold line-clamp-1 leading-none">
                           {story.title}: Part {chapter.chapterNumber}
-                        </CardTitle>
+                        </Typography>
                       </CardHeader>
 
                       <CardContent className="px-4 pt-0 pb-4 flex-1">
-                        <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed italic">
+                        <Typography
+                          variant="muted"
+                          className="text-xs line-clamp-3 leading-relaxed italic"
+                        >
                           {chapter.content}
-                        </p>
+                        </Typography>
                       </CardContent>
                     </Card>
                   </Link>
@@ -384,16 +417,22 @@ export default function StoryViewer({
                       )}
                     </div>
                     <div>
-                      <h3 className="text-lg font-black tracking-tight text-blue-600 dark:text-blue-400 mb-1">
+                      <Typography
+                        variant="h3"
+                        className="mb-1 text-blue-600 dark:text-blue-400"
+                      >
                         {isGenerating
                           ? "Manifesting..."
                           : isAdmin
                             ? "Admin: Force Next Chapter"
                             : "Summon New Chapter"}
-                      </h3>
-                      <p className="text-xs text-muted-foreground font-medium">
+                      </Typography>
+                      <Typography
+                        variant="muted"
+                        className="text-xs font-medium"
+                      >
                         Trigger the AI Agent to continue the narrative journey.
-                      </p>
+                      </Typography>
                     </div>
                   </div>
                 </Card>
@@ -414,9 +453,12 @@ export default function StoryViewer({
                 >
                   <ChevronLeft className="w-4 h-4 mr-1" /> Previous
                 </Button>
-                <div className="text-xs font-black text-muted-foreground uppercase tracking-widest">
+                <Typography
+                  variant="muted"
+                  className="text-xs font-black uppercase tracking-widest leading-none"
+                >
                   Page {currentPage} of {totalPages}
-                </div>
+                </Typography>
                 <Button
                   variant="outline"
                   size="sm"
@@ -439,13 +481,16 @@ export default function StoryViewer({
           >
             <section>
               <div className="flex items-center gap-4 mb-8">
-                <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground whitespace-nowrap">
+                <Typography
+                  variant="muted"
+                  className="text-[10px] font-black uppercase tracking-[0.4em] whitespace-nowrap leading-none"
+                >
                   Synopsis
-                </h2>
+                </Typography>
                 <div className="h-[1px] w-full bg-linear-to-r from-border/50 to-transparent" />
               </div>
               <Typography className=" sm:text-lg leading-relaxed text-foreground/80 italic font-medium">
-                &ldquo;{story.synopsis || story.subject}&rdquo;
+                {story.synopsis || story.subject}
               </Typography>
             </section>
 
@@ -453,9 +498,12 @@ export default function StoryViewer({
             {story.characters && story.characters.length > 0 && (
               <section>
                 <div className="flex items-center gap-4 mb-8">
-                  <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground whitespace-nowrap">
+                  <Typography
+                    variant="muted"
+                    className="text-[10px] font-black uppercase tracking-[0.4em] whitespace-nowrap leading-none"
+                  >
                     Characters
-                  </h2>
+                  </Typography>
                   <div className="h-[1px] w-full bg-linear-to-r from-border/50 to-transparent" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -465,13 +513,19 @@ export default function StoryViewer({
                       className="bg-zinc-50/50 dark:bg-zinc-900/20 border border-zinc-100 dark:border-zinc-800/50 rounded-[2rem] p-8 flex flex-col gap-4 transition-all hover:shadow-md hover:border-blue-500/20 group"
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-xl font-black text-foreground tracking-tight transition-colors">
+                        <Typography
+                          variant="h3"
+                          className="text-xl font-black text-foreground tracking-tight transition-colors"
+                        >
                           {char.name}
-                        </h3>
+                        </Typography>
                       </div>
-                      <p className="text-sm text-muted-foreground leading-relaxed font-medium">
+                      <Typography
+                        variant="muted"
+                        className="text-sm leading-relaxed font-medium"
+                      >
                         {char.description}
-                      </p>
+                      </Typography>
                     </div>
                   ))}
                 </div>
@@ -482,9 +536,12 @@ export default function StoryViewer({
             {story.worldBuilding && (
               <section>
                 <div className="flex items-center gap-4 mb-8">
-                  <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground whitespace-nowrap">
+                  <Typography
+                    variant="muted"
+                    className="text-[10px] font-black uppercase tracking-[0.4em] whitespace-nowrap leading-none"
+                  >
                     World Setting
-                  </h2>
+                  </Typography>
                   <div className="h-[1px] w-full bg-linear-to-r from-border/50 to-transparent" />
                 </div>
                 <div className="bg-orange-50/20 dark:bg-orange-950/5 border border-orange-100/30 dark:border-orange-900/10 rounded-[2.5rem] p-8 sm:p-14 shadow-sm">
@@ -505,18 +562,24 @@ export default function StoryViewer({
             className="animate-in fade-in duration-700 mt-8"
           >
             <div className="flex items-center gap-4 mb-8">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground whitespace-nowrap">
+              <Typography
+                variant="muted"
+                className="text-[10px] font-black uppercase tracking-[0.4em] whitespace-nowrap leading-none"
+              >
                 Latest Reader Insights
-              </h2>
+              </Typography>
               <div className="h-[1px] w-full bg-linear-to-r from-border/50 to-transparent" />
             </div>
 
             {isLoadingReviews ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
-                <p className="text-sm font-black uppercase tracking-widest text-muted-foreground animate-pulse">
+                <Typography
+                  variant="muted"
+                  className="text-sm font-black uppercase tracking-widest animate-pulse"
+                >
                   Unveiling reader feedback...
-                </p>
+                </Typography>
               </div>
             ) : reviews && reviews.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -531,10 +594,16 @@ export default function StoryViewer({
                           {(rev.reviewerName || "A")[0].toUpperCase()}
                         </div>
                         <div>
-                          <h4 className="font-black text-sm text-foreground">
+                          <Typography
+                            variant="small"
+                            className="font-black text-sm text-foreground"
+                          >
                             {rev.reviewerName || "Anonymous Reader"}
-                          </h4>
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                          </Typography>
+                          <Typography
+                            variant="muted"
+                            className="text-[10px] font-bold uppercase tracking-wider"
+                          >
                             {new Date(rev.createdAt).toLocaleDateString(
                               "en-US",
                               {
@@ -543,7 +612,7 @@ export default function StoryViewer({
                                 year: "numeric",
                               },
                             )}
-                          </p>
+                          </Typography>
                         </div>
                       </div>
                       <div className="flex gap-0.5">
@@ -560,9 +629,12 @@ export default function StoryViewer({
                       </div>
                     </div>
                     {rev.review && (
-                      <p className="text-sm text-foreground/80 leading-relaxed font-medium italic">
+                      <Typography
+                        variant="muted"
+                        className="text-sm text-foreground/80 leading-relaxed font-medium italic"
+                      >
                         &ldquo;{rev.review}&rdquo;
-                      </p>
+                      </Typography>
                     )}
                   </Card>
                 ))}
@@ -573,13 +645,19 @@ export default function StoryViewer({
                   <MessageSquare className="w-8 h-8 text-zinc-300" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="text-lg font-black tracking-tight text-foreground">
+                  <Typography
+                    variant="h3"
+                    className="text-lg font-black tracking-tight"
+                  >
                     No insights yet.
-                  </h3>
-                  <p className="text-xs text-muted-foreground font-medium max-w-[240px]">
+                  </Typography>
+                  <Typography
+                    variant="muted"
+                    className="text-xs font-medium max-w-[240px]"
+                  >
                     Be the first to share your journey through this narrative
                     with the world.
-                  </p>
+                  </Typography>
                 </div>
                 <Button
                   variant="outline"
@@ -604,7 +682,7 @@ export default function StoryViewer({
         username={user?.username}
         onSuccess={(updatedStory) => {
           if (onStoryUpdate) onStoryUpdate(updatedStory);
-          fetchReviews();
+          mutateReviews();
         }}
       />
     </div>

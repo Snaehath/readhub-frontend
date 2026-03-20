@@ -102,13 +102,12 @@ export default function StoryLibrary() {
                     <List className="w-3 h-3 text-blue-400" />
                     {story.currentChapterCount} Ch.
                   </div>
-                  {story.averageRating !== undefined &&
-                    Number(story.averageRating) > 0 && (
-                      <div className="bg-black/60 backdrop-blur-md text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/10 shadow-lg">
-                        <Star className="w-3 h-3 fill-amber-400" />
-                        {(Number(story.averageRating) || 0).toFixed(1)}
-                      </div>
-                    )}
+                  {(story.averageRating !== undefined ? story.averageRating : (story.reviewCount && story.reviewCount > 0 ? (story.ratingSum || 0) / story.reviewCount : 0)) > 0 && (
+                    <div className="bg-black/60 backdrop-blur-md text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/10 shadow-lg">
+                      <Star className="w-3 h-3 fill-amber-400" />
+                      {(story.averageRating ?? (story.reviewCount && story.reviewCount > 0 ? (story.ratingSum || 0) / story.reviewCount : 0)).toFixed(1)}
+                    </div>
+                  )}
                 </div>
 
                 {/* Animated Hover Overlay */}

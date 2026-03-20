@@ -58,7 +58,7 @@ export default function ReviewModal({
           body: JSON.stringify({
             rating,
             review: reviewText,
-            username: username || "Anonymous Reader",
+            reviewerName: username || "Anonymous Reader",
           }),
         },
       );

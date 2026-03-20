@@ -79,6 +79,7 @@ export type StorySummary = {
   maxChapters: number;
   isCompleted?: boolean;
   averageRating?: number;
+  ratingSum?: number;
   reviewCount?: number;
 };
 
@@ -93,7 +94,8 @@ export type AIStory = StorySummary & {
     content: string;
   }[];
   reviews?: {
-    userId: string;
+    userId?: string;
+    reviewerName?: string;
     rating: number;
     review?: string;
     createdAt: string;

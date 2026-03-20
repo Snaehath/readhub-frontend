@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { AIStory } from "@/types";
 import {
   User,
@@ -11,6 +11,7 @@ import {
   ChevronRight,
   ArrowLeft,
   Star,
+  MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 import ReviewModal from "./review-modal";
@@ -48,6 +49,29 @@ export default function StoryViewer({
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [reviews, setReviews] = useState<AIStory["reviews"]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+
+  const fetchReviews = useCallback(async () => {
+    setIsLoadingReviews(true);
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/story/${story.index || story.id}/reviews`,
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setReviews(data.reviews || []);
+      }
+    } catch (err) {
+      console.error("Error fetching reviews:", err);
+    } finally {
+      setIsLoadingReviews(false);
+    }
+  }, [story.id, story.index]);
+
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
 
   const showGenerationButton = !story.isCompleted && !!user;
   const totalItems =
@@ -240,9 +264,9 @@ export default function StoryViewer({
                       <Star
                         className={`w-4 h-4 transition-all ${
                           star <=
-                          (hoveredRating ||
+                            (hoveredRating ||
                             rating ||
-                            Math.round(story.averageRating || 0))
+                            Math.round(story.averageRating ?? (story.reviewCount && story.reviewCount > 0 ? (story.ratingSum || 0) / story.reviewCount : 0)))
                             ? "text-amber-500 fill-amber-500"
                             : "text-zinc-300 dark:text-zinc-700"
                         }`}
@@ -251,7 +275,7 @@ export default function StoryViewer({
                   ))}
                 </div>
                 <span className="text-xs font-black text-foreground">
-                  {(Number(story.averageRating) || 0).toFixed(1)}
+                  {(story.averageRating ?? (story.reviewCount && story.reviewCount > 0 ? (story.ratingSum || 0) / story.reviewCount : 0)).toFixed(1)}
                 </span>
                 <span className="text-xs text-muted-foreground font-bold uppercase">
                   ({story.reviewCount || 0})
@@ -279,6 +303,13 @@ export default function StoryViewer({
               >
                 <BookOpen className="w-3.5 h-3.5" />
                 Chapter Archives
+              </TabsTrigger>
+              <TabsTrigger
+                value="reviews"
+                className="flex items-center gap-2 px-8 py-3 rounded-[1.8rem] text-xs font-black uppercase tracking-widest transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-lg data-[state=active]:text-blue-600 data-[state=active]:border data-[state=active]:border-zinc-200 dark:data-[state=active]:border-zinc-700 data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                Reader Insights
               </TabsTrigger>
             </TabsList>
           </div>
@@ -467,6 +498,99 @@ export default function StoryViewer({
               </section>
             )}
           </TabsContent>
+
+          {/* 5. Reviews Section */}
+          <TabsContent
+            value="reviews"
+            className="animate-in fade-in duration-700 mt-8"
+          >
+            <div className="flex items-center gap-4 mb-8">
+              <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-muted-foreground whitespace-nowrap">
+                Latest Reader Insights
+              </h2>
+              <div className="h-[1px] w-full bg-linear-to-r from-border/50 to-transparent" />
+            </div>
+
+            {isLoadingReviews ? (
+              <div className="flex flex-col items-center justify-center py-20 gap-4">
+                <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                <p className="text-sm font-black uppercase tracking-widest text-muted-foreground animate-pulse">
+                  Unveiling reader feedback...
+                </p>
+              </div>
+            ) : reviews && reviews.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {reviews.map((rev, i) => (
+                  <Card
+                    key={i}
+                    className="border-none shadow-xl bg-background/40 backdrop-blur-md rounded-[2rem] overflow-hidden group hover:bg-background/60 transition-all p-8 flex flex-col gap-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-linear-to-br from-blue-500/20 to-violet-500/20 flex items-center justify-center font-black text-blue-600 text-sm">
+                          {(rev.reviewerName || "A")[0].toUpperCase()}
+                        </div>
+                        <div>
+                          <h4 className="font-black text-sm text-foreground">
+                            {rev.reviewerName || "Anonymous Reader"}
+                          </h4>
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                            {new Date(rev.createdAt).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              },
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex gap-0.5">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star
+                            key={s}
+                            className={`w-3 h-3 ${
+                              s <= rev.rating
+                                ? "text-amber-500 fill-amber-500"
+                                : "text-zinc-200 dark:text-zinc-800"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    {rev.review && (
+                      <p className="text-sm text-foreground/80 leading-relaxed font-medium italic">
+                        &ldquo;{rev.review}&rdquo;
+                      </p>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-center gap-6 bg-zinc-50/50 dark:bg-zinc-900/20 rounded-[3rem] border border-dashed border-zinc-200 dark:border-zinc-800">
+                <div className="w-16 h-16 rounded-full bg-background flex items-center justify-center shadow-inner">
+                  <MessageSquare className="w-8 h-8 text-zinc-300" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-black tracking-tight text-foreground">
+                    No insights yet.
+                  </h3>
+                  <p className="text-xs text-muted-foreground font-medium max-w-[240px]">
+                    Be the first to share your journey through this narrative
+                    with the world.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  className="rounded-full px-8 font-black text-xs uppercase tracking-widest border-blue-200 text-blue-600 hover:bg-blue-50"
+                  onClick={() => setIsReviewOpen(true)}
+                >
+                  Post First Review
+                </Button>
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
       </div>
       <ReviewModal
@@ -478,7 +602,10 @@ export default function StoryViewer({
         story={story}
         rating={rating}
         username={user?.username}
-        onSuccess={onStoryUpdate}
+        onSuccess={(updatedStory) => {
+          if (onStoryUpdate) onStoryUpdate(updatedStory);
+          fetchReviews();
+        }}
       />
     </div>
   );

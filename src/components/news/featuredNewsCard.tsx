@@ -29,7 +29,7 @@ const FeaturedNewsCard: React.FC<FeaturedNewsCardProps> = ({ article }) => {
   };
 
   return (
-    <Card className="group overflow-hidden border border-zinc-200/50 dark:border-zinc-800/50 shadow-md hover:shadow-lg hover:shadow-gray-500/50 transition-all duration-300 rounded-xl bg-background p-0">
+    <Card className="group overflow-hidden transition-all duration-300 bg-background p-0">
       <div className="relative h-64 overflow-hidden">
         {/* Latest Ribbon (Matching news-card-items style) */}
         {isLatest(article.publishedAt) && (

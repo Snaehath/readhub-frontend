@@ -57,9 +57,9 @@ export default function FeaturedStorySection() {
         </defs>
       </svg>
 
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-black uppercase tracking-widest mb-1">
+      <div className="flex items-center justify-between pb-4">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-black mb-1">
             <Sparkles
               className="w-4 h-4"
               style={{
@@ -72,9 +72,9 @@ export default function FeaturedStorySection() {
           </div>
           <Typography
             variant="h2"
-            className="text-3xl sm:text-4xl font-black tracking-tight flex items-center gap-3 bg-linear-to-r from-foreground to-foreground/70 bg-clip-text"
+            className="text-3xl sm:text-4xl font-black tracking-tight flex items-center gap-3"
           >
-            AI Serial Spotlight
+            ReadHub Stories
           </Typography>
         </div>
         <Button variant="ghost" asChild className="rounded-full font-bold h-10">
@@ -85,10 +85,10 @@ export default function FeaturedStorySection() {
       </div>
 
       <Link href={`/story/${story.index || story.id}`} className="block group">
-        <Card className="overflow-hidden border border-zinc-200/50 dark:border-zinc-800/50 shadow-2xl bg-background/40 backdrop-blur-xl transition-all duration-500 hover:shadow-blue-500/10 hover:border-blue-500/30 rounded-[2.5rem]">
-          <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[420px]">
+        <Card className="bg-background p-0">
+          <div className="grid grid-cols-1 sm:grid-cols-12 min-h-[420px]">
             {/* Left Column: Artistic Cover */}
-            <div className="lg:col-span-5 relative overflow-hidden bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center group/cover">
+            <div className="sm:col-span-5 relative overflow-hidden flex items-center justify-center group/cover rounded-l-xl">
               {!imageError ? (
                 <Image
                   src={
@@ -99,7 +99,7 @@ export default function FeaturedStorySection() {
                   }
                   alt={story.title}
                   fill
-                  className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                  className="object-cover rounded-l-xl"
                   onError={() => {
                     if (!retriedPng && !story.coverImage) setRetriedPng(true);
                     else setImageError(true);
@@ -125,7 +125,7 @@ export default function FeaturedStorySection() {
                 >
                   {story.title}
                 </Typography>
-                <div className="flex items-center justify-center lg:justify-start gap-3 opacity-90">
+                <div className="flex items-center justify-center sm:justify-start opacity-90">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-blue-300">
                     <Sparkles
                       className="w-4 h-4"
@@ -136,16 +136,9 @@ export default function FeaturedStorySection() {
                       }}
                     />
                   </div>
-                  <Typography className="text-xs font-black tracking-widest uppercase text-blue-100 drop-shadow-md leading-none">
-                    Written by {story.authorName}
+                  <Typography className="text-sm tracking-widest font-bold">
+                    {story.authorName}
                   </Typography>
-                </div>
-              </div>
-
-              {/* Corner Accent */}
-              <div className="absolute top-6 left-6 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
-                  <Sparkles className="w-6 h-6 text-amber-300 animate-pulse" />
                 </div>
               </div>
             </div>

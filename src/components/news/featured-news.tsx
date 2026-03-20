@@ -6,15 +6,14 @@ export default async function FeaturedNews() {
   const { news: featuredNews } = await getNewsPaginated(1, 3, "science");
 
   return (
-    <section className="mb-24 relative pb-12 overflow-x-hidden">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+    <section className="mb-24 relative overflow-x-hidden">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-4">
         <div className="space-y-2">
           <Typography
             variant="h2"
             className="text-3xl sm:text-4xl font-black tracking-tight flex items-center gap-3"
           >
             Featured News
-            <div className="hidden sm:block h-px w-24 bg-linear-to-r from-blue-500 to-transparent opacity-30" />
           </Typography>
         </div>
       </div>

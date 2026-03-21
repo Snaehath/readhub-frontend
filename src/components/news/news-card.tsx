@@ -298,8 +298,8 @@ Please try again in a few moments.`,
         <Typography variant="h2" className="mb-4">📰 Latest News</Typography>
         {/* AI Dialog */}
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
-          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
-            <DialogHeader className="flex-shrink-0">
+          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col gap-0">
+            <DialogHeader className="flex-shrink-0 mb-6">
               <DialogTitle className="text-xl font-bold flex items-center gap-2">
                 <Zap className="w-5 h-5 text-indigo-600" />
                 AI Summary
@@ -309,8 +309,8 @@ Please try again in a few moments.`,
               </DialogDescription>
             </DialogHeader>
 
-            <ScrollArea className="flex-1 pr-4">
-              <div className="space-y-4">
+            <ScrollArea className="flex-1 -mx-6">
+              <div className="space-y-4 px-6">
                 {!token ? (
                   <div className="flex flex-col items-center justify-center py-8 text-center gap-4">
                     <div className="bg-indigo-50 dark:bg-indigo-950/30 p-4 rounded-full">
@@ -354,7 +354,7 @@ Please try again in a few moments.`,
               </div>
             </ScrollArea>
 
-            <DialogFooter className="flex-shrink-0 mt-4">
+            <DialogFooter className="flex-shrink-0 mt-6">
               <Button
                 onClick={() => setShowDialog(false)}
                 className="rounded-full px-6 cursor-pointer"

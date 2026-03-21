@@ -182,7 +182,7 @@ export default function StoryViewer({
                 }
                 alt={story.title}
                 fill
-                className="object-cover"
+                className="object-contain"
                 onError={() => {
                   if (!retriedPng && !story.coverImage) {
                     setRetriedPng(true);

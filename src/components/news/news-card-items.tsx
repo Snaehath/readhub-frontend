@@ -18,7 +18,7 @@ import { Button } from "../ui/button";
 
 interface NewsCardItemsProps {
   filteredArticles: NewsArticle[];
-  onAskAi: (id: string) => void;
+  onAskAi: (article: NewsArticle) => void;
   askFutureAi: (id: string) => void;
   resetFutureAi: () => void;
   isLatest: (publishedAt: string) => boolean;
@@ -121,7 +121,7 @@ export default function NewsCardItems({
               })}
               <Badge
                 className="ml-auto px-3 py-1 text-xs font-semibold rounded-full bg-linear-to-r from-violet-500 to-purple-500 text-white flex items-center cursor-pointer hover:from-violet-600 hover:to-purple-600 active:scale-95 transition-all duration-150 shadow-sm"
-                onClick={() => onAskAi(article.id)}
+                onClick={() => onAskAi(article)}
                 aria-label="Ask AI"
                 variant="outline"
                 title="Get Insights from AI"

@@ -48,16 +48,41 @@ export function useChat(token: string | null) {
         body: JSON.stringify({ userMessage: message }),
       });
 
+      if (!res.ok) {
+        throw new Error(`Server responded with ${res.status}`);
+      }
+
       const data = await res.json();
+      
+      if (!data?.reply) {
+        throw new Error("EMPTY_RESPONSE");
+      }
+
       setChatHistory((prev) => [
         ...prev,
-        { sender: "bot", message: data?.reply?.trim() || "No response." },
+        { sender: "bot", message: data.reply.trim() },
       ]);
-    } catch (error) {
-      console.error(error);
+    } catch (error: unknown) {
+      console.error("[ChatError]:", error);
+      let errorMessage =
+        "⚠️ I encountered an synchronization error. Please check your connection or try again shortly.";
+
+      if (error instanceof Error) {
+        if (error.message === "EMPTY_RESPONSE") {
+          errorMessage =
+            "😶 My apologies, I couldn't generate a response for that. Could you try rephrasing your request?";
+        } else if (
+          error.message.includes("401") ||
+          error.message.includes("403")
+        ) {
+          errorMessage =
+            "🔒 Your session has expired. Please log in again to continue our briefing.";
+        }
+      }
+
       setChatHistory((prev) => [
         ...prev,
-        { sender: "bot", message: "⚠️ Something went wrong. Try again." },
+        { sender: "bot", message: errorMessage },
       ]);
     } finally {
       setLoading(false);

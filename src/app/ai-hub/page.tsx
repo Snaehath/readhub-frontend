@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { Sparkles, Lock, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -18,7 +18,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export default function HubPage() {
+function HubContent() {
   const { user } = useUserStore();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -202,5 +202,18 @@ export default function HubPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function HubPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto pb-20 pt-10 px-4 sm:px-8 flex flex-col items-center justify-center min-h-[50vh]">
+        <div className="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin mb-4" />
+        <p className="text-muted-foreground animate-pulse font-medium text-sm uppercase tracking-widest">Initialising AI Hub...</p>
+      </div>
+    }>
+      <HubContent />
+    </Suspense>
   );
 }

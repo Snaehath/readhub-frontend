@@ -1,16 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   RefreshCcw,
   Search,
   ChevronDown,
   ChevronUp,
-  Lock,
-  Zap,
 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import Link from "next/link";
 import ReactCountryFlag from "react-country-flag";
 
 // custom
@@ -18,10 +14,10 @@ import { toast } from "sonner";
 import { Button } from "../ui/button";
 import TopLoadingBar from "../misc/topLoadBar";
 import NewsCardItems from "./news-card-items";
-import { AiInsightSkeleton } from "../misc/skeletons";
 import NewsTicker from "./news-ticker";
 import Typography from "../ui/custom/typography";
 import AiSummaryModal from "./ai-summary-modal";
+import FutureInsightModal from "./future-insight-modal";
 
 import { NewsArticle } from "@/types";
 import { newsCategories, newsCountries } from "@/constants";
@@ -36,7 +32,6 @@ export default function NewsCard() {
   // hooks
   const searchParams = useSearchParams();
   const router = useRouter();
-  const futureAiRef = useRef<HTMLDivElement>(null);
 
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedCountry, setSelectedCountry] = useState<string>("us");
@@ -53,9 +48,7 @@ export default function NewsCard() {
   const [aiResponse, setAiResponse] = useState<string>("");
   const [aiLoading, setAiLoading] = useState<boolean>(false);
   const [showDialog, setShowDialog] = useState<boolean>(false);
-  const [futureToggles, setFutureToggles] = useState<Record<string, boolean>>(
-    {},
-  );
+  const [showFutureDialog, setShowFutureDialog] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>(
     searchParams.get("query")?.toLocaleLowerCase() ?? "",
@@ -243,19 +236,14 @@ Please try again in a few moments.`,
     futureAiArticle,
     error: aiError,
     fetchFutureAi,
-    resetFutureAi,
   } = useFutureAi(token, selectedCountry);
 
-  const handleFutureAi = (id: string) => fetchFutureAi(id);
+  const handleFutureAi = (article: NewsArticle) => {
+    setSelectedArticle(article);
+    setShowFutureDialog(true);
+    fetchFutureAi(article.id);
+  };
 
-  useEffect(() => {
-    if ((futureLoading || aiError) && futureAiRef.current) {
-      futureAiRef.current.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
-  }, [futureLoading, aiError]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -301,6 +289,16 @@ Please try again in a few moments.`,
           onOpenChange={setShowDialog}
           aiResponse={aiResponse}
           aiLoading={aiLoading}
+          token={token}
+          article={selectedArticle}
+        />
+
+        <FutureInsightModal
+          isOpen={showFutureDialog}
+          onOpenChange={setShowFutureDialog}
+          insightResponse={futureAiArticle || ""}
+          insightLoading={futureLoading}
+          insightError={aiError}
           token={token}
           article={selectedArticle}
         />
@@ -422,90 +420,8 @@ Please try again in a few moments.`,
           filteredArticles={filteredNews}
           onAskAi={handleAskAi}
           askFutureAi={handleFutureAi}
-          resetFutureAi={resetFutureAi}
           isLatest={isLatest}
-          futureToggles={futureToggles}
-          setFutureToggles={setFutureToggles}
         />
-        {/* Future AI */}
-        {futureLoading || futureAiArticle || aiError ? (
-          <div
-            ref={futureAiRef}
-            className="mt-6 bg-gray-50 dark:bg-zinc-900 border rounded-xl p-6 shadow-sm transition-all duration-300"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <Typography variant="h3" className="flex items-center gap-2">
-                <Zap className="w-5 h-5 text-indigo-500" />
-                Future AI Insight
-              </Typography>
-            </div>
-
-            {futureLoading ? (
-              <div className="space-y-4 py-4 animate-in fade-in duration-500">
-                <div className="flex items-center gap-3">
-                  <div className="relative flex-shrink-0">
-                    <div className="w-10 h-10 border-2 border-indigo-100 dark:border-indigo-900 rounded-full"></div>
-                    <div className="absolute top-0 left-0 w-10 h-10 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                  <div className="space-y-1">
-                    <Typography variant="small" className="font-semibold">
-                      AI is thinking...
-                    </Typography>
-                    <Typography variant="muted" className="text-xs">
-                      Predicting trends and impacts
-                    </Typography>
-                  </div>
-                </div>
-
-                <AiInsightSkeleton />
-              </div>
-            ) : aiError ? (
-              <div className="flex flex-col items-center justify-center py-6 text-center gap-4">
-                {aiError.includes("Authentication Required") ? (
-                  <>
-                    <div className="bg-indigo-50 dark:bg-indigo-950/30 p-4 rounded-full">
-                      <Lock className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-                    </div>
-                    <div className="space-y-2 px-6">
-                      <Typography variant="h3">Feature Locked</Typography>
-                      <Typography variant="muted" className="max-w-md mx-auto">
-                        Sign in to your ReadHub account to unlock intelligent
-                        news summaries and deep analysis powered by AI.
-                      </Typography>
-                    </div>
-                    <Button
-                      asChild
-                      className="rounded-full px-8 cursor-pointer mt-2"
-                    >
-                      <Link href="/login">Sign In to Unlock</Link>
-                    </Button>
-                  </>
-                ) : (
-                  <div className="p-4 border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20 rounded-lg text-red-600 dark:text-red-400 text-sm">
-                    {aiError}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="prose dark:prose-invert max-w-none text-sm leading-relaxed text-muted-foreground">
-                <ReactMarkdown>{futureAiArticle}</ReactMarkdown>
-              </div>
-            )}
-
-            <div className="mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  resetFutureAi(); // clears AI article
-                  setFutureToggles({}); // resets all toggles
-                }}
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        ) : null}
 
         {/* No Results */}
         {filteredNews.length === 0 && !isLoading && (

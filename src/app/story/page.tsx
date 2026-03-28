@@ -67,20 +67,16 @@ export default function StoryPage() {
               <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400 relative z-10" />
             </div>
             <Typography variant="h2" className="text-3xl font-black mb-3">
-              AI Serial Locked
+              AI Story Locked
             </Typography>
             <Typography
               variant="p"
               className="text-muted-foreground text-base max-w-md mb-8 leading-relaxed"
             >
-              Login to witness personalized daily chapters crafted by our AI
-              agents. Be the architect of your own epic.
+              Login to access AI creation mode. Where AI generates the story.
             </Typography>
-            <Button
-              asChild
-              className="rounded-full px-8 py-6 h-auto text-base font-bold shadow-lg transition-transform hover:scale-105 active:scale-95"
-            >
-              <Link href="/login">Login to Unlock My Story</Link>
+            <Button size={"lg"} asChild>
+              <Link href="/login">Login</Link>
             </Button>
           </div>
         ) : null}

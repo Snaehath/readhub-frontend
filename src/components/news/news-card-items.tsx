@@ -19,23 +19,15 @@ import { Button } from "../ui/button";
 interface NewsCardItemsProps {
   filteredArticles: NewsArticle[];
   onAskAi: (article: NewsArticle) => void;
-  askFutureAi: (id: string) => void;
-  resetFutureAi: () => void;
+  askFutureAi: (article: NewsArticle) => void;
   isLatest: (publishedAt: string) => boolean;
-  futureToggles: Record<string, boolean>;
-  setFutureToggles: React.Dispatch<
-    React.SetStateAction<Record<string, boolean>>
-  >;
 }
 
 export default function NewsCardItems({
   filteredArticles,
   onAskAi,
   askFutureAi,
-  resetFutureAi,
   isLatest,
-  futureToggles,
-  setFutureToggles,
 }: NewsCardItemsProps) {
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
 
@@ -43,16 +35,8 @@ export default function NewsCardItems({
     setLoadedImages((prev) => ({ ...prev, [id]: true }));
   };
 
-  const handleFutureToggle = (id: string, checked: boolean) => {
-    if (checked) {
-      // Turn off all others and turn on this one
-      setFutureToggles({ [id]: true });
-      askFutureAi(id);
-    } else {
-      // Just turn off this one
-      setFutureToggles((prev) => ({ ...prev, [id]: false }));
-      resetFutureAi();
-    }
+  const handleFutureClick = (article: NewsArticle) => {
+    askFutureAi(article);
   };
   return (
     <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
@@ -89,20 +73,14 @@ export default function NewsCardItems({
                 }`}
               />
               <Button
-                onClick={() =>
-                  handleFutureToggle(article.id, !futureToggles[article.id])
-                }
-                className={`absolute top-2 right-2 flex items-center gap-1 px-3 py-1.5 
+                onClick={() => handleFutureClick(article)}
+                className="absolute top-2 right-2 flex items-center gap-1 px-3 py-1.5 
       text-xs font-semibold rounded-full shadow-md transition-all cursor-pointer
-      ${
-        futureToggles[article.id]
-          ? "bg-emerald-600 text-white hover:bg-emerald-700"
-          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-      }
-    `}
-                title="Toggle Future AI insights"
+      bg-emerald-600/90 text-white hover:bg-emerald-600 hover:scale-105 active:scale-95
+    "
+                title="View Future AI insights"
               >
-                {futureToggles[article.id] ? "Future ON" : "Future AI"}
+                Future AI
                 <Zap className="w-4 h-4 ml-1" />
               </Button>
             </div>

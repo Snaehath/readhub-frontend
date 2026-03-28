@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Menu, Newspaper, Sparkles } from "lucide-react";
+import { BookOpen, LayoutGrid, Menu, Newspaper } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -61,9 +61,9 @@ export default function Navbar() {
                 icon: <BookOpen className="h-4 w-4" />,
               },
               {
-                href: "/story",
-                label: "AI Story",
-                icon: <Sparkles className="h-4 w-4" />,
+                href: "/ai-hub",
+                label: "AI Hub",
+                icon: <LayoutGrid className="h-4 w-4" />,
               },
               { href: "/chatbot", label: "ChatBot", icon: "🤖" },
             ].map(({ href, label, icon }) => (
@@ -157,9 +157,9 @@ export default function Navbar() {
                     icon: <BookOpen className="h-5 w-5" />,
                   },
                   {
-                    href: "/story",
-                    label: "AI Story",
-                    icon: <Sparkles className="h-5 w-5" />,
+                    href: "/ai-hub",
+                    label: "AI Hub",
+                    icon: <LayoutGrid className="h-5 w-5" />,
                   },
                   { href: "/chatbot", label: "ChatBot", icon: "🤖" },
                 ].map(({ href, label, icon }) => (

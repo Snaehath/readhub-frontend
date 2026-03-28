@@ -36,7 +36,7 @@ export default function ChapterViewer({
           process.env.NEXT_PUBLIC_API_BASE_URL ||
           "https://readhub-backend.onrender.com/api";
 
-        const res = await fetch(`${baseUrl}/story/${index}`, {
+        const res = await fetch(`${baseUrl}/ai-hub/story/${index}`, {
           cache: "no-store",
         });
 
@@ -78,7 +78,7 @@ export default function ChapterViewer({
           The story you are looking for does not exist in our archive.
         </p>
         <Button asChild className="rounded-full px-8">
-          <Link href="/story">Back to AI Serial</Link>
+          <Link href="/ai-hub">Back to AI Serial</Link>
         </Button>
       </div>
     );
@@ -98,7 +98,7 @@ export default function ChapterViewer({
           The chapter you requested has not been generated yet.
         </p>
         <Button asChild className="rounded-full px-8">
-          <Link href={`/story/${index}`}>Back to Story Overview</Link>
+          <Link href={`/ai-hub/story/${index}`}>Back to Story Overview</Link>
         </Button>
       </div>
     );
@@ -109,7 +109,7 @@ export default function ChapterViewer({
   const hasPrev = chapterNumber > 1;
 
   const navigateToChapter = (num: number) => {
-    router.push(`/story/${index}/chapter/${num}`);
+    router.push(`/ai-hub/story/${index}/chapter/${num}`);
   };
 
   return (
@@ -123,7 +123,7 @@ export default function ChapterViewer({
             asChild
             className="gap-2 font-bold text-muted-foreground hover:text-muted-foreground/80"
           >
-            <Link href={`/story/${index}`}>
+            <Link href={`/ai-hub/story/${index}`}>
               <ArrowLeft className="w-4 h-4" /> Back to Overview
             </Link>
           </Button>
@@ -191,7 +191,7 @@ export default function ChapterViewer({
             asChild
             className="hidden sm:flex font-bold text-muted-foreground hover:text-foreground hover:bg-zinc-100 rounded-full px-6"
           >
-            <Link href={`/story/${index}`}>
+            <Link href={`/ai-hub/story/${index}`}>
               <BookOpen className="w-4 h-4 mr-2" />
               Index
             </Link>

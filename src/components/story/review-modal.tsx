@@ -48,7 +48,7 @@ export default function ReviewModal({
     try {
       const token = localStorage.getItem("jwt");
       const res = await fetch(
-        `${API_BASE_URL}/story/${story.index || story.id}/review`,
+        `${API_BASE_URL}/ai-hub/story/${story.index || story.id}/review`,
         {
           method: "PATCH",
           headers: {

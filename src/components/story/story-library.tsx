@@ -22,7 +22,7 @@ export default function StoryLibrary() {
   const coverBaseUrl = baseUrl.replace("/api", "") + "/covers";
 
   const { data, isLoading } = useSWR<AllStoriesResponse>(
-    `${baseUrl}/story/allStories`,
+    `${baseUrl}/ai-hub/story/allStories`,
     fetcher,
   );
 
@@ -68,7 +68,7 @@ export default function StoryLibrary() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 sm:gap-8">
         {stories.map((story) => (
           <Link
-            href={`/story/${story.index}`}
+            href={`/ai-hub/story/${story.index}`}
             key={story.index}
             className="group outline-none"
           >

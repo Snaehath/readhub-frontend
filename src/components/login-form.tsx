@@ -10,15 +10,17 @@ import { useRouter } from "next/navigation";
 import { useUserStore } from "@/lib/store/userStore";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/constants";
+import ResetPasswordForm from "./reset-password-form";
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showReset, setShowReset] = useState(false);
 
   const router = useRouter();
-  const setUser = useUserStore((state) => state.setUser);
+  const { setToken, fetchUser } = useUserStore();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,8 +40,8 @@ export default function LoginForm() {
       if (!response.ok) {
         throw new Error(data.error || "Login failed");
       }
-      localStorage.setItem("jwt", data.token);
-      setUser(data.user);
+      setToken(data.token);
+      await fetchUser();
       toast.success("Logged in successfully!");
       router.push("/");
     } catch (err: unknown) {
@@ -53,8 +55,12 @@ export default function LoginForm() {
     }
   };
 
+  if (showReset) {
+    return <ResetPasswordForm onBack={() => setShowReset(false)} />;
+  }
+
   return (
-    <Card className="w-full border border-gray-200 shadow-lg rounded-xl">
+    <Card className="w-full border border-gray-200 shadow-lg rounded-xl animate-in fade-in slide-in-from-left-4 duration-300">
       <CardHeader className="pb-2">
         <CardTitle className="text-2xl text-center font-semibold text-primary">
           Welcome back 👋
@@ -85,12 +91,21 @@ export default function LoginForm() {
           </div>
 
           <div>
-            <Label
-              htmlFor="password"
-              className="text-sm font-medium text-muted-foreground"
-            >
-              Password
-            </Label>
+            <div className="flex items-center justify-between mb-2">
+              <Label
+                htmlFor="password"
+                className="text-sm font-medium text-muted-foreground"
+              >
+                Password
+              </Label>
+              <button
+                type="button"
+                onClick={() => setShowReset(true)}
+                className="text-xs text-primary font-bold hover:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
             <div className="relative">
               <Input
                 id="password"

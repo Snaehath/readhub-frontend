@@ -1,5 +1,6 @@
-import { CalendarIcon, Sparkles, Zap } from "lucide-react";
-import { useState } from "react";
+import { Bookmark, CalendarIcon, Sparkles, ThumbsUp, Zap } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { Badge } from "../ui/badge";
 import {
   Card,
@@ -21,6 +22,10 @@ interface NewsCardItemsProps {
   onAskAi: (article: NewsArticle) => void;
   askFutureAi: (article: NewsArticle) => void;
   isLatest: (publishedAt: string) => boolean;
+  token: string | null;
+  country: string;
+  initialLikes: string[];
+  initialBookmarks: string[];
 }
 
 export default function NewsCardItems({
@@ -28,8 +33,27 @@ export default function NewsCardItems({
   onAskAi,
   askFutureAi,
   isLatest,
+  token,
+  country,
+  initialLikes,
+  initialBookmarks,
 }: NewsCardItemsProps) {
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
+  const [likes, setLikes] = useState<Record<string, boolean>>({});
+  const [bookmarks, setBookmarks] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const likeMap = initialLikes.reduce(
+      (acc, id) => ({ ...acc, [id]: true }),
+      {},
+    );
+    const bookmarkMap = initialBookmarks.reduce(
+      (acc, id) => ({ ...acc, [id]: true }),
+      {},
+    );
+    setLikes(likeMap);
+    setBookmarks(bookmarkMap);
+  }, [initialLikes, initialBookmarks]);
 
   const handleImageLoad = (id: string) => {
     setLoadedImages((prev) => ({ ...prev, [id]: true }));
@@ -38,12 +62,90 @@ export default function NewsCardItems({
   const handleFutureClick = (article: NewsArticle) => {
     askFutureAi(article);
   };
+
+  const toggleLike = async (id: string) => {
+    if (!token) {
+      toast.warning("🔒 Login to save your preferences!", {
+        action: {
+          label: "Login",
+          onClick: () => (window.location.href = "/login"),
+        },
+      });
+      return;
+    }
+
+    try {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        "https://readhub-backend.onrender.com/api";
+      const res = await fetch(`${baseUrl}/user/like-news`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ newsId: id, country }),
+      });
+
+      if (res.ok) {
+        setLikes((prev) => ({ ...prev, [id]: !prev[id] }));
+        toast.success(
+          likes[id] ? "Removed from likes" : "Added to liked articles",
+          {
+            duration: 1000,
+          },
+        );
+      }
+    } catch (err) {
+      console.error("Error toggling like:", err);
+      toast.error("Failed to update like");
+    }
+  };
+
+  const toggleBookmark = async (id: string) => {
+    if (!token) {
+      toast.warning("🔒 Login to bookmark articles!", {
+        action: {
+          label: "Login",
+          onClick: () => (window.location.href = "/login"),
+        },
+      });
+      return;
+    }
+
+    try {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        "https://readhub-backend.onrender.com/api";
+      const res = await fetch(`${baseUrl}/user/bookmark-news`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ newsId: id, country }),
+      });
+
+      if (res.ok) {
+        setBookmarks((prev) => ({ ...prev, [id]: !prev[id] }));
+        toast.success(
+          bookmarks[id] ? "Removed from bookmarks" : "Saved to bookmarks",
+          {
+            duration: 1000,
+          },
+        );
+      }
+    } catch (err) {
+      console.error("Error toggling bookmark:", err);
+      toast.error("Failed to update bookmark");
+    }
+  };
   return (
     <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
       {filteredArticles.map((article, i) => (
         <Card
           key={i}
-          className="overflow-hidden hover:shadow-lg hover:shadow-gray-500/50 p-0"
+          className="overflow-hidden hover:shadow-lg hover:shadow-gray-500/50 p-0 flex flex-col h-full"
         >
           <CardHeader className="p-0">
             <div className="relative h-64 w-full overflow-hidden">
@@ -116,27 +218,74 @@ export default function NewsCardItems({
               {article.description || "No description available."}
             </Typography>
           </CardContent>
-          <CardFooter className="p-4 pt-0 flex justify-between">
-            <ToolTip
-              content={formatDistanceToNow(new Date(article.publishedAt), {
-                addSuffix: true,
-              })}
-            >
-              <div className="flex items-center">
-                <CalendarIcon className="mr-1 h-4 w-4" />
-                <Typography variant="small" color="muted">
-                  {formatDate(new Date(article.publishedAt), "MMMM d, yyyy")}
-                </Typography>
-              </div>
-            </ToolTip>
-            <Link
-              href={article.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-primary hover:underline"
-            >
-              Read more
-            </Link>
+          <CardFooter className="p-4 pt-0 flex items-center justify-between border-t dark:border-zinc-800/50 mt-auto">
+            <div className="flex items-center gap-1">
+              <ToolTip
+                content={likes[article.id] ? "Unlike" : "Like this article"}
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => toggleLike(article.id)}
+                  className={`h-9 w-9 rounded-full transition-all duration-300 cursor-pointer ${
+                    likes[article.id]
+                      ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20"
+                      : "text-zinc-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                  }`}
+                >
+                  <ThumbsUp
+                    className={`w-4 h-4 ${likes[article.id] ? "fill-current" : ""}`}
+                  />
+                </Button>
+              </ToolTip>
+
+              <ToolTip
+                content={
+                  bookmarks[article.id] ? "Remove Bookmark" : "Bookmark this"
+                }
+              >
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => toggleBookmark(article.id)}
+                  className={`h-9 w-9 rounded-full transition-all duration-300 cursor-pointer ${
+                    bookmarks[article.id]
+                      ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20"
+                      : "text-zinc-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                  }`}
+                >
+                  <Bookmark
+                    className={`w-4.5 h-4.5 ${bookmarks[article.id] ? "fill-current" : ""}`}
+                  />
+                </Button>
+              </ToolTip>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <ToolTip
+                content={formatDistanceToNow(new Date(article.publishedAt), {
+                  addSuffix: true,
+                })}
+              >
+                <div className="hidden sm:flex items-center text-zinc-400">
+                  <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
+                  <Typography
+                    variant="small"
+                    className="text-[11px] font-medium"
+                  >
+                    {formatDate(new Date(article.publishedAt), "MMM d, yyyy")}
+                  </Typography>
+                </div>
+              </ToolTip>
+              <Link
+                href={article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline transition-transform"
+              >
+                Read Source
+              </Link>
+            </div>
           </CardFooter>
         </Card>
       ))}

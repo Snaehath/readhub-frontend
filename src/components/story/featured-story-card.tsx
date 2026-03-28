@@ -23,7 +23,7 @@ export default function FeaturedStorySection() {
 
   // 1. Fetch all stories to find a featured one
   const { data: allData, isLoading: allLoading } = useSWR<AllStoriesResponse>(
-    `${API_BASE_URL}/story/allStories`,
+    `${API_BASE_URL}/ai-hub/story/allStories`,
     fetcher,
   );
 
@@ -35,7 +35,7 @@ export default function FeaturedStorySection() {
 
   // 2. Fetch full content for the identified featured story
   const { data: fullData, isLoading: fullLoading } = useSWR(
-    targetStoryId ? `${API_BASE_URL}/story/${targetStoryId}` : null,
+    targetStoryId ? `${API_BASE_URL}/ai-hub/story/${targetStoryId}` : null,
     fetcher,
   );
 
@@ -84,7 +84,7 @@ export default function FeaturedStorySection() {
         </Button>
       </div>
 
-      <Link href={`/story/${story.index || story.id}`} className="block group">
+      <Link href={`/ai-hub/story/${story.index || story.id}`} className="block group">
         <Card className="bg-background p-0">
           <div className="grid grid-cols-1 sm:grid-cols-12 min-h-[420px]">
             {/* Left Column: Artistic Cover */}

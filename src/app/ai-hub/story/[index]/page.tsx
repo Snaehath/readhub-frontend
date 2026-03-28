@@ -66,7 +66,7 @@ export default function StoryArchivePage() {
           The story you are looking for does not exist in our archive.
         </p>
         <Button asChild className="rounded-full px-8">
-          <Link href="/story">Back to AI Serial</Link>
+          <Link href="/ai-hub">Back to AI Serial</Link>
         </Button>
       </div>
     );
@@ -76,7 +76,7 @@ export default function StoryArchivePage() {
     <div className="container mx-auto pb-20">
       <StoryViewer
         story={story}
-        backUrl="/story"
+        backUrl="/ai-hub"
         backText="Back to Collection"
         onStoryUpdate={(updated) => setStory(updated)}
       />

@@ -6,20 +6,23 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export function AuthMonitor() {
-  const { logout, user } = useUserStore();
+  const { logout, user, token, fetchUser } = useUserStore();
   const router = useRouter();
 
   useEffect(() => {
     const checkToken = () => {
-      const token = localStorage.getItem("jwt");
-
-      // If no token but user is in store, or if token exists, we check it
+      // If no token but user is in store, clean up
       if (!token && user) {
         logout();
         return;
       }
 
       if (!token) return;
+
+      // Ensure user details are loaded if token exists
+      if (!user) {
+        fetchUser();
+      }
 
       try {
         const parts = token.split(".");
@@ -47,7 +50,7 @@ export function AuthMonitor() {
     const interval = setInterval(checkToken, 30 * 1000);
 
     return () => clearInterval(interval);
-  }, [logout, router, user]);
+  }, [logout, router, user, fetchUser, token]);
 
   return null;
 }

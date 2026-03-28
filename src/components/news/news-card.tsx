@@ -50,6 +50,8 @@ export default function NewsCard() {
   const [showDialog, setShowDialog] = useState<boolean>(false);
   const [showFutureDialog, setShowFutureDialog] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
+  const [userLikes, setUserLikes] = useState<string[]>([]);
+  const [userBookmarks, setUserBookmarks] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>(
     searchParams.get("query")?.toLocaleLowerCase() ?? "",
   );
@@ -60,6 +62,33 @@ export default function NewsCard() {
     const storedToken = localStorage.getItem("jwt");
     setToken(storedToken);
   }, []);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchUserData = async () => {
+      try {
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API_BASE_URL ||
+          "https://readhub-backend.onrender.com/api";
+        const res = await fetch(`${baseUrl}/user/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUserLikes([...(data.likes_us || []), ...(data.likes_in || [])]);
+          setUserBookmarks([
+            ...(data.bookmarks_us || []),
+            ...(data.bookmarks_in || []),
+          ]);
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err);
+      }
+    };
+
+    fetchUserData();
+  }, [token]);
 
   // Fetch paginated news based on country + category
   useEffect(() => {
@@ -421,6 +450,10 @@ Please try again in a few moments.`,
           onAskAi={handleAskAi}
           askFutureAi={handleFutureAi}
           isLatest={isLatest}
+          token={token}
+          country={selectedCountry}
+          initialLikes={userLikes}
+          initialBookmarks={userBookmarks}
         />
 
         {/* No Results */}

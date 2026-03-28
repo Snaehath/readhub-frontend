@@ -21,17 +21,52 @@ export default function ProfilePage() {
   const [newUsername, setNewUsername] = useState("");
   const [newAvatar, setNewAvatar] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
-    if (user?.createdAt) {
-      const formatted = format(new Date(user.createdAt), "MMMM d, yyyy");
-      setJoinedDate(formatted);
-    }
-    if (user) {
-      setNewUsername(user.username);
-      setNewAvatar(user.avatar);
-    }
-  }, [user]);
+    const fetchUserData = async () => {
+      const token = localStorage.getItem("jwt");
+      if (!token) {
+        setFetching(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/user/me`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUser(data);
+          setNewUsername(data.username);
+          setNewAvatar(data.avatar);
+          if (data.createdAt) {
+            setJoinedDate(format(new Date(data.createdAt), "MMMM d, yyyy"));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch user data:", err);
+      } finally {
+        setFetching(false);
+      }
+    };
+
+    fetchUserData();
+  }, [setUser]);
+
+  if (fetching) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <Typography variant="muted">Loading your profile...</Typography>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -206,6 +241,40 @@ export default function ProfilePage() {
                       Administrator
                     </Typography>
                   )}
+                </div>
+
+                {/* User Stats/Summary */}
+                <div className="grid grid-cols-2 gap-4 w-full pt-6 border-t mt-6 dark:border-zinc-800">
+                  <div className="text-center p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800/50">
+                    <Typography
+                      variant="h3"
+                      className="text-indigo-600 dark:text-indigo-400"
+                    >
+                      {(user.likes_us?.length || 0) +
+                        (user.likes_in?.length || 0)}
+                    </Typography>
+                    <Typography
+                      variant="muted"
+                      className="text-[10px] uppercase font-bold tracking-widest"
+                    >
+                      Liked Articles
+                    </Typography>
+                  </div>
+                  <div className="text-center p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800/50">
+                    <Typography
+                      variant="h3"
+                      className="text-emerald-600 dark:text-emerald-400"
+                    >
+                      {(user.bookmarks_us?.length || 0) +
+                        (user.bookmarks_in?.length || 0)}
+                    </Typography>
+                    <Typography
+                      variant="muted"
+                      className="text-[10px] uppercase font-bold tracking-widest"
+                    >
+                      Bookmarked Articles
+                    </Typography>
+                  </div>
                 </div>
               </div>
             )}

@@ -112,3 +112,26 @@ export type AllStoriesResponse = {
   message: string;
   stories: StorySummary[];
 };
+
+export type AiNews = {
+  _id: string;
+  title: string;
+  topic: string;
+  summary: string;
+  authorName: string;
+  content: string;
+  category: string;
+  hashtags: string[];
+  isCompleted: boolean;
+  createdAt: string;
+};
+
+export type AiNewsResponse = {
+  message: string;
+  news: AiNews[];
+};
+
+export type SingleAiNewsResponse = {
+  message: string;
+  news: AiNews;
+};

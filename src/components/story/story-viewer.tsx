@@ -58,7 +58,7 @@ export default function StoryViewer({
     isLoading: isLoadingReviews,
     mutate: mutateReviews,
   } = useSWR<{ reviews: AIStory["reviews"] }>(
-    `${API_BASE_URL}/story/${story.index || story.id}/reviews`,
+    `${API_BASE_URL}/ai-hub/story/${story.index || story.id}/reviews`,
     fetcher,
   );
 
@@ -78,8 +78,8 @@ export default function StoryViewer({
     try {
       const token = localStorage.getItem("jwt");
       const endpoint = isAdmin
-        ? `${API_BASE_URL}/story/myStory?force=true`
-        : `${API_BASE_URL}/story/myStory`;
+        ? `${API_BASE_URL}/ai-hub/story/myStory?force=true`
+        : `${API_BASE_URL}/ai-hub/story/myStory`;
 
       const res = await fetch(endpoint, {
         method: "POST",
@@ -96,7 +96,7 @@ export default function StoryViewer({
 
         // Fetch full content for the updated story
         const fullRes = await fetch(
-          `${API_BASE_URL}/story/${updatedStory.id || updatedStory.index}`,
+          `${API_BASE_URL}/ai-hub/story/${updatedStory.id || updatedStory.index}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -358,7 +358,7 @@ export default function StoryViewer({
                 .map((chapter) => (
                   <Link
                     key={chapter.chapterNumber}
-                    href={`/story/${story.index || story.id}/chapter/${chapter.chapterNumber}`}
+                    href={`/ai-hub/story/${story.index || story.id}/chapter/${chapter.chapterNumber}`}
                     className="block h-full outline-none"
                   >
                     <Card className="h-full group overflow-hidden border-none shadow-xl cursor-pointer flex flex-col bg-background/40 backdrop-blur-sm transition-all hover:bg-background/60 gap-2">

@@ -9,15 +9,14 @@ import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
 import { SingleAiNewsResponse } from "@/types";
 import { format } from "date-fns";
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { fetcher } from "@/lib/fetcher";
 
 export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
   const resolvedParams = use(params);
   const id = resolvedParams.id;
 
   const { data, isLoading, error } = useSWR<SingleAiNewsResponse>(
-    `${API_BASE_URL}/ai-hub/news/${id}`,
+    id ? `${API_BASE_URL}/ai-hub/news/${id}` : null,
     fetcher
   );
 

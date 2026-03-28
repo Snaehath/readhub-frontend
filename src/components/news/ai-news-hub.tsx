@@ -10,6 +10,7 @@ import {
   Microscope,
   Lock as LockIcon,
 } from "lucide-react";
+import { fetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -20,8 +21,6 @@ import { API_BASE_URL } from "@/constants";
 import { AiNewsResponse } from "@/types";
 import { useUserStore } from "@/lib/store/userStore";
 import { format } from "date-fns";
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const AiNewsHub = () => {
   const { user, _hasHydrated } = useUserStore();

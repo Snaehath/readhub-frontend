@@ -1,40 +1,24 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AIStory, StoryResponse } from "@/types";
+import useSWR from "swr";
+import { StoryResponse } from "@/types";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import StoryViewer from "@/components/story/story-viewer";
 import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
+import { fetcher } from "@/lib/fetcher";
 
 export const StoryView = ({ index }: { index: string }) => {
-  const [story, setStory] = useState<AIStory | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading, error, mutate } = useSWR<StoryResponse>(
+    index ? `${API_BASE_URL}/ai-hub/story/${index}` : null,
+    fetcher,
+  );
 
-  useEffect(() => {
-    const fetchStory = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/ai-hub/story/${index}`, {
-          cache: "no-store",
-        });
+  const story = data?.story;
 
-        if (res.ok) {
-          const data: StoryResponse = await res.json();
-          setStory(data.story || null);
-        }
-      } catch (error) {
-        console.error("Error fetching story from archive:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (index) fetchStory();
-  }, [index]);
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="relative">
@@ -48,7 +32,7 @@ export const StoryView = ({ index }: { index: string }) => {
     );
   }
 
-  if (!story) {
+  if (error || !story) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
         <Typography variant="h2" className="text-2xl font-bold mb-4">
@@ -70,7 +54,9 @@ export const StoryView = ({ index }: { index: string }) => {
         story={story}
         backUrl="/ai-hub"
         backText="Back to Collection"
-        onStoryUpdate={(updated) => setStory(updated)}
+        onStoryUpdate={(updated) =>
+          mutate({ message: "Updated", story: updated }, false)
+        }
       />
     </div>
   );

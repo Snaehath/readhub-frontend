@@ -9,14 +9,13 @@ import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
 import { useUserStore } from "@/lib/store/userStore";
 import { toast } from "sonner";
+import { fetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
 import { AllStoriesResponse } from "@/types";
 import { Input } from "@/components/ui/input";
 import AiNewsHub from "@/components/news/ai-news-hub";
 import NewBadge from "@/components/ui/custom/new-badge";
 import { useRouter, useSearchParams } from "next/navigation";
-
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const HubContent = () => {
   const { user } = useUserStore();

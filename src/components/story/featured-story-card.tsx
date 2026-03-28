@@ -4,13 +4,13 @@ import { useState } from "react";
 import { StorySummary, AllStoriesResponse } from "@/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Sparkles, ArrowRight, Layout } from "lucide-react";
+import { BookOpen, Sparkles, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
+import { getCoverBaseUrl } from "@/lib/utils";
 import Image from "next/image";
-
 import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -19,7 +19,7 @@ const FeaturedStorySection = () => {
   const [imageError, setImageError] = useState(false);
   const [retriedPng, setRetriedPng] = useState(false);
 
-  const coverBaseUrl = API_BASE_URL.replace("/api", "") + "/covers";
+  const coverBaseUrl = getCoverBaseUrl();
 
   // 1. Fetch all stories to find a featured one
   const { data: allData, isLoading: allLoading } = useSWR<AllStoriesResponse>(
@@ -84,7 +84,10 @@ const FeaturedStorySection = () => {
         </Button>
       </div>
 
-      <Link href={`/ai-hub/story/${story.index || story.id}`} className="block group">
+      <Link
+        href={`/ai-hub/story/${story.index || story.id}`}
+        className="block group"
+      >
         <Card className="bg-background p-0">
           <div className="grid grid-cols-1 sm:grid-cols-12 min-h-[420px]">
             {/* Left Column: Artistic Cover */}
@@ -99,14 +102,21 @@ const FeaturedStorySection = () => {
                   }
                   alt={story.title}
                   fill
-                  className="object-cover rounded-l-xl"
+                  className="object-cover rounded-l-xl transition-transform duration-700"
                   onError={() => {
                     if (!retriedPng && !story.coverImage) setRetriedPng(true);
                     else setImageError(true);
                   }}
                 />
               ) : (
-                <div className="absolute inset-0 bg-linear-to-br from-blue-600/20 via-indigo-600/10 to-violet-600/20" />
+                <div className="absolute inset-0 bg-zinc-50 dark:bg-zinc-900">
+                  <Image
+                    src="/story_placeholder.png"
+                    alt="Placeholder"
+                    fill
+                    className="object-cover opacity-50 contrast-75"
+                  />
+                </div>
               )}
 
               {/* High-quality overlay */}
@@ -146,16 +156,6 @@ const FeaturedStorySection = () => {
             {/* Right Column: Narrative Details */}
             <div className="lg:col-span-7 p-8 sm:p-14 flex flex-col justify-center gap-10 bg-linear-to-br from-transparent to-zinc-50/50 dark:to-zinc-900/50">
               <div className="space-y-6">
-                <div className="flex flex-wrap items-center gap-4">
-                  <Badge
-                    variant="secondary"
-                    className="bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest"
-                  >
-                    <Layout className="w-3 h-3 mr-2" />
-                    {story.genre}
-                  </Badge>
-                </div>
-
                 <div className="relative">
                   <div className="absolute -left-4 top-0 bottom-0 w-1 bg-blue-500 rounded-full" />
                   <Typography

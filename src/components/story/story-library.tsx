@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { AllStoriesResponse } from "@/types";
-import { BookOpen, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Typography from "@/components/ui/custom/typography";
 import Image from "next/image";
 import { StoriesSkeleton } from "@/components/misc/skeletons";
 
+import { API_BASE_URL } from "@/constants";
+import { getCoverBaseUrl } from "@/lib/utils";
 import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -16,13 +18,10 @@ const StoryLibrary = () => {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [retriedPng, setRetriedPng] = useState<Record<string, boolean>>({});
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_API_BASE_URL ||
-    "https://readhub-backend.onrender.com/api";
-  const coverBaseUrl = baseUrl.replace("/api", "") + "/covers";
+  const coverBaseUrl = getCoverBaseUrl();
 
   const { data, isLoading } = useSWR<AllStoriesResponse>(
-    `${baseUrl}/ai-hub/story/allStories`,
+    `${API_BASE_URL}/ai-hub/story/allStories`,
     fetcher,
   );
 
@@ -51,7 +50,7 @@ const StoryLibrary = () => {
             href={`/ai-hub/story/${story.index || story.id}`}
             className="group block relative"
           >
-            <div className="relative aspect-[4/5] overflow-hidden rounded-[2.5rem] bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 transition-all duration-500 group-hover:shadow-[0_40px_80px_-15px_rgba(37,99,235,0.15)] group-hover:-translate-y-2 group-hover:scale-[1.02]">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[2.5rem] bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 transition-[box-shadow] duration-500 group-hover:shadow-[0_40px_80px_-15px_rgba(37,99,235,0.15)]">
               {/* Image with fallback */}
               {!imageErrors[story.id] ? (
                 <Image
@@ -63,7 +62,7 @@ const StoryLibrary = () => {
                   }
                   alt={story.title}
                   fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="object-cover transition-transform duration-700"
                   onError={() => {
                     if (!retriedPng[story.id] && !story.coverImage) {
                       setRetriedPng((prev) => ({ ...prev, [story.id]: true }));
@@ -76,8 +75,13 @@ const StoryLibrary = () => {
                   }}
                 />
               ) : (
-                <div className="absolute inset-0 bg-linear-to-br from-blue-600/10 to-indigo-600/10 flex items-center justify-center p-12">
-                  <BookOpen className="w-12 h-12 text-blue-200" />
+                <div className="absolute inset-0 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center">
+                  <Image
+                    src="/story_placeholder.png"
+                    alt="Placeholder"
+                    fill
+                    className="object-cover opacity-50 contrast-75"
+                  />
                 </div>
               )}
 
@@ -86,22 +90,6 @@ const StoryLibrary = () => {
 
               {/* Content Overlay */}
               <div className="absolute inset-x-0 bottom-0 p-8 space-y-4">
-                <div className="flex flex-wrap items-center gap-3 mb-2">
-                  <span className="text-[9px] font-black uppercase tracking-widest bg-blue-600 text-white px-3 py-1 rounded-full shadow-lg shadow-blue-500/20">
-                    {story.genre}
-                  </span>
-                  {story.isCompleted ? (
-                    <span className="text-[9px] font-black uppercase tracking-widest bg-emerald-500/90 text-white px-3 py-1 rounded-full">
-                      Full Arc
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full">
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-                      Ongoing
-                    </span>
-                  )}
-                </div>
-
                 <Typography
                   variant="h3"
                   className="text-white text-xl font-black leading-tight group-hover:text-blue-200 transition-colors duration-300"
@@ -111,19 +99,21 @@ const StoryLibrary = () => {
 
                 <div className="flex items-center justify-between pt-2">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-[10px] font-black text-white uppercase">
+                    <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-[10px] font-black text-white uppercase group-hover:border-blue-500/50 transition-colors">
                       {story.authorName.charAt(0)}
                     </div>
-                    <Typography className="text-[10px] text-white/70 font-black uppercase tracking-widest truncate max-w-[100px]">
+                    <Typography className="text-[10px] text-white/70 font-black uppercase tracking-widest group-hover:text-white transition-colors">
                       {story.authorName}
                     </Typography>
                   </div>
 
-                  <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0">
+                  <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0">
                     <Typography className="text-[10px] text-white font-black uppercase tracking-widest">
                       Explore
                     </Typography>
-                    <ArrowRight className="w-3.5 h-3.5 text-white" />
+                    <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                      <ArrowRight className="w-3.5 h-3.5 text-white" />
+                    </div>
                   </div>
                 </div>
               </div>

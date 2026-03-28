@@ -20,7 +20,7 @@ import AiSummaryModal from "./ai-summary-modal";
 import FutureInsightModal from "./future-insight-modal";
 
 import { NewsArticle } from "@/types";
-import { newsCategories, newsCountries } from "@/constants";
+import { newsCategories, newsCountries, API_BASE_URL } from "@/constants";
 import { getNewsPaginated } from "@/lib/data";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "../ui/input";
@@ -68,9 +68,7 @@ export default function NewsCard() {
 
     const fetchUserData = async () => {
       try {
-        const baseUrl =
-          process.env.NEXT_PUBLIC_API_BASE_URL ||
-          "https://readhub-backend.onrender.com/api";
+        const baseUrl = API_BASE_URL;
         const res = await fetch(`${baseUrl}/user/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -184,9 +182,7 @@ export default function NewsCard() {
     try {
       setIsLoading(true);
 
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL ||
-        "https://readhub-backend.onrender.com/api";
+      const baseUrl = API_BASE_URL;
       const responseUS = await fetch(`${baseUrl}/news/fetch-categories/us`);
       const responseIN = await fetch(`${baseUrl}/news/fetch-categories/in`);
 
@@ -231,9 +227,7 @@ export default function NewsCard() {
     }
 
     try {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL ||
-        "https://readhub-backend.onrender.com/api";
+      const baseUrl = API_BASE_URL;
       const res = await fetch(`${baseUrl}/ai/chat`, {
         method: "POST",
         headers: {
@@ -248,11 +242,11 @@ export default function NewsCard() {
     } catch (_error) {
       setAiResponse(
         `⚠️ Unable to generate AI summary. This could be due to:
-
+ 
 • Network connectivity issues
 • Server temporarily unavailable
 • Rate limit exceeded
-
+ 
 Please try again in a few moments.`,
       );
     } finally {

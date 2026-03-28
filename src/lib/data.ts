@@ -2,6 +2,7 @@
 
 import { NewsArticle } from "@/types";
 import client from "../lib/mongodb";
+import { API_BASE_URL } from "@/constants";
 
 export type PaginatedNewsResponse = {
   news: NewsArticle[];
@@ -27,9 +28,7 @@ export async function getNewsPaginated(
       params.append("category", category);
     }
 
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "https://readhub-backend.onrender.com/api";
+    const baseUrl = API_BASE_URL;
     const endpoint =
       country === "in"
         ? `${baseUrl}/news/newIn/pagination`
@@ -81,9 +80,7 @@ export async function getTickerNews(
   country: string = "us",
 ): Promise<NewsArticle[]> {
   try {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_API_BASE_URL ||
-      "https://readhub-backend.onrender.com/api";
+    const baseUrl = API_BASE_URL;
     const endpoint =
       country === "in"
         ? `${baseUrl}/news/newIn/pagination`

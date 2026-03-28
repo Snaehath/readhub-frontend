@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserStore } from "@/lib/store/userStore";
 import { API_BASE_URL } from "@/constants";
+import { getCoverBaseUrl } from "@/lib/utils";
 import { toast } from "sonner";
 import { Wand2, Loader2 } from "lucide-react";
 import Image from "next/image";
@@ -69,7 +70,8 @@ const StoryViewer = ({
     (story.chapters?.length || 0) + (showGenerationButton ? 1 : 0);
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
-  const coverBaseUrl = API_BASE_URL.replace("/api", "") + "/covers";
+  const coverBaseUrl = getCoverBaseUrl();
+
 
   const handleGenerateChapter = async () => {
     if (isGenerating) return;

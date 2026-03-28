@@ -2,15 +2,13 @@
 
 import { use } from "react";
 import useSWR from "swr";
-import { ArrowLeft, Share2, Printer, Clock, Hash, BookOpen, Bookmark, ThumbsUp, Newspaper } from "lucide-react";
+import { ArrowLeft, Share2, Printer, Clock, Hash, BookOpen, ThumbsUp, Newspaper } from "lucide-react";
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
 import { Button } from "@/components/ui/button";
 import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
 import { SingleAiNewsResponse } from "@/types";
 import { format } from "date-fns";
-import { toast } from "sonner";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AllStoriesResponse } from "@/types";
-import { BookOpen, List, Star, Sparkles, ArrowRight, User } from "lucide-react";
+import { BookOpen, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Typography from "@/components/ui/custom/typography";
 import Image from "next/image";

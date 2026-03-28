@@ -7,7 +7,6 @@ import {
   Loader2,
   ArrowRight,
   Calendar,
-  User,
   Microscope,
   Lock as LockIcon,
 } from "lucide-react";
@@ -57,7 +56,7 @@ const AiNewsHub = () => {
       } else {
         toast.error("AI nodes are currently saturated.", { id: "gen-news" });
       }
-    } catch (_err) {
+    } catch {
       toast.error("Network synchronization failed.", { id: "gen-news" });
     } finally {
       setLoading(false);

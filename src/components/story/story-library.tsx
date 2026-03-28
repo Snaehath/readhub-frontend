@@ -12,7 +12,7 @@ import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export default function StoryLibrary() {
+const StoryLibrary = () => {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [retriedPng, setRetriedPng] = useState<Record<string, boolean>>({});
 
@@ -26,161 +26,113 @@ export default function StoryLibrary() {
     fetcher,
   );
 
-  const stories = data?.stories || [];
-
   if (isLoading) {
-    return (
-      <section className="mt-20">
-        <StoriesSkeleton />
-      </section>
-    );
+    return <StoriesSkeleton />;
   }
 
-  if (stories.length === 0) return null;
+  const stories = data?.stories || [];
 
   return (
-    <section className="mt-20">
-      <div className="mb-10 sm:mb-14">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="max-w-2xl">
-            <Typography variant="muted" className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider mb-3">
-              <Sparkles className="w-3.5 h-3.5" />
-              ReadHub Original
-            </Typography>
-            <Typography
-              variant="h2"
-              className="text-3xl sm:text-4xl font-black tracking-tight mb-3"
-            >
-              AI Story Library
-            </Typography>
-            <Typography
-              variant="p"
-              className="text-base text-muted-foreground leading-relaxed"
-            >
-              Built entirely by AI Agents with zero human intervention. Browse
-              our archive for immersive narratives tailored by AI agents.
-            </Typography>
-          </div>
-        </div>
+    <div className="space-y-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+      <div className="flex items-center gap-6">
+        <Typography
+          variant="muted"
+          className="text-xs font-black uppercase tracking-[0.3em] whitespace-nowrap text-blue-600"
+        >
+          Story Archive
+        </Typography>
+        <div className="h-px w-full bg-blue-500/10" />
       </div>
 
-      {/* Modern Card Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 sm:gap-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
         {stories.map((story) => (
           <Link
-            href={`/ai-hub/story/${story.index}`}
-            key={story.index}
-            className="group outline-none"
+            key={story.id}
+            href={`/ai-hub/story/${story.index || story.id}`}
+            className="group block relative"
           >
-            <div className="relative flex flex-col h-full bg-card/40 backdrop-blur-sm rounded-3xl border border-border/50 overflow-hidden transition-all duration-500 ease-out hover:-translate-y-2 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.15)] dark:hover:shadow-[0_20px_40px_-15px_rgba(255,255,255,0.05)] hover:border-blue-500/30 dark:hover:border-blue-500/20 hover:bg-card/60">
-              {/* Card Cover Section */}
-              <div className="relative aspect-[4/5] w-full overflow-hidden bg-muted/30">
-                {!imageErrors[story.id] ? (
-                  <Image
-                    src={
-                      retriedPng[story.id]
-                        ? `${coverBaseUrl}/cover_${story.id}.png`
-                        : story.coverImage ||
-                          `${coverBaseUrl}/cover_${story.id}.jpg`
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[2.5rem] bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 transition-all duration-500 group-hover:shadow-[0_40px_80px_-15px_rgba(37,99,235,0.15)] group-hover:-translate-y-2 group-hover:scale-[1.02]">
+              {/* Image with fallback */}
+              {!imageErrors[story.id] ? (
+                <Image
+                  src={
+                    retriedPng[story.id]
+                      ? `${coverBaseUrl}/cover_${story.id}.png`
+                      : story.coverImage ||
+                        `${coverBaseUrl}/cover_${story.id}.jpg`
+                  }
+                  alt={story.title}
+                  fill
+                  className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  onError={() => {
+                    if (!retriedPng[story.id] && !story.coverImage) {
+                      setRetriedPng((prev) => ({ ...prev, [story.id]: true }));
+                    } else {
+                      setImageErrors((prev) => ({
+                        ...prev,
+                        [story.id]: true,
+                      }));
                     }
-                    alt={story.title}
-                    fill
-                    className="object-cover transition-transform duration-700 ease-out"
-                    onError={() => {
-                      if (!retriedPng[story.id] && !story.coverImage) {
-                        setRetriedPng((prev) => ({
-                          ...prev,
-                          [story.id]: true,
-                        }));
-                      } else {
-                        setImageErrors((prev) => ({
-                          ...prev,
-                          [story.id]: true,
-                        }));
-                      }
-                    }}
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-indigo-600/5 to-violet-600/10 flex flex-col items-center justify-center p-6 text-center">
-                    <BookOpen className="w-16 h-16 mb-4 opacity-20 text-blue-500 flex-shrink-0" />
-                    <Typography
-                      variant="h4"
-                      className="text-lg font-black tracking-tight leading-tight line-clamp-3 text-foreground/40"
-                    >
-                      {story.title}
-                    </Typography>
-                  </div>
-                )}
+                  }}
+                />
+              ) : (
+                <div className="absolute inset-0 bg-linear-to-br from-blue-600/10 to-indigo-600/10 flex items-center justify-center p-12">
+                  <BookOpen className="w-12 h-12 text-blue-200" />
+                </div>
+              )}
 
-                {/* Always-on Tags (Top) */}
-                <div className="absolute top-3 inset-x-3 flex items-center justify-between z-10">
-                  <Typography variant="muted" className="bg-black/60 backdrop-blur-md text-white/90 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 border border-white/10 shadow-lg leading-none">
-                    <List className="w-3 h-3 text-blue-400" />
-                    {story.currentChapterCount} Ch.
-                  </Typography>
-                  {(story.averageRating !== undefined
-                    ? story.averageRating
-                    : story.reviewCount && story.reviewCount > 0
-                      ? (story.ratingSum || 0) / story.reviewCount
-                      : 0) > 0 && (
-                    <Typography variant="muted" className="bg-black/60 backdrop-blur-md text-amber-400 text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 border border-white/10 shadow-lg leading-none">
-                      <Star className="w-3 h-3 fill-amber-400" />
-                      {(
-                        story.averageRating ??
-                        (story.reviewCount && story.reviewCount > 0
-                          ? (story.ratingSum || 0) / story.reviewCount
-                          : 0)
-                      ).toFixed(1)}
-                    </Typography>
+              {/* Overlay Gradient */}
+              <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/20 to-transparent opacity-80 group-hover:opacity-95 transition-opacity duration-500" />
+
+              {/* Content Overlay */}
+              <div className="absolute inset-x-0 bottom-0 p-8 space-y-4">
+                <div className="flex flex-wrap items-center gap-3 mb-2">
+                  <span className="text-[9px] font-black uppercase tracking-widest bg-blue-600 text-white px-3 py-1 rounded-full shadow-lg shadow-blue-500/20">
+                    {story.genre}
+                  </span>
+                  {story.isCompleted ? (
+                    <span className="text-[9px] font-black uppercase tracking-widest bg-emerald-500/90 text-white px-3 py-1 rounded-full">
+                      Full Arc
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-full">
+                      <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                      Ongoing
+                    </span>
                   )}
                 </div>
 
-                {/* Animated Hover Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100 dark:from-black/95 dark:via-black/70" />
-
-                <div className="absolute inset-x-0 bottom-0 p-5 translate-y-8 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-500 ease-out flex flex-col justify-end z-20 h-full">
-                  <div className="mt-auto">
-                    {story.synopsis ? (
-                      <Typography variant="muted" className="text-white/80 text-sm line-clamp-4 mb-4 leading-relaxed font-medium drop-shadow-sm">
-                        {story.synopsis}
-                      </Typography>
-                    ) : (
-                      <Typography variant="muted" className="text-white/50 text-sm italic mb-4">
-                        No synopsis available.
-                      </Typography>
-                    )}
-                    <Typography variant="small" className="inline-flex items-center gap-2 text-xs font-bold bg-white text-black px-4 py-2 rounded-full shadow-lg hover:scale-105 transition-transform duration-300">
-                      Read Now <ArrowRight className="w-3.5 h-3.5" />
-                    </Typography>
-                  </div>
-                </div>
-              </div>
-
-              {/* Metadata Section (Always Visible) */}
-              <div className="p-4 sm:p-5 flex flex-col flex-grow bg-gradient-to-b from-transparent to-background/50 z-10">
                 <Typography
                   variant="h3"
-                  className="text-base sm:text-lg font-bold tracking-tight line-clamp-1 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors duration-300"
+                  className="text-white text-xl font-black leading-tight group-hover:text-blue-200 transition-colors duration-300"
                 >
                   {story.title}
                 </Typography>
 
-                <div className="flex items-center gap-2.5 mt-3 opacity-80 group-hover:opacity-100 transition-opacity">
-                  <div className="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 flex-shrink-0">
-                    <User className="w-3 h-3" />
+                <div className="flex items-center justify-between pt-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-[10px] font-black text-white uppercase">
+                      {story.authorName.charAt(0)}
+                    </div>
+                    <Typography className="text-[10px] text-white/70 font-black uppercase tracking-widest truncate max-w-[100px]">
+                      {story.authorName}
+                    </Typography>
                   </div>
-                  <Typography
-                    variant="muted"
-                    className="text-xs font-semibold truncate"
-                  >
-                    {story.authorName}
-                  </Typography>
+
+                  <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0">
+                    <Typography className="text-[10px] text-white font-black uppercase tracking-widest">
+                      Explore
+                    </Typography>
+                    <ArrowRight className="w-3.5 h-3.5 text-white" />
+                  </div>
                 </div>
               </div>
             </div>
           </Link>
         ))}
       </div>
-    </section>
+    </div>
   );
-}
+};
+
+export default StoryLibrary;

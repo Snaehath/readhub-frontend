@@ -18,7 +18,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-function HubContent() {
+const HubContent = () => {
   const { user } = useUserStore();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -203,9 +203,9 @@ function HubContent() {
       </div>
     </div>
   );
-}
+};
 
-export default function HubPage() {
+const HubPage = () => {
   return (
     <Suspense fallback={
       <div className="container mx-auto pb-20 pt-10 px-4 sm:px-8 flex flex-col items-center justify-center min-h-[50vh]">
@@ -216,4 +216,6 @@ export default function HubPage() {
       <HubContent />
     </Suspense>
   );
-}
+};
+
+export default HubPage;

@@ -5,7 +5,7 @@ import { useUserStore } from "@/lib/store/userStore";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-export function AuthMonitor() {
+export const AuthMonitor = () => {
   const { logout, user, token, fetchUser } = useUserStore();
   const router = useRouter();
 

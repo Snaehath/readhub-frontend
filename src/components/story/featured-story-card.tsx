@@ -15,7 +15,7 @@ import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-export default function FeaturedStorySection() {
+const FeaturedStorySection = () => {
   const [imageError, setImageError] = useState(false);
   const [retriedPng, setRetriedPng] = useState(false);
 
@@ -229,4 +229,6 @@ export default function FeaturedStorySection() {
       </Link>
     </section>
   );
-}
+};
+
+export default FeaturedStorySection;

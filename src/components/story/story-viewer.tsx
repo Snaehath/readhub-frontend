@@ -36,12 +36,12 @@ interface StoryViewerProps {
   onStoryUpdate?: (updatedStory: AIStory) => void;
 }
 
-export default function StoryViewer({
+const StoryViewer = ({
   story,
   backUrl,
   backText,
   onStoryUpdate,
-}: StoryViewerProps) {
+}: StoryViewerProps) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -687,4 +687,6 @@ export default function StoryViewer({
       />
     </div>
   );
-}
+};
+
+export default StoryViewer;

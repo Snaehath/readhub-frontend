@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import Typography from "@/components/ui/custom/typography";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { API_BASE_URL } from "@/constants";
 
 interface ChapterViewerProps {
   index: string;
@@ -32,7 +33,7 @@ const ChapterViewer = ({
     const fetchStory = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/ai-hub/story/${index}`,
+          `${API_BASE_URL}/ai-hub/story/${index}`,
         );
         const data: StoryResponse = await res.json();
         setStory(data.story);
@@ -144,7 +145,14 @@ const ChapterViewer = ({
         <article className="prose prose-slate dark:prose-invert max-w-none">
           <div className="text-muted-foreground leading-relaxed space-y-6 text-lg font-medium">
             {selectedChapter.content.split("\n\n").map((para, i) => (
-              <p key={i} className="mb-6 indent-0 first-letter:text-2xl first-letter:font-bold first-letter:text-primary first-letter:mr-1">
+              <p
+                key={i}
+                className={`mb-6 indent-0 ${
+                  i === 0
+                    ? "first-letter:text-2xl first-letter:font-bold first-letter:text-primary first-letter:mr-1"
+                    : ""
+                }`}
+              >
                 {para}
               </p>
             ))}

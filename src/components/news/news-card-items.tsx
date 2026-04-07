@@ -1,4 +1,4 @@
-import { Bookmark, CalendarIcon, Sparkles, ThumbsUp, Zap } from "lucide-react";
+import { Bookmark, Sparkles, ThumbsUp, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "../ui/badge";
@@ -32,7 +32,6 @@ export default function NewsCardItems({
   filteredArticles,
   onAskAi,
   askFutureAi,
-  isLatest,
   token,
   country,
   initialLikes,
@@ -145,17 +144,10 @@ export default function NewsCardItems({
       {filteredArticles.map((article, i) => (
         <Card
           key={i}
-          className="overflow-hidden hover:shadow-lg hover:shadow-gray-500/50 p-0 flex flex-col h-full"
+          className="overflow-hidden hover:border-zinc-900 dark:hover:border-zinc-100 p-0 flex flex-col h-full transition-colors border-zinc-200 dark:border-zinc-800"
         >
           <CardHeader className="p-0">
             <div className="relative h-64 w-full overflow-hidden">
-              {isLatest(article.dateOriginal) && (
-                <div className="absolute top-0 left-0 z-20 pointer-events-none">
-                  <div className="absolute top-3 -left-7 w-28 -rotate-45 bg-linear-to-r from-red-600 to-orange-500 text-white text-xs Capitalize py-1 text-center shadow-lg border-y border-white/20">
-                    Latest
-                  </div>
-                </div>
-              )}
               {!loadedImages[article.id] && (
                 <div className="absolute inset-0 z-10 bg-zinc-100 dark:bg-zinc-800 animate-pulse overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
@@ -170,20 +162,20 @@ export default function NewsCardItems({
                   e.currentTarget.src = "/ReadHub_PlaceHolder.png";
                   handleImageLoad(article.id);
                 }}
-                className={`object-cover w-full h-full transition-opacity duration-300 ${
+                className={`object-cover w-full h-full transition-opacity duration-300 contrast-[1.1] ${
                   loadedImages[article.id] ? "opacity-100" : "opacity-0"
                 }`}
               />
               <Button
                 onClick={() => handleFutureClick(article)}
                 className="absolute top-2 right-2 flex items-center gap-1 px-3 py-1.5 
-      text-xs font-semibold rounded-full shadow-md transition-all cursor-pointer
-      bg-emerald-600/90 text-white hover:bg-emerald-600 hover:scale-105 active:scale-95
+      text-xs font-black uppercase tracking-widest rounded-full shadow-md transition-all cursor-pointer
+      bg-emerald-600 text-white hover:bg-emerald-700 hover:scale-105 active:scale-95
     "
                 title="View Future AI insights"
               >
                 Future AI
-                <Zap className="w-4 h-4 ml-1" />
+                <Zap className="w-3.5 h-3.5 ml-1" />
               </Button>
             </div>
             <div className="flex flex-wrap gap-2 mb-2 p-2 pt-0 pb-0">
@@ -200,26 +192,30 @@ export default function NewsCardItems({
                 );
               })}
               <Badge
-                className="ml-auto px-3 py-1 text-xs font-semibold rounded-full bg-linear-to-r from-violet-500 to-purple-500 text-white flex items-center cursor-pointer hover:from-violet-600 hover:to-purple-600 active:scale-95 transition-all duration-150 shadow-sm"
+                className="ml-auto px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full bg-linear-to-r from-indigo-600 to-violet-600 text-white flex items-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-150 shadow-lg shadow-indigo-500/10 border-0"
                 onClick={() => onAskAi(article)}
                 aria-label="Ask AI"
                 variant="outline"
                 title="Get Insights from AI"
               >
-                Ask AI <Sparkles className="w-4 h-4 ml-1" />
+                Ask AI <Sparkles className="w-3.5 h-3.5 ml-1.5" />
               </Badge>
             </div>
-            <CardTitle className="text-lg line-clamp-2 p-2 pt-0 pb-0">
+            <CardTitle className="text-lg font-black leading-tight p-2 pt-1 pb-0 line-clamp-2">
               {article.title}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-2 pt-0 pb-0 line-clamp-2">
-            <Typography variant="small" color="muted">
+          <CardContent className="p-2 pt-1 pb-4 flex-grow">
+            <Typography
+              variant="small"
+              color="muted"
+              className="line-clamp-2 leading-relaxed italic opacity-80 border-l-2 border-zinc-200 dark:border-zinc-800 pl-3"
+            >
               {article.description || "No description available."}
             </Typography>
           </CardContent>
-          <CardFooter className="p-4 pt-0 flex items-center justify-between border-t dark:border-zinc-800/50 mt-auto">
-            <div className="flex items-center gap-1">
+          <CardFooter className="p-4 pt-0 flex items-center justify-between border-t dark:border-zinc-800/20 mt-auto bg-zinc-50/30 dark:bg-zinc-900/10">
+            <div className="flex items-center gap-1.5">
               <ToolTip
                 content={likes[article.id] ? "Unlike" : "Like this article"}
               >
@@ -229,8 +225,8 @@ export default function NewsCardItems({
                   onClick={() => toggleLike(article.id)}
                   className={`h-9 w-9 rounded-full transition-all duration-300 cursor-pointer ${
                     likes[article.id]
-                      ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20"
-                      : "text-zinc-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                      ? "text-zinc-900 bg-zinc-200 dark:text-zinc-100 dark:bg-zinc-800"
+                      : "text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:text-zinc-100 dark:hover:bg-zinc-800"
                   }`}
                 >
                   <ThumbsUp
@@ -250,12 +246,12 @@ export default function NewsCardItems({
                   onClick={() => toggleBookmark(article.id)}
                   className={`h-9 w-9 rounded-full transition-all duration-300 cursor-pointer ${
                     bookmarks[article.id]
-                      ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20"
-                      : "text-zinc-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+                      ? "text-zinc-900 bg-zinc-200 dark:text-zinc-100 dark:bg-zinc-800"
+                      : "text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:text-zinc-100 dark:hover:bg-zinc-800"
                   }`}
                 >
                   <Bookmark
-                    className={`w-4.5 h-4.5 ${bookmarks[article.id] ? "fill-current" : ""}`}
+                    className={`w-4 h-4 ${bookmarks[article.id] ? "fill-current" : ""}`}
                   />
                 </Button>
               </ToolTip>
@@ -267,21 +263,16 @@ export default function NewsCardItems({
                   addSuffix: true,
                 })}
               >
-                <div className="hidden sm:flex items-center text-zinc-400">
-                  <CalendarIcon className="mr-1.5 h-3.5 w-3.5" />
-                  <Typography
-                    variant="small"
-                    className="text-[11px] font-medium"
-                  >
-                    {formatDate(new Date(article.publishedAt), "MMM d, yyyy")}
-                  </Typography>
+                <div className="hidden sm:flex items-center text-[10px] font-black uppercase tracking-widest text-zinc-400">
+                  {formatDate(new Date(article.publishedAt), "MMM d, yyyy")}
                 </div>
               </ToolTip>
+              <div className="w-px h-3 bg-zinc-200 dark:bg-zinc-800 mx-1 hidden sm:block" />
               <Link
                 href={article.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline transition-transform"
+                className="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100 hover:underline transition-all"
               >
                 Read Source
               </Link>

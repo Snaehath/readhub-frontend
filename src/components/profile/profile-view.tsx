@@ -1,8 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -205,7 +205,7 @@ const ProfileView = () => {
                               : "border-zinc-100 dark:border-zinc-800 hover:border-indigo-200"
                           }`}
                         >
-                          <Image
+                          <img
                             src={opt.value}
                             alt={opt.label}
                             width={60}

@@ -14,7 +14,6 @@ import useSWR, { mutate } from "swr";
 import { AllStoriesResponse } from "@/types";
 import { Input } from "@/components/ui/input";
 import AiNewsHub from "@/components/news/ai-news-hub";
-import NewBadge from "@/components/ui/custom/new-badge";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const HubContent = () => {
@@ -119,7 +118,6 @@ const HubContent = () => {
           >
             <Newspaper className="w-4 h-4" />
             AI News
-            <NewBadge />
           </button>
         </div>
       </div>

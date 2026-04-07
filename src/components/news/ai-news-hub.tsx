@@ -15,7 +15,6 @@ import useSWR, { mutate } from "swr";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
 import { AiNewsResponse } from "@/types";
@@ -24,39 +23,41 @@ import { format } from "date-fns";
 
 const AiNewsHub = () => {
   const { user, _hasHydrated } = useUserStore();
-  const [suggestion, setSuggestion] = useState("");
   const [loading, setLoading] = useState(false);
 
   const { data, isLoading } = useSWR<AiNewsResponse>(
     `${API_BASE_URL}/ai-hub/news/all`,
-    fetcher
+    fetcher,
   );
 
   const handleGenerateNews = async () => {
     if (!user) return;
     setLoading(true);
-    toast.loading("Deploying AI Journalist...", { id: "gen-news" });
+    toast.loading("AI Agents are drafting today's news...", { id: "gen-news" });
 
     try {
       const token = localStorage.getItem("jwt");
-      const res = await fetch(`${API_BASE_URL}/ai-hub/news/generate`, {
+      const res = await fetch(`${API_BASE_URL}/ai-hub/news/trigger`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ topic: suggestion }),
+        body: JSON.stringify({ suggestion: "auto" }),
       });
 
       if (res.ok) {
         toast.success("AI Investigation Complete!", { id: "gen-news" });
         mutate(`${API_BASE_URL}/ai-hub/news/all`);
-        setSuggestion("");
       } else {
-        toast.error("AI nodes are currently saturated.", { id: "gen-news" });
+        const errorData = await res.json();
+        toast.error(errorData.error || "AI nodes are currently saturated.", {
+          id: "gen-news",
+        });
       }
-    } catch {
-      toast.error("Network synchronization failed.", { id: "gen-news" });
+    } catch (err) {
+      console.error("AI news generation error:", err);
+      toast.error("Global data synchronization failed.", { id: "gen-news" });
     } finally {
       setLoading(false);
     }
@@ -93,31 +94,26 @@ const AiNewsHub = () => {
               <Microscope className="w-6 h-6" />
             </div>
             <Typography variant="h2" className="text-3xl font-black">
-              Generate AI News
+              Daily AI Insights
             </Typography>
             <Typography variant="p" className="text-muted-foreground">
-              Direct the AI Bureau to investigate any topic. From global shifts
-              to technical trends, get a comprehensive journalistic briefing.
+              Our AI Bureau analyzes all globally fetched news from the past 24
+              hours to synthesize a comprehensive, deep-dive investigation. One
+              major briefing is generated daily.
             </Typography>
 
-            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              <Input
-                placeholder="What should our AI investigate?"
-                value={suggestion}
-                onChange={(e) => setSuggestion(e.target.value)}
-                className="rounded-full bg-background/50 border-zinc-200 dark:border-zinc-800 h-14 px-8 text-base shadow-inner focus:ring-indigo-500"
-              />
+            <div className="pt-4">
               <Button
                 onClick={handleGenerateNews}
-                disabled={loading || !suggestion.trim()}
-                className="h-14 px-10 rounded-full font-black uppercase tracking-wide bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-500/20 gap-2 shrink-0 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                disabled={loading}
+                className="h-12 px-8 rounded-full font-black uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-500/20 gap-2.5 transition-all hover:scale-[1.02] active:scale-[0.98] group"
               >
                 {loading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-4.5 h-4.5 animate-spin text-white" />
                 ) : (
-                  <Sparkles className="w-5 h-5" />
+                  <Sparkles className="w-4.5 h-4.5 text-indigo-200 group-hover:rotate-12 transition-transform" />
                 )}
-                Investigate
+                {loading ? "Drafting..." : "Synthesize Today's Briefing"}
               </Button>
             </div>
           </div>
@@ -138,7 +134,10 @@ const AiNewsHub = () => {
             Login to access advanced AI generation. Direct our investigative
             agents to create custom deep-briefings.
           </Typography>
-          <Button asChild className="rounded-full px-10 h-12 font-bold shadow-lg">
+          <Button
+            asChild
+            className="rounded-full px-10 h-12 font-bold shadow-lg"
+          >
             <Link href="/login">Authenticate to Access</Link>
           </Button>
         </div>

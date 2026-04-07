@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { NewsArticle } from "@/types";
@@ -7,7 +8,6 @@ import { Badge } from "../ui/badge";
 import { formatDate, formatDistanceToNow, differenceInHours } from "date-fns";
 import Typography from "../ui/custom/typography";
 import ToolTip from "../ui/custom/tooltip";
-import Image from "next/image";
 import { useState } from "react";
 
 interface FeaturedNewsCardProps {
@@ -49,16 +49,15 @@ const FeaturedNewsCard: React.FC<FeaturedNewsCardProps> = ({ article }) => {
 
         {/* Image Container */}
         <div className="relative w-full h-full">
-          <Image
+          <img
             src={
               imageError
                 ? "/ReadHub_PlaceHolder.png"
                 : article.urlToImage || "/ReadHub_PlaceHolder.png"
             }
             alt={article.title}
-            fill
-            className={`object-cover transition-opacity duration-500 ${isImageLoading ? "opacity-0" : "opacity-100"}`}
-            onLoadingComplete={() => setIsImageLoading(false)}
+            className={`object-cover w-full h-full transition-opacity duration-500 ${isImageLoading ? "opacity-0" : "opacity-100"}`}
+            onLoad={() => setIsImageLoading(false)}
             onError={() => {
               setImageError(true);
               setIsImageLoading(false);

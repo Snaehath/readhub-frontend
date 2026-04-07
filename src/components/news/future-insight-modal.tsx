@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import ReactMarkdown from "react-markdown";
 import {
@@ -18,7 +19,6 @@ import {
 import { Button } from "../ui/button";
 import Typography from "../ui/custom/typography";
 import { NewsArticle } from "@/types";
-import Image from "next/image";
 import { formatDate } from "date-fns";
 
 interface FutureInsightModalProps {
@@ -54,12 +54,10 @@ export default function FutureInsightModal({
 
         {/* Full-Height Left Thumbnail (Desktop Only) */}
         <div className="hidden md:block w-[50%] relative flex-shrink-0 group overflow-hidden border-r border-zinc-100 dark:border-zinc-800">
-          <Image
+          <img
             src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
             alt={article.title}
-            fill
-            className="object-cover transition-transform duration-[2000ms] group-hover:scale-110"
-            priority
+            className="object-cover w-full h-full transition-transform duration-[2000ms] group-hover:scale-110"
           />
           <div className="absolute inset-0 bg-black/40" />
           <div className="absolute inset-0 bg-linear-to-b from-black/10 via-transparent to-black/90" />
@@ -90,11 +88,10 @@ export default function FutureInsightModal({
           <div className="flex-1 overflow-y-auto p-6 sm:p-12 pt-4 space-y-4 bg-zinc-50/10 dark:bg-zinc-900/5">
             {/* Mobile Hero View (Headline on image for mobile too) */}
             <div className="md:hidden relative h-72 rounded-xl overflow-hidden mb-8 shadow-2xl">
-              <Image
+              <img
                 src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
                 alt={article.title}
-                fill
-                className="object-cover"
+                className="object-cover w-full h-full"
               />
               <div className="absolute inset-0 bg-linear-to-b from-transparent via-black/20 to-black/80" />
               <div className="absolute bottom-6 left-6 right-6 space-y-3">

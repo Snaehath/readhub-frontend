@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -10,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
 import { getCoverBaseUrl } from "@/lib/utils";
-import Image from "next/image";
 import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -45,188 +45,143 @@ const FeaturedStorySection = () => {
   if (isLoading || !story) return null;
 
   return (
-    <section className="mb-24 relative overflow-x-hidden">
-      {/* AI Gradient Definition */}
-      <svg width="0" height="0" className="absolute">
-        <defs>
-          <linearGradient id="ai-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#2563eb" />
-            <stop offset="50%" stopColor="#7c3aed" />
-            <stop offset="100%" stopColor="#db2777" />
-          </linearGradient>
-        </defs>
-      </svg>
-
-      <div className="flex items-center justify-between pb-4">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 font-black mb-1">
-            <Sparkles
-              className="w-4 h-4"
-              style={{
-                stroke: "url(#ai-gradient)",
-                fill: "url(#ai-gradient)",
-                fillOpacity: 0.1,
-              }}
-            />
-            AI Original
+    <section className="mb-32">
+      <div className="max-w-6xl mx-auto px-4">
+        {/* Header Hook */}
+        <div className="flex items-center gap-4 mb-8">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900">
+            <Sparkles className="w-4 h-4" />
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+              ReadHub AI Original
+            </span>
           </div>
-          <Typography
-            variant="h2"
-            className="text-3xl sm:text-4xl font-black tracking-tight flex items-center gap-3"
-          >
-            ReadHub Stories
-          </Typography>
+          <div className="h-[1px] flex-1 bg-linear-to-r from-zinc-200 dark:from-zinc-800 to-transparent" />
         </div>
-        <Button variant="ghost" asChild className="rounded-full font-bold h-10">
-          <Link href="/library">
-            View All Series <ArrowRight className="w-4 h-4 ml-2" />
-          </Link>
-        </Button>
-      </div>
 
-      <Link
-        href={`/ai-hub/story/${story.index || story.id}`}
-        className="block group"
-      >
-        <Card className="bg-background p-0">
-          <div className="grid grid-cols-1 sm:grid-cols-12 min-h-[420px]">
-            {/* Left Column: Artistic Cover */}
-            <div className="sm:col-span-5 relative overflow-hidden flex items-center justify-center group/cover rounded-l-xl">
-              {!imageError ? (
-                <Image
-                  src={
-                    retriedPng
-                      ? `${coverBaseUrl}/cover_${story.id}.png`
-                      : story.coverImage ||
-                        `${coverBaseUrl}/cover_${story.id}.jpg`
-                  }
-                  alt={story.title}
-                  fill
-                  className="object-cover rounded-l-xl transition-transform duration-700"
-                  onError={() => {
-                    if (!retriedPng && !story.coverImage) setRetriedPng(true);
-                    else setImageError(true);
-                  }}
-                />
-              ) : (
-                <div className="absolute inset-0 bg-zinc-50 dark:bg-zinc-900">
-                  <Image
-                    src="/story_placeholder.png"
-                    alt="Placeholder"
-                    fill
-                    className="object-cover opacity-50 contrast-75"
+        <Link
+          href={`/ai-hub/story/${story.index || story.id}`}
+          className="block group"
+        >
+          <Card className="bg-background p-0 overflow-hidden border-2 shadow-2xl">
+            <div className="grid grid-cols-1 lg:grid-cols-12 min-h-fit lg:min-h-[600px]">
+              {/* Left Column: Pure Artistic Cover */}
+              <div className="lg:col-span-5 relative overflow-hidden bg-zinc-100 dark:bg-zinc-900 min-h-[400px] lg:min-h-full">
+                {!imageError ? (
+                  <img
+                    src={
+                      retriedPng
+                        ? `${coverBaseUrl}/cover_${story.id}.png`
+                        : story.coverImage ||
+                          `${coverBaseUrl}/cover_${story.id}.jpg`
+                    }
+                    alt={story.title}
+                    className="absolute inset-0 object-cover w-full h-full"
+                    onError={() => {
+                      if (!retriedPng && !story.coverImage) setRetriedPng(true);
+                      else setImageError(true);
+                    }}
                   />
-                </div>
-              )}
-
-              {/* High-quality overlay */}
-              <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent group-hover:from-black/95 transition-all duration-500" />
-
-              <div className="relative z-10 p-12 text-center lg:text-left h-full flex flex-col justify-end w-full">
-                <Badge
-                  variant="outline"
-                  className="w-fit mb-6 uppercase text-[10px] tracking-[0.2em] font-black border-2 bg-white/10 backdrop-blur-md text-white border-white/20 mx-auto lg:mx-0"
-                >
-                  {story.isCompleted ? "Completed" : "Active"}
-                </Badge>
-                <Typography
-                  variant="h1"
-                  className="mb-4 text-white drop-shadow-2xl leading-[0.9]"
-                >
-                  {story.title}
-                </Typography>
-                <div className="flex items-center justify-center sm:justify-start opacity-90">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-blue-300">
-                    <Sparkles
-                      className="w-4 h-4"
-                      style={{
-                        stroke: "url(#ai-gradient)",
-                        fill: "url(#ai-gradient)",
-                        fillOpacity: 0.1,
-                      }}
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <img
+                      src="/story_placeholder.png"
+                      alt="Placeholder"
+                      className="object-cover w-full h-full opacity-30"
                     />
                   </div>
-                  <Typography className="text-sm tracking-widest font-bold">
-                    {story.authorName}
-                  </Typography>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column: Narrative Details */}
-            <div className="lg:col-span-7 p-8 sm:p-14 flex flex-col justify-center gap-10 bg-linear-to-br from-transparent to-zinc-50/50 dark:to-zinc-900/50">
-              <div className="space-y-6">
-                <div className="relative">
-                  <div className="absolute -left-4 top-0 bottom-0 w-1 bg-blue-500 rounded-full" />
-                  <Typography
-                    variant="h4"
-                    className="text-2xl sm:text-3xl font-black italic tracking-tight leading-tight text-foreground/90 pl-4"
-                  >
-                    &ldquo;{story.subject}&rdquo;
-                  </Typography>
-                </div>
-
-                <Typography
-                  variant="muted"
-                  className="leading-relaxed font-medium line-clamp-4"
-                >
-                  {story.synopsis ||
-                    story.chapters?.[story.chapters.length - 1]?.content ||
-                    "An epic narrative journey forged by advanced AI agents, exploring original worlds and complex characters."}
-                </Typography>
+                )}
+                {/* Subtle vignette for depth */}
+                <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent pointer-events-none" />
               </div>
 
-              <div className="flex flex-col sm:flex-row items-end justify-between gap-8 pt-8 border-t border-zinc-200/50 dark:border-zinc-800/50">
-                <div className="flex flex-wrap items-center gap-10">
-                  <div className="flex flex-col gap-2">
-                    <Typography
-                      variant="muted"
-                      className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80"
+              {/* Right Column: Editorial Intelligence */}
+              <div className="lg:col-span-7 p-8 sm:p-16 flex flex-col justify-between bg-white dark:bg-zinc-950">
+                <div className="space-y-10">
+                  {/* Metadata Row */}
+                  <div className="flex flex-wrap items-center gap-4">
+                    <Badge
+                      variant="outline"
+                      className="rounded-full px-4 py-1 border-2 font-black text-[10px] uppercase tracking-widest"
                     >
-                      Status
+                      Series 01
+                    </Badge>
+                    <div className="h-1 w-1 rounded-full bg-zinc-300 dark:bg-zinc-700" />
+                    <Typography className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                      By {story.authorName}
                     </Typography>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className={`w-2 h-2 rounded-full animate-pulse ${story.isCompleted ? "bg-emerald-500" : "bg-blue-500"}`}
-                      />
+                  </div>
+
+                  {/* Headline & Subject */}
+                  <div className="space-y-6">
+                    <Typography
+                      variant="h1"
+                      className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tighter leading-none"
+                    >
+                      {story.title}
+                    </Typography>
+
+                    <div className="relative pl-6">
+                      <div className="absolute left-0 top-1 bottom-1 w-1 bg-zinc-900 dark:bg-white rounded-full" />
                       <Typography
-                        className={`text-xs font-black uppercase tracking-widest leading-none ${story.isCompleted ? "text-emerald-500" : "text-blue-500"}`}
+                        variant="h3"
+                        className="text-xl sm:text-2xl font-black italic tracking-tight leading-tight opacity-80"
                       >
-                        {story.isCompleted ? "Completed" : "Ongoing"}
+                        &ldquo;{story.subject}&rdquo;
                       </Typography>
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <Typography
-                      variant="muted"
-                      className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80"
-                    >
-                      Read Time
-                    </Typography>
-                    <div className="flex items-center gap-2">
-                      <BookOpen className="w-3.5 h-3.5 text-indigo-500" />
-                      <Typography className="text-xs font-black uppercase tracking-widest leading-none">
-                        {Math.ceil((story.chapters?.length || 1) * 8)} min read
-                      </Typography>
-                    </div>
-                  </div>
+                  {/* Narrative Body */}
+                  <Typography
+                    variant="muted"
+                    className="text-sm sm:text-base leading-relaxed font-medium line-clamp-5 text-zinc-600 dark:text-zinc-400 max-w-2xl"
+                  >
+                    {story.synopsis ||
+                      story.chapters?.[story.chapters.length - 1]?.content ||
+                      "An epic narrative journey forged by advanced AI agents, exploring original worlds and complex characters."}
+                  </Typography>
                 </div>
 
-                <div className="flex items-center">
-                  <Button
-                    variant="pureGhost"
-                    className="rounded-full font-black cursor-pointer"
-                  >
-                    Read Now
-                    <ArrowRight className="w-3.5 h-3.5 ml-2" />
+                {/* Footer Logistics */}
+                <div className="pt-12 sm:pt-16 border-t border-zinc-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-8">
+                  <div className="flex items-center gap-12">
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+                        Status
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className={`w-2 h-2 rounded-full ${story.isCompleted ? "bg-emerald-500" : "bg-blue-500"} animate-pulse`}
+                        />
+                        <span className="text-xs font-black uppercase tracking-widest">
+                          {story.isCompleted ? "Completed" : "Ongoing"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+                        Duration
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <BookOpen className="w-3 h-3" />
+                        <span className="text-xs font-black uppercase tracking-widest">
+                          {Math.ceil((story.chapters?.length || 1) * 8)} MIN
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button className="w-full sm:w-auto rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-black uppercase tracking-widest text-xs shadow-xl shadow-zinc-500/10 dark:shadow-none">
+                    Read
+                    <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
             </div>
-          </div>
-        </Card>
-      </Link>
+          </Card>
+        </Link>
+      </div>
     </section>
   );
 };

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -5,7 +6,6 @@ import { AllStoriesResponse } from "@/types";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Typography from "@/components/ui/custom/typography";
-import Image from "next/image";
 import { StoriesSkeleton } from "@/components/misc/skeletons";
 
 import { API_BASE_URL } from "@/constants";
@@ -53,7 +53,7 @@ const StoryLibrary = () => {
             <div className="relative aspect-[4/5] overflow-hidden rounded-[2.5rem] bg-zinc-100 dark:bg-zinc-900 border border-zinc-200/50 dark:border-zinc-800/50 transition-[box-shadow] duration-500 group-hover:shadow-[0_40px_80px_-15px_rgba(37,99,235,0.15)]">
               {/* Image with fallback */}
               {!imageErrors[story.id] ? (
-                <Image
+                <img
                   src={
                     retriedPng[story.id]
                       ? `${coverBaseUrl}/cover_${story.id}.png`
@@ -61,8 +61,7 @@ const StoryLibrary = () => {
                         `${coverBaseUrl}/cover_${story.id}.jpg`
                   }
                   alt={story.title}
-                  fill
-                  className="object-cover transition-transform duration-700"
+                  className="object-cover w-full h-full transition-transform duration-700"
                   onError={() => {
                     if (!retriedPng[story.id] && !story.coverImage) {
                       setRetriedPng((prev) => ({ ...prev, [story.id]: true }));
@@ -76,11 +75,10 @@ const StoryLibrary = () => {
                 />
               ) : (
                 <div className="absolute inset-0 bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center">
-                  <Image
+                  <img
                     src="/story_placeholder.png"
                     alt="Placeholder"
-                    fill
-                    className="object-cover opacity-50 contrast-75"
+                    className="object-cover w-full h-full opacity-50 contrast-75"
                   />
                 </div>
               )}

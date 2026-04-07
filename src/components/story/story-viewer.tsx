@@ -26,7 +26,6 @@ import { API_BASE_URL } from "@/constants";
 import { getCoverBaseUrl } from "@/lib/utils";
 import { toast } from "sonner";
 import { Wand2, Loader2 } from "lucide-react";
-import Image from "next/image";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -71,7 +70,6 @@ const StoryViewer = ({
   const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
 
   const coverBaseUrl = getCoverBaseUrl();
-
 
   const handleGenerateChapter = async () => {
     if (isGenerating) return;
@@ -175,7 +173,8 @@ const StoryViewer = ({
           {/* Cover Image */}
           <div className="relative w-48 h-64 sm:w-64 sm:h-80 rounded-2xl overflow-hidden shadow-2xl border-4 border-background shrink-0 group">
             {!imageError ? (
-              <Image
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
                 src={
                   retriedPng
                     ? `${coverBaseUrl}/cover_${story.id}.png`
@@ -183,8 +182,7 @@ const StoryViewer = ({
                       `${coverBaseUrl}/cover_${story.id}.jpg`
                 }
                 alt={story.title}
-                fill
-                className="object-contain"
+                className="object-contain w-full h-full"
                 onError={() => {
                   if (!retriedPng && !story.coverImage) {
                     setRetriedPng(true);
@@ -318,21 +316,21 @@ const StoryViewer = ({
                 className="flex items-center gap-2 px-8 py-3 rounded-[1.8rem] text-xs font-black uppercase tracking-widest transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-lg data-[state=active]:text-blue-600 data-[state=active]:border data-[state=active]:border-zinc-200 dark:data-[state=active]:border-zinc-700 data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground"
               >
                 <Sparkles className="w-3.5 h-3.5" />
-                Lore & Setting
+                Lore
               </TabsTrigger>
               <TabsTrigger
                 value="chapters"
                 className="flex items-center gap-2 px-8 py-3 rounded-[1.8rem] text-xs font-black uppercase tracking-widest transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-lg data-[state=active]:text-blue-600 data-[state=active]:border data-[state=active]:border-zinc-200 dark:data-[state=active]:border-zinc-700 data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground"
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                Chapter Archives
+                Chapters
               </TabsTrigger>
               <TabsTrigger
                 value="reviews"
                 className="flex items-center gap-2 px-8 py-3 rounded-[1.8rem] text-xs font-black uppercase tracking-widest transition-all data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-800 data-[state=active]:shadow-lg data-[state=active]:text-blue-600 data-[state=active]:border data-[state=active]:border-zinc-200 dark:data-[state=active]:border-zinc-700 data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
-                Reader Insights
+                Reviews
               </TabsTrigger>
             </TabsList>
           </div>
@@ -347,7 +345,7 @@ const StoryViewer = ({
                 variant="muted"
                 className="text-[10px] font-black uppercase tracking-[0.4em] whitespace-nowrap leading-none"
               >
-                Chapter Archives
+                Chapters
               </Typography>
               <div className="h-[1px] w-full bg-linear-to-r from-border/50 to-transparent" />
             </div>
@@ -568,7 +566,7 @@ const StoryViewer = ({
                 variant="muted"
                 className="text-[10px] font-black uppercase tracking-[0.4em] whitespace-nowrap leading-none"
               >
-                Latest Reader Insights
+                Reviews
               </Typography>
               <div className="h-[1px] w-full bg-linear-to-r from-border/50 to-transparent" />
             </div>

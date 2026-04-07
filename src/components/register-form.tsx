@@ -1,7 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -127,7 +127,7 @@ export default function RegisterForm() {
                   aria-label={opt.label}
                   title={opt.label}
                 >
-                  <Image
+                  <img
                     src={opt.value}
                     alt={opt.label}
                     width={64}

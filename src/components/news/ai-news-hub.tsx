@@ -8,7 +8,6 @@ import {
   ArrowRight,
   Calendar,
   Microscope,
-  Lock as LockIcon,
 } from "lucide-react";
 import { fetcher } from "@/lib/fetcher";
 import useSWR, { mutate } from "swr";
@@ -81,10 +80,8 @@ const AiNewsHub = () => {
 
   return (
     <div className="space-y-16">
-      {/* Generate Interface (Auth Gated) */}
-      {!_hasHydrated ? (
-        <div className="h-40 w-full bg-zinc-100 dark:bg-zinc-900 rounded-[2.5rem] animate-pulse" />
-      ) : user ? (
+      {/* Generate Interface (Admin Only) */}
+      {_hasHydrated && user?.role === "admin" && (
         <div className="relative group bg-linear-to-br from-indigo-600/5 via-violet-600/5 to-fuchsia-600/5 backdrop-blur-md p-10 sm:p-14 rounded-[3rem] border border-indigo-500/10 shadow-sm overflow-hidden flex flex-col items-center text-center">
           <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] -mr-32 -mt-32 rounded-full" />
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-fuchsia-500/5 blur-[100px] -ml-32 -mb-32 rounded-full" />
@@ -117,29 +114,6 @@ const AiNewsHub = () => {
               </Button>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center py-20 px-8 text-center bg-zinc-50/50 dark:bg-zinc-900/10 rounded-[3rem] border border-zinc-200/50 dark:border-zinc-800/50">
-          <div className="bg-zinc-100 dark:bg-zinc-800/50 p-5 rounded-full mb-6 relative">
-            <LockIcon className="w-8 h-8 text-zinc-400" />
-            <div className="absolute inset-0 bg-indigo-500/10 blur-xl rounded-full" />
-          </div>
-          <Typography variant="h3" className="text-2xl font-black mb-2">
-            Journalist Mode Locked
-          </Typography>
-          <Typography
-            variant="p"
-            className="text-muted-foreground text-sm max-w-sm mb-8"
-          >
-            Login to access advanced AI generation. Direct our investigative
-            agents to create custom deep-briefings.
-          </Typography>
-          <Button
-            asChild
-            className="rounded-full px-10 h-12 font-bold shadow-lg"
-          >
-            <Link href="/login">Authenticate to Access</Link>
-          </Button>
         </div>
       )}
 

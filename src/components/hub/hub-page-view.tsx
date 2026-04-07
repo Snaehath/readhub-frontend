@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { Sparkles, Lock, Newspaper } from "lucide-react";
+import { Sparkles, Newspaper } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import { StoryLibraryLoader as StoryLibrary } from "@/components/misc/card-loader";
 import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
@@ -125,34 +124,12 @@ const HubContent = () => {
       <div className="max-w-7xl mx-auto">
         {activeTab === "stories" ? (
           <div className="animate-in fade-in slide-in-from-left-8 duration-700">
-            {/* Call to Action Section (Logged out wrapper) */}
-            {!user ? (
-              <div className="flex flex-col items-center justify-center py-16 px-4 text-center bg-card/40 backdrop-blur-md rounded-[2.5rem] border border-border/50 shadow-sm mb-12">
-                <div className="bg-blue-50 dark:bg-blue-950/30 p-5 rounded-full mb-6 relative group">
-                  <Lock className="w-8 h-8 text-blue-600 dark:text-blue-400 relative z-10" />
-                </div>
-                <Typography variant="h2" className="text-3xl font-black mb-3">
-                  AI Story Locked
-                </Typography>
-                <Typography
-                  variant="p"
-                  className="text-muted-foreground text-base max-w-md mb-8 leading-relaxed"
-                >
-                  Login to access AI creation mode. Where AI generates the
-                  story.
-                </Typography>
-                <Button size={"lg"} asChild>
-                  <Link href="/login">Login</Link>
-                </Button>
-              </div>
-            ) : null}
-
             <StoryLibrary />
 
-            {/* Forge New Story form, shown below library, only if logged in and no ongoing history */}
-            {user && !isLoading && !hasOngoingStory && (
-              <div className="mt-16 flex flex-col items-center justify-center py-10 px-6 sm:px-12 text-center bg-linear-to-br from-blue-600/5 via-indigo-600/5 to-violet-600/5 backdrop-blur-md rounded-[2.5rem] border border-blue-500/10 shadow-sm animate-in fade-in slide-in-from-bottom-6 duration-700">
-                <div className="mb-6 max-w-xl">
+            {/* Forge New Story form (Admin Only) */}
+            {user?.role === "admin" && !isLoading && !hasOngoingStory && (
+              <div className="mt-16 flex flex-col items-center justify-center py-12 px-6 sm:px-12 text-center bg-linear-to-br from-blue-600/5 via-indigo-600/5 to-violet-600/5 backdrop-blur-md rounded-[2.5rem] border border-blue-500/10 shadow-sm animate-in fade-in slide-in-from-bottom-6 duration-700">
+                <div className="mb-8 max-w-xl">
                   <Typography
                     variant="h2"
                     className="text-2xl font-black tracking-tight mb-2"
@@ -204,12 +181,16 @@ const HubContent = () => {
 
 export const HubView = () => {
   return (
-    <Suspense fallback={
-      <div className="container mx-auto pb-20 pt-10 px-4 sm:px-8 flex flex-col items-center justify-center min-h-[50vh]">
-        <div className="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin mb-4" />
-        <p className="text-muted-foreground animate-pulse font-medium text-sm uppercase tracking-widest">Initialising AI Hub...</p>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="container mx-auto pb-20 pt-10 px-4 sm:px-8 flex flex-col items-center justify-center min-h-[50vh]">
+          <div className="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin mb-4" />
+          <p className="text-muted-foreground animate-pulse font-medium text-sm uppercase tracking-widest">
+            Initialising AI Hub...
+          </p>
+        </div>
+      }
+    >
       <HubContent />
     </Suspense>
   );

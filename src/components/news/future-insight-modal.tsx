@@ -129,7 +129,7 @@ export default function FutureInsightModal({
                   variant="h3"
                   className="text-xl font-black tracking-tight truncate"
                 >
-                  ReadHub AI Bureau Simulation
+                  ReadHub AI Bureau Forecaster
                 </Typography>
               </div>
               <div className="h-[1.5px] flex-1 bg-linear-to-r from-zinc-200 dark:from-zinc-800 to-transparent hidden sm:block" />

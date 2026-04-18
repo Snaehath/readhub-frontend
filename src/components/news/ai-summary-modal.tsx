@@ -8,6 +8,7 @@ import {
   DialogContent,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import Typography from "../ui/custom/typography";
@@ -147,8 +148,9 @@ export default function AiSummaryModal({
                         variant="muted"
                         className="text-base leading-relaxed"
                       >
-                        Authenticate to grant our **AI Agent** full access to this
-                        news narrative for deep synthesis and context mapping.
+                        Authenticate to grant our **AI Agent** full access to
+                        this news narrative for deep synthesis and context
+                        mapping.
                       </Typography>
                     </div>
                     <Button
@@ -183,13 +185,15 @@ export default function AiSummaryModal({
                 ) : (
                   <div className="animate-in fade-in slide-in-from-bottom-8 duration-[1200ms] space-y-12 pb-20">
                     {/* Enhanced Editorial Markdown */}
-                    <div className="prose prose-zinc dark:prose-invert max-w-none 
+                    <div
+                      className="prose prose-zinc dark:prose-invert max-w-none 
                       prose-headings:font-black prose-headings:tracking-tight 
                       prose-p:text-lg prose-p:leading-relaxed prose-p:text-zinc-800 dark:prose-p:text-zinc-300 
                       prose-strong:text-indigo-700 dark:prose-strong:text-indigo-400
-                      prose-li:text-lg prose-li:text-zinc-700 dark:prose-li:text-zinc-300">
+                      prose-li:text-lg prose-li:text-zinc-700 dark:prose-li:text-zinc-300"
+                    >
                       <ReactMarkdown
-                         components={{
+                        components={{
                           h3: ({ children }) => (
                             <div className="flex flex-col gap-6 mt-16 mb-8 first:mt-0">
                               <div className="h-px w-full bg-linear-to-r from-zinc-200 dark:from-zinc-800 via-zinc-200 dark:via-zinc-800 to-transparent" />
@@ -206,8 +210,12 @@ export default function AiSummaryModal({
                       </ReactMarkdown>
                     </div>
 
-                    <Typography variant="muted" className="text-center text-xs italic tracking-wide pb-4 pt-12 border-t border-zinc-100 dark:border-zinc-800">
-                      Briefing provided by ReadHub AI Bureau • Intelligence curated in real-time
+                    <Typography
+                      variant="muted"
+                      className="text-center text-xs italic tracking-wide pb-4 pt-12 border-t border-zinc-100 dark:border-zinc-800"
+                    >
+                      Briefing provided by ReadHub AI Bureau • Intelligence
+                      curated in real-time
                     </Typography>
                   </div>
                 )}

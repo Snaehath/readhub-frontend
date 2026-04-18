@@ -10,7 +10,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
-import { getCoverBaseUrl } from "@/lib/utils";
+import { getCoverBaseUrl, getImageUrl } from "@/lib/utils";
 import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -71,7 +71,7 @@ const FeaturedStorySection = () => {
                     src={
                       retriedPng
                         ? `${coverBaseUrl}/cover_${story.id}.png`
-                        : story.coverImage ||
+                        : getImageUrl(story.coverImage) ||
                           `${coverBaseUrl}/cover_${story.id}.jpg`
                     }
                     alt={story.title}

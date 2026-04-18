@@ -23,7 +23,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUserStore } from "@/lib/store/userStore";
 import { API_BASE_URL } from "@/constants";
-import { getCoverBaseUrl } from "@/lib/utils";
+import { getCoverBaseUrl, getImageUrl } from "@/lib/utils";
 import { toast } from "sonner";
 import { Wand2, Loader2 } from "lucide-react";
 
@@ -178,7 +178,7 @@ const StoryViewer = ({
                 src={
                   retriedPng
                     ? `${coverBaseUrl}/cover_${story.id}.png`
-                    : story.coverImage ||
+                    : getImageUrl(story.coverImage) ||
                       `${coverBaseUrl}/cover_${story.id}.jpg`
                 }
                 alt={story.title}

@@ -9,7 +9,7 @@ import Typography from "@/components/ui/custom/typography";
 import { StoriesSkeleton } from "@/components/misc/skeletons";
 
 import { API_BASE_URL } from "@/constants";
-import { getCoverBaseUrl } from "@/lib/utils";
+import { getCoverBaseUrl, getImageUrl } from "@/lib/utils";
 import useSWR from "swr";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -57,7 +57,7 @@ const StoryLibrary = () => {
                   src={
                     retriedPng[story.id]
                       ? `${coverBaseUrl}/cover_${story.id}.png`
-                      : story.coverImage ||
+                      : getImageUrl(story.coverImage) ||
                         `${coverBaseUrl}/cover_${story.id}.jpg`
                   }
                   alt={story.title}

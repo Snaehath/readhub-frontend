@@ -38,7 +38,7 @@ const StoryLibrary = () => {
           variant="muted"
           className="text-xs font-black uppercase tracking-[0.3em] whitespace-nowrap text-blue-600"
         >
-          Story Archive
+          Story Chronicles
         </Typography>
         <div className="h-px w-full bg-blue-500/10" />
       </div>

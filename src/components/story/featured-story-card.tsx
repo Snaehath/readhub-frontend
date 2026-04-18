@@ -52,7 +52,7 @@ const FeaturedStorySection = () => {
           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-zinc-900 dark:bg-white text-white dark:text-zinc-900">
             <Sparkles className="w-4 h-4" />
             <span className="text-[10px] font-black uppercase tracking-[0.2em]">
-              ReadHub AI Original
+              ReadHub AI Chronicles
             </span>
           </div>
           <div className="h-[1px] flex-1 bg-linear-to-r from-zinc-200 dark:from-zinc-800 to-transparent" />

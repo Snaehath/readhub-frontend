@@ -112,19 +112,19 @@ const StoryViewer = ({
         if (onStoryUpdate) onStoryUpdate(updatedStory);
         toast.success(
           isAdmin
-            ? "Narrative advanced successfully! (Admin Force)"
-            : "A new chapter has been forged!",
+            ? "Narrative advanced successfully! (Chronicler Force)"
+            : "A new chapter has been Chronicled!",
         );
       } else {
         toast.error(
           isAdmin
             ? "Failed to advance narrative."
-            : "Failed to manifest a new chapter.",
+            : "Failed to manifest a new chapter in the Chronicles.",
         );
       }
     } catch (_err) {
       console.error("Error generating progress:", _err);
-      toast.error("Error while communicating with the creative agent.");
+      toast.error("Error while communicating with the Chief Chronicler.");
     } finally {
       setIsGenerating(false);
     }
@@ -216,7 +216,7 @@ const StoryViewer = ({
                       fillOpacity: 0.2,
                     }}
                   />{" "}
-                  ReadHub Original
+                  ReadHub AI Chronicles
                 </Badge>
                 {story.isCompleted && (
                   <Badge
@@ -431,7 +431,7 @@ const StoryViewer = ({
                         variant="muted"
                         className="text-xs font-medium"
                       >
-                        Trigger the AI Agent to continue the narrative journey.
+                        Trigger the Chief Chronicler to continue the narrative journey.
                       </Typography>
                     </div>
                   </div>

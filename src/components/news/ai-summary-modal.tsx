@@ -215,6 +215,16 @@ export default function AiSummaryModal({
             </div>
           </div>
         </div>
+
+        <DialogFooter className="p-4 border-t border-black/20 dark:border-white/20 bg-white dark:bg-zinc-950 flex items-center justify-center sm:justify-center">
+          <Button
+            size={"sm"}
+            onClick={() => onOpenChange(false)}
+            className="w-full sm:w-auto uppercase tracking-widest cursor-pointer"
+          >
+            Close
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

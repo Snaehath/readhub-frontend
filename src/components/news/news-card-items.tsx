@@ -1,4 +1,4 @@
-import { Bookmark, Sparkles, ThumbsUp, Zap } from "lucide-react";
+import { Bookmark, Sparkles, ThumbsUp, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "../ui/badge";
@@ -166,17 +166,7 @@ export default function NewsCardItems({
                   loadedImages[article.id] ? "opacity-100" : "opacity-0"
                 }`}
               />
-              <Button
-                onClick={() => handleFutureClick(article)}
-                className="absolute top-2 right-2 flex items-center gap-1 px-3 py-1.5 
-      text-xs font-black uppercase tracking-widest rounded-full shadow-md transition-all cursor-pointer
-      bg-emerald-600 text-white hover:bg-emerald-700 hover:scale-105 active:scale-95
-    "
-                title="View Future AI insights"
-              >
-                Future AI
-                <Zap className="w-3.5 h-3.5 ml-1" />
-              </Button>
+              {/* Removed absolute Future AI button from image */}
             </div>
             <div className="flex flex-wrap gap-2 mb-2 p-2 pt-0 pb-0">
               {article.category.map((cat, i) => {
@@ -191,15 +181,26 @@ export default function NewsCardItems({
                   </Badge>
                 );
               })}
-              <Badge
-                className="ml-auto px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full bg-linear-to-r from-indigo-600 to-violet-600 text-white flex items-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-150 shadow-lg shadow-indigo-500/10 border-0"
-                onClick={() => onAskAi(article)}
-                aria-label="Ask AI"
-                variant="outline"
-                title="Get Insights from AI"
-              >
-                Ask AI <Sparkles className="w-3.5 h-3.5 ml-1.5" />
-              </Badge>
+              <div className="ml-auto flex items-center gap-2">
+                <ToolTip content="Predicted Future insights">
+                  <Badge
+                    className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full bg-linear-to-r from-cyan-600 to-blue-600 text-white flex items-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-150 shadow-lg shadow-cyan-500/10 border-0"
+                    onClick={() => handleFutureClick(article)}
+                    variant="outline"
+                  >
+                    Forecast AI <TrendingUp className="w-3.5 h-3.5 ml-1.5" />
+                  </Badge>
+                </ToolTip>
+                <ToolTip content="Get Insights from AI">
+                  <Badge
+                    className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full bg-linear-to-r from-indigo-600 to-violet-600 text-white flex items-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-150 shadow-lg shadow-indigo-500/10 border-0"
+                    onClick={() => onAskAi(article)}
+                    variant="outline"
+                  >
+                    Ask AI <Sparkles className="w-3.5 h-3.5 ml-1.5" />
+                  </Badge>
+                </ToolTip>
+              </div>
             </div>
             <CardTitle className="text-lg font-black leading-tight p-2 pt-1 pb-0 line-clamp-2">
               {article.title}

@@ -3,15 +3,17 @@ import { useState } from "react";
 export function useFutureAi(token: string | null, selectedCountry: string) {
   const [loading, setLoading] = useState(false);
   const [futureAiArticle, setFutureAiArticle] = useState<string | null>(null);
+  const [currentYear, setCurrentYear] = useState(1);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchFutureAi = async (id: string) => {
+  const fetchFutureAi = async (id: string, targetYear: number = 1, previousForecast: string = "") => {
     setLoading(true);
     setError(null);
+    setCurrentYear(targetYear);
 
     if (!token) {
       setError(
-        "Authentication Required: Please sign in to access Future AI insights.",
+        "Authentication Required: Please sign in to access Forecast AI insights.",
       );
       setLoading(false);
       return;
@@ -27,13 +29,26 @@ export function useFutureAi(token: string | null, selectedCountry: string) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ userMessage: { id, selectedCountry } }),
+        body: JSON.stringify({ 
+          userMessage: { 
+            id, 
+            selectedCountry,
+            targetYear,
+            previousForecast: previousForecast.slice(-2000) // Send last 2000 chars as context only
+          } 
+        }),
       });
 
       const data = await res.json();
-      setFutureAiArticle(data?.futureArticle?.trim() || "No response.");
+      const newPart = data?.futureArticle?.trim() || "Simulation path interrupted.";
+      
+      if (targetYear === 1) {
+        setFutureAiArticle(newPart);
+      } else {
+        setFutureAiArticle(prev => prev + "\n\n" + newPart);
+      }
     } catch (err) {
-      setError(`An error occurred: ${err}`);
+      setError(`Simulation Protocol Error: ${err}`);
     } finally {
       setLoading(false);
     }
@@ -41,8 +56,9 @@ export function useFutureAi(token: string | null, selectedCountry: string) {
 
   const resetFutureAi = () => {
     setFutureAiArticle(null);
+    setCurrentYear(1);
     setError(null);
   };
 
-  return { loading, futureAiArticle, error, fetchFutureAi, resetFutureAi };
+  return { loading, futureAiArticle, currentYear, error, fetchFutureAi, resetFutureAi };
 }

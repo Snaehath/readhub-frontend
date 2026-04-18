@@ -76,6 +76,70 @@ export async function getNewsPaginated(
   }
 }
 
+export async function searchNews(
+  q: string,
+  page: number = 1,
+  limit: number = 12,
+  country: string = "us",
+  category: string = "all",
+): Promise<PaginatedNewsResponse> {
+  try {
+    const params = new URLSearchParams({
+      q,
+      page: String(page),
+      limit: String(limit),
+    });
+
+    if (category && category !== "all") {
+      params.append("category", category);
+    }
+
+    const baseUrl = API_BASE_URL;
+    const endpoint =
+      country === "in" ? `${baseUrl}/news/search/in` : `${baseUrl}/news/search/us`;
+
+    const res = await fetch(`${endpoint}?${params.toString()}`, {
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Failed to search news for ${country}`);
+    }
+
+    const data = await res.json();
+
+    const formattedNews: NewsArticle[] = data.articles.map(
+      (article: NewsArticle) => ({
+        id: article._id.toString(),
+        title: article.title,
+        description: article.description,
+        content: article.content,
+        url: article.url,
+        urlToImage: article.urlToImage,
+        publishedAt: article.publishedAt,
+        dateOriginal: article.publishedAt,
+        source: article.source ?? { name: "Unknown" },
+        category: article.category ?? [],
+      }),
+    );
+
+    return {
+      news: formattedNews,
+      totalPages: data.totalPages,
+      currentPage: data.currentPage,
+      totalArticles: data.totalArticles,
+    };
+  } catch (error) {
+    console.error("Error searching news:", error);
+    return {
+      news: [],
+      totalPages: 0,
+      currentPage: 1,
+      totalArticles: 0,
+    };
+  }
+}
+
 export async function getTickerNews(
   country: string = "us",
 ): Promise<NewsArticle[]> {

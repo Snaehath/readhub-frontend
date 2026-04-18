@@ -1,12 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import {
-  RefreshCcw,
-  Search,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { RefreshCcw, ChevronDown, ChevronUp } from "lucide-react";
 import ReactCountryFlag from "react-country-flag";
 
 // custom
@@ -21,12 +16,13 @@ import FutureInsightModal from "./future-insight-modal";
 
 import { NewsArticle } from "@/types";
 import { newsCategories, newsCountries, API_BASE_URL } from "@/constants";
-import { getNewsPaginated } from "@/lib/data";
+import { getNewsPaginated, searchNews } from "@/lib/data";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "../ui/input";
 import { differenceInHours } from "date-fns";
 import { useFutureAi } from "@/lib/hooks/useFutureAi";
 import { Badge } from "../ui/badge";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 
 export default function NewsCard() {
   // hooks
@@ -53,8 +49,10 @@ export default function NewsCard() {
   const [userLikes, setUserLikes] = useState<string[]>([]);
   const [userBookmarks, setUserBookmarks] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>(
-    searchParams.get("query")?.toLocaleLowerCase() ?? "",
+    searchParams.get("query") ?? "",
   );
+
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   const MAX_CATEGORIES = 4;
 
@@ -88,17 +86,28 @@ export default function NewsCard() {
     fetchUserData();
   }, [token]);
 
-  // Fetch paginated news based on country + category
+  // Fetch paginated news based on country + category (or search)
   useEffect(() => {
     const fetchNews = async () => {
       setIsLoading(true);
       try {
-        const res = await getNewsPaginated(
-          page,
-          12,
-          selectedCategory,
-          selectedCountry,
-        );
+        let res;
+        if (debouncedSearchQuery.trim()) {
+          res = await searchNews(
+            debouncedSearchQuery,
+            page,
+            12,
+            selectedCountry,
+            selectedCategory,
+          );
+        } else {
+          res = await getNewsPaginated(
+            page,
+            12,
+            selectedCategory,
+            selectedCountry,
+          );
+        }
 
         if (page === 1) {
           setArticles(res.news);
@@ -116,12 +125,18 @@ export default function NewsCard() {
     };
 
     fetchNews();
-  }, [page, selectedCountry, selectedCategory, refreshTrigger]);
+  }, [
+    page,
+    selectedCountry,
+    selectedCategory,
+    refreshTrigger,
+    debouncedSearchQuery,
+  ]);
 
-  // Reset pagination when country or category changes
+  // Reset pagination when country, category, or search changes
   useEffect(() => {
     setPage(1);
-  }, [selectedCountry, selectedCategory]);
+  }, [selectedCountry, selectedCategory, debouncedSearchQuery]);
 
   const delay = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
@@ -277,16 +292,17 @@ Please try again in a few moments.`,
   const {
     loading: futureLoading,
     futureAiArticle,
+    currentYear,
     error: aiError,
     fetchFutureAi,
+    resetFutureAi,
   } = useFutureAi(token, selectedCountry);
 
   const handleFutureAi = (article: NewsArticle) => {
     setSelectedArticle(article);
     setShowFutureDialog(true);
-    fetchFutureAi(article.id);
+    fetchFutureAi(article.id, 1);
   };
-
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -301,15 +317,6 @@ Please try again in a few moments.`,
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     router.replace(newUrl, { scroll: false });
   }, [router, searchQuery]);
-
-  // filter News based on search
-  const filteredNews = useMemo(() => {
-    if (!articles) return [];
-    return articles.filter((article) =>
-      article.title.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [articles, searchQuery]);
-
   const categoriesToShow = showAll
     ? newsCategories
     : newsCategories.slice(0, MAX_CATEGORIES);
@@ -338,12 +345,27 @@ Please try again in a few moments.`,
 
         <FutureInsightModal
           isOpen={showFutureDialog}
-          onOpenChange={setShowFutureDialog}
+          onOpenChange={(open) => {
+            setShowFutureDialog(open);
+            if (!open) {
+              resetFutureAi();
+            }
+          }}
           insightResponse={futureAiArticle || ""}
           insightLoading={futureLoading}
           insightError={aiError}
           token={token}
           article={selectedArticle}
+          currentYear={currentYear}
+          onProjectNext={() => {
+            if (selectedArticle) {
+              fetchFutureAi(
+                selectedArticle.id,
+                currentYear + 1,
+                futureAiArticle || "",
+              );
+            }
+          }}
         />
 
         {isLoading && <TopLoadingBar duration={15000} />}
@@ -356,7 +378,10 @@ Please try again in a few moments.`,
               <Badge
                 variant="outline"
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={() => {
+                  setSelectedCategory(cat.id);
+                  setPage(1);
+                }}
                 className={`rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 transition-all duration-150 flex items-center justify-center ${
                   selectedCategory === cat.id
                     ? "bg-blue-600 text-white scale-95"
@@ -409,8 +434,11 @@ Please try again in a few moments.`,
           {/* Country buttons */}
           <div className="flex items-center gap-2">
             <Input
-              type="text"
-              startIcon={<Search className="w-4 h-4" />}
+              type="search"
+              onClear={() => {
+                setSearchQuery("");
+                setPage(1);
+              }}
               placeholder={"Search News..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -460,7 +488,7 @@ Please try again in a few moments.`,
         {/* Articles */}
 
         <NewsCardItems
-          filteredArticles={filteredNews}
+          filteredArticles={articles}
           onAskAi={handleAskAi}
           askFutureAi={handleFutureAi}
           isLatest={isLatest}
@@ -471,9 +499,9 @@ Please try again in a few moments.`,
         />
 
         {/* No Results */}
-        {filteredNews.length === 0 && !isLoading && (
+        {articles.length === 0 && !isLoading && (
           <Typography variant="muted" className="text-center mt-6">
-            No articles found for this category.
+            No articles found.
           </Typography>
         )}
 

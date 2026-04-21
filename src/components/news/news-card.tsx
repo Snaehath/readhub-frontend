@@ -213,26 +213,6 @@ export default function NewsCard() {
       if (responseUS.ok && responseIN.ok) {
         toast.success("✨ Latest news updated successfully!");
         setRefreshTrigger((prev) => prev + 1);
-
-        // Auto-trigger AI news generation on successful update
-        if (token) {
-          fetch(`${baseUrl}/ai-hub/news/trigger`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ suggestion: "auto" }),
-          })
-            .then((res) => {
-              if (res.ok) {
-                toast.success(
-                  "📰 New AI Investigation generated based on latest news!",
-                );
-              }
-            })
-            .catch(console.error);
-        }
       } else if (!responseUS.ok || !responseIN.ok) {
         toast.warning(
           "Some news sources couldn't be updated. Showing cached news.",

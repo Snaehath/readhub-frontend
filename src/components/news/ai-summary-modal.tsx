@@ -183,7 +183,7 @@ export default function AiSummaryModal({
                     </div>
                   </div>
                 ) : (
-                  <div className="animate-in fade-in slide-in-from-bottom-8 duration-[1200ms] space-y-12 pb-20">
+                  <div className="animate-in fade-in slide-in-from-bottom-8 duration-[1200ms] space-y-12">
                     {/* Enhanced Editorial Markdown */}
                     <div
                       className="prose prose-zinc dark:prose-invert max-w-none 
@@ -212,7 +212,7 @@ export default function AiSummaryModal({
 
                     <Typography
                       variant="muted"
-                      className="text-center text-xs italic tracking-wide pb-4 pt-12 border-t border-zinc-100 dark:border-zinc-800"
+                      className="text-center text-xs italic tracking-wide pt-6 border-t border-zinc-100 dark:border-zinc-800"
                     >
                       Briefing provided by ReadHub AI Bureau • Intelligence
                       curated in real-time
@@ -222,17 +222,16 @@ export default function AiSummaryModal({
               </section>
             </div>
           </div>
+          <DialogFooter className="p-4 border-t border-black/20 dark:border-white/20 bg-white dark:bg-zinc-950 flex items-center justify-center sm:justify-center">
+            <Button
+              size={"sm"}
+              onClick={() => onOpenChange(false)}
+              className="w-full sm:w-auto uppercase tracking-widest cursor-pointer"
+            >
+              Close
+            </Button>
+          </DialogFooter>
         </div>
-
-        <DialogFooter className="p-4 border-t border-black/20 dark:border-white/20 bg-white dark:bg-zinc-950 flex items-center justify-center sm:justify-center">
-          <Button
-            size={"sm"}
-            onClick={() => onOpenChange(false)}
-            className="w-full sm:w-auto uppercase tracking-widest cursor-pointer"
-          >
-            Close
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -191,7 +191,8 @@ export default function FutureInsightModal({
                         Initializing
                       </Typography>
                       <Typography variant="muted" className="text-xs italic">
-                        Temporal engines active. Simulating Year 1 trajectories...
+                        Temporal engines active. Simulating Year 1
+                        trajectories...
                       </Typography>
                     </div>
                   </div>
@@ -369,7 +370,10 @@ export default function FutureInsightModal({
                               )
                               .slice(0, 5)
                               .map((point, idx) => (
-                                <div key={idx} className="flex gap-4 items-start">
+                                <div
+                                  key={idx}
+                                  className="flex gap-4 items-start"
+                                >
                                   <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-cyan-500 shrink-0" />
                                   <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 leading-relaxed italic">
                                     {point

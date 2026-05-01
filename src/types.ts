@@ -5,7 +5,7 @@ export type ChatMessage = {
 
 export type NewsArticle = {
   id: string;
-  _id: string;
+  _id?: string;
   content: string;
   source: {
     name: string;
@@ -19,6 +19,26 @@ export type NewsArticle = {
   category: string[];
 };
 
+export interface PaginatedNewsResponse {
+  news: NewsArticle[];
+  totalPages: number;
+  currentPage: number;
+  totalArticles: number;
+}
+
+export interface RawNewsArticle {
+  _id?: { toString: () => string };
+  id?: string;
+  title: string;
+  description?: string;
+  content?: string;
+  url: string;
+  urlToImage?: string;
+  publishedAt: string;
+  source?: { name: string };
+  category?: string[];
+}
+
 export type NewsCardProps = {
   articlesUS: NewsArticle[];
 };
@@ -29,11 +49,22 @@ export type Book = {
   cover_id?: number;
   title: string;
   author_name: string[];
-  author_key: string;
+  author_key: string[];
   lending_identifier_s: string;
   work_key: string;
   tag: string;
 };
+
+export interface OpenLibraryBook {
+  title: string;
+  author_key?: string[];
+  author_name?: string[];
+  cover_id?: number;
+  cover_edition_key?: string;
+  key: string;
+  lending_identifier_s?: string;
+  cover_i?: number;
+}
 export type BookCopy = {
   authors: string;
   _id: string;

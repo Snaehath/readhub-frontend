@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Marquee from "react-fast-marquee";
-import { getTickerNews } from "@/lib/data";
+import { getTickerNewsApi } from "@/api/news";
 import { Category, NewsArticle } from "@/types";
 import { Loader2 } from "lucide-react";
 import { NEWS_CATEGORY_COLORS } from "@/constants";
@@ -20,7 +20,7 @@ export default function NewsTicker({ country }: NewsTickerProps) {
     const fetchTickerData = async () => {
       setLoading(true);
       try {
-        const articles = await getTickerNews(country);
+        const articles = await getTickerNewsApi(country);
 
         // Group by category and take first 2 from each
         const categoryMap = new Map<string, NewsArticle[]>();

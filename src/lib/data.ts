@@ -1,15 +1,8 @@
 "use server";
 
-import { NewsArticle } from "@/types";
+import { NewsArticle, PaginatedNewsResponse, RawNewsArticle } from "@/types";
 import client from "../lib/mongodb";
 import { API_BASE_URL } from "@/constants";
-
-export type PaginatedNewsResponse = {
-  news: NewsArticle[];
-  totalPages: number;
-  currentPage: number;
-  totalArticles: number;
-};
 
 //get news data from database country:us
 export async function getNewsPaginated(
@@ -45,8 +38,8 @@ export async function getNewsPaginated(
     const data = await res.json();
 
     const formattedNews: NewsArticle[] = data.articles.map(
-      (article: NewsArticle) => ({
-        id: article._id.toString(),
+      (article: RawNewsArticle) => ({
+        id: article._id?.toString() || article.id || "",
         title: article.title,
         description: article.description,
         content: article.content,
@@ -109,8 +102,8 @@ export async function searchNews(
     const data = await res.json();
 
     const formattedNews: NewsArticle[] = data.articles.map(
-      (article: NewsArticle) => ({
-        id: article._id.toString(),
+      (article: RawNewsArticle) => ({
+        id: article._id?.toString() || article.id || "",
         title: article.title,
         description: article.description,
         content: article.content,
@@ -158,8 +151,8 @@ export async function getTickerNews(
     if (!res.ok) return [];
 
     const data = await res.json();
-    return data.articles.map((article: NewsArticle) => ({
-      id: article._id.toString(),
+    return data.articles.map((article: RawNewsArticle) => ({
+      id: article._id?.toString() || article.id || "",
       title: article.title,
       category: article.category ?? [],
       publishedAt: article.publishedAt,

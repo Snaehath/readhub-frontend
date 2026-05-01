@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ChatMessage } from "@/types";
+import { sendChatRequest } from "@/api/ai";
 
 export function useChat(token: string | null) {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -36,23 +37,7 @@ export function useChat(token: string | null) {
     setLoading(true);
 
     try {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL ||
-        "https://readhub-backend.onrender.com/api";
-      const res = await fetch(`${baseUrl}/ai/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ userMessage: message }),
-      });
-
-      if (!res.ok) {
-        throw new Error(`Server responded with ${res.status}`);
-      }
-
-      const data = await res.json();
+      const data = await sendChatRequest(token, { userMessage: message });
       
       if (!data?.reply) {
         throw new Error("EMPTY_RESPONSE");

@@ -15,8 +15,9 @@ import AiSummaryModal from "./ai-summary-modal";
 import FutureInsightModal from "./future-insight-modal";
 
 import { NewsArticle } from "@/types";
-import { newsCategories, newsCountries, API_BASE_URL } from "@/constants";
-import { getNewsPaginated, searchNews } from "@/lib/data";
+import { newsCategories, newsCountries } from "@/constants";
+import { fetchNews, searchNewsApi, refreshNewsApi } from "@/api/news";
+import { sendChatRequest } from "@/api/ai";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "../ui/input";
 import { differenceInHours } from "date-fns";
@@ -66,8 +67,7 @@ export default function NewsCard() {
 
     const fetchUserData = async () => {
       try {
-        const baseUrl = API_BASE_URL;
-        const res = await fetch(`${baseUrl}/user/me`, {
+        const res = await fetch(`/api/user/me`, { // Note: Should ideally be in a user api service too
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -88,12 +88,12 @@ export default function NewsCard() {
 
   // Fetch paginated news based on country + category (or search)
   useEffect(() => {
-    const fetchNews = async () => {
+    const loadArticles = async () => {
       setIsLoading(true);
       try {
         let res;
         if (debouncedSearchQuery.trim()) {
-          res = await searchNews(
+          res = await searchNewsApi(
             debouncedSearchQuery,
             page,
             12,
@@ -101,7 +101,7 @@ export default function NewsCard() {
             selectedCategory,
           );
         } else {
-          res = await getNewsPaginated(
+          res = await fetchNews(
             page,
             12,
             selectedCategory,
@@ -124,7 +124,7 @@ export default function NewsCard() {
       }
     };
 
-    fetchNews();
+    loadArticles();
   }, [
     page,
     selectedCountry,
@@ -197,27 +197,13 @@ export default function NewsCard() {
     try {
       setIsLoading(true);
 
-      const baseUrl = API_BASE_URL;
-      const responseUS = await fetch(`${baseUrl}/news/fetch-categories/us`);
-      const responseIN = await fetch(`${baseUrl}/news/fetch-categories/in`);
+      await refreshNewsApi("us");
+      await refreshNewsApi("in");
 
       await delay(1000);
 
-      if (!responseUS.ok) {
-        toast.error(`Failed to fetch US news. Please try again later.`);
-      }
-      if (!responseIN.ok) {
-        toast.error(`Failed to fetch India news. Please try again later.`);
-      }
-
-      if (responseUS.ok && responseIN.ok) {
-        toast.success("✨ Latest news updated successfully!");
-        setRefreshTrigger((prev) => prev + 1);
-      } else if (!responseUS.ok || !responseIN.ok) {
-        toast.warning(
-          "Some news sources couldn't be updated. Showing cached news.",
-        );
-      }
+      toast.success("✨ Latest news updated successfully!");
+      setRefreshTrigger((prev) => prev + 1);
 
       setPage(1);
     } catch {
@@ -242,16 +228,9 @@ export default function NewsCard() {
     }
 
     try {
-      const baseUrl = API_BASE_URL;
-      const res = await fetch(`${baseUrl}/ai/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ userMessage: { id, selectedCountry } }),
+      const data = await sendChatRequest(token, {
+        userMessage: { id, selectedCountry },
       });
-      const data = await res.json();
       setAiResponse(data?.reply?.trim() || "No response.");
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_error) {

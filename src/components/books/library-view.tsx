@@ -6,6 +6,7 @@ import { BookCardSkeleton } from "@/components/misc/skeletons";
 import { BooksCardLoader } from "@/components/misc/card-loader";
 import { Book } from "@/types";
 import { booksCategories } from "@/constants";
+import { searchOpenLibrary } from "@/api/books";
 
 import { Badge } from "@/components/ui/badge";
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
@@ -35,34 +36,11 @@ const LibraryView = () => {
       setError(null);
 
       try {
-        let query = `https://openlibrary.org/search.json?q=${
-          debouncedSearchQuery || "all"
-        }&lang=en&limit=${debouncedSearchQuery ? "4" : "15"}`;
-
-        if (selectedCategory && selectedCategory !== "all") {
-          query += `&subject=${selectedCategory}`;
-        }
-
-        const res = await fetch(query, { cache: "no-store" });
-
-        if (!res.ok) {
-          throw new Error(
-            `Failed to fetch books: ${res.status} ${res.statusText}`,
-          );
-        }
-
-        const data = await res.json();
-
-        const cleaned = (data.docs || []).map((book: Book) => ({
-          title: book.title,
-          author_key: book.author_key ?? [],
-          author_name: book.author_name ?? [],
-          cover_id: book.cover_id,
-          cover_edition_key: book.cover_edition_key,
-          work_key: book.key,
-          lending_identifier_s: book.lending_identifier_s || "",
-          tag: debouncedSearchQuery || selectedCategory,
-        }));
+        const cleaned = await searchOpenLibrary(
+          debouncedSearchQuery || "all",
+          debouncedSearchQuery ? 4 : 15,
+          selectedCategory
+        );
 
         setBooks(cleaned);
       } catch (err: unknown) {

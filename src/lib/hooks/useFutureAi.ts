@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { fetchFutureNews } from "@/api/ai";
 
 export function useFutureAi(token: string | null, selectedCountry: string) {
   const [loading, setLoading] = useState(false);
@@ -20,26 +21,14 @@ export function useFutureAi(token: string | null, selectedCountry: string) {
     }
 
     try {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL ||
-        "https://readhub-backend.onrender.com/api";
-      const res = await fetch(`${baseUrl}/ai/futureNews`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const data = await fetchFutureNews(token, {
+        userMessage: {
+          id,
+          selectedCountry,
+          targetYear,
+          previousForecast: previousForecast.slice(-2000), // Send last 2000 chars as context only
         },
-        body: JSON.stringify({ 
-          userMessage: { 
-            id, 
-            selectedCountry,
-            targetYear,
-            previousForecast: previousForecast.slice(-2000) // Send last 2000 chars as context only
-          } 
-        }),
       });
-
-      const data = await res.json();
       const newPart = data?.futureArticle?.trim() || "Simulation path interrupted.";
       
       if (targetYear === 1) {

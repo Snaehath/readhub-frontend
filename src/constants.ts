@@ -1,4 +1,4 @@
-export const newsCategories = [
+﻿export const newsCategories = [
   { id: "all", name: "All" },
   { id: "technology", name: "Technology" },
   { id: "business", name: "Business" },
@@ -64,15 +64,21 @@ export const booksCategories = [
   { id: "children", name: "Children" },
 ];
 
-export const suggestions = [
-  "🌍 What’s the biggest story in the world right now?",
-  "📰 Give me today’s news in 60 seconds",
-  "📈 Tell me one big business headline",
-  "Any important updates from India?",
-  "💻 What’s trending in tech today?",
-  "good children’s books.",
-  " Recommend me a great books.",
-  "Must-read horror books",
+export interface Suggestion {
+  icon: string;
+  label: string;
+  query: string;
+}
+
+export const suggestions: Suggestion[] = [
+  { icon: "🌍", label: "Top Story",      query: "What is the biggest story in the world right now?" },
+  { icon: "⚡", label: "News Briefing",  query: "Give me todays news in 60 seconds" },
+  { icon: "📈", label: "Business Pulse", query: "Tell me one big business headline and why it matters" },
+  { icon: "🇮🇳", label: "India Updates", query: "Any important updates from India today?" },
+  { icon: "💻", label: "Tech Trends",    query: "What is trending in tech today?" },
+  { icon: "📚", label: "Book Pick",      query: "Recommend me a great book to read this week" },
+  { icon: "👻", label: "Horror Picks",   query: "What are some must-read horror books?" },
+  { icon: "🧒", label: "Kids Books",     query: "Suggest some good childrens books" },
 ];
 
 export const API_BASE_URL =

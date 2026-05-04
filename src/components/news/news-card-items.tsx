@@ -1,4 +1,4 @@
-import { Bookmark, Sparkles, ThumbsUp, TrendingUp } from "lucide-react";
+import { Bookmark, Sparkles, ThumbsUp, Telescope, ArrowUpRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Badge } from "../ui/badge";
@@ -32,6 +32,7 @@ export default function NewsCardItems({
   filteredArticles,
   onAskAi,
   askFutureAi,
+  isLatest,
   token,
   country,
   initialLikes,
@@ -140,147 +141,171 @@ export default function NewsCardItems({
     }
   };
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {filteredArticles.map((article, i) => (
         <Card
           key={i}
-          className="overflow-hidden hover:border-zinc-900 dark:hover:border-zinc-100 p-0 flex flex-col h-full transition-colors border-zinc-200 dark:border-zinc-800"
+          className="group/card overflow-hidden p-0 flex flex-col h-full border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
         >
+          {/* ── Image ── */}
           <CardHeader className="p-0">
-            <div className="relative h-64 w-full overflow-hidden">
+            <div className="relative h-44 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+              {/* Skeleton */}
               {!loadedImages[article.id] && (
-                <div className="absolute inset-0 z-10 bg-zinc-100 dark:bg-zinc-800 animate-pulse overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                </div>
+                <div className="absolute inset-0 z-10 animate-pulse bg-zinc-200 dark:bg-zinc-700" />
               )}
+
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
-                alt="news thumbnail"
+                alt={article.title}
                 onLoad={() => handleImageLoad(article.id)}
                 onError={(e) => {
                   e.currentTarget.src = "/ReadHub_PlaceHolder.png";
                   handleImageLoad(article.id);
                 }}
-                className={`object-cover w-full h-full transition-opacity duration-300 contrast-[1.1] ${
+                className={`object-cover w-full h-full transition-all duration-500 contrast-[1.05] group-hover/card:scale-105 ${
                   loadedImages[article.id] ? "opacity-100" : "opacity-0"
                 }`}
               />
-              {/* Removed absolute Future AI button from image */}
+
+              {/* Bottom gradient for overlaid text */}
+              <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+
+              {/* 🔴 New badge */}
+              {isLatest(article.publishedAt) && (
+                <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md z-10">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                  New
+                </div>
+              )}
+
+              {/* Source name — bottom left */}
+              {article.source?.name && (
+                <span className="absolute bottom-2 left-2.5 text-[9px] font-bold uppercase tracking-widest text-white/80 truncate max-w-[55%] pointer-events-none">
+                  {article.source.name}
+                </span>
+              )}
+
+              {/* Time — bottom right */}
+              <ToolTip content={formatDate(new Date(article.publishedAt), "MMM d, yyyy • h:mm a")}>
+                <span className="absolute bottom-2 right-2.5 text-[9px] font-semibold text-white/70 cursor-default">
+                  {formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })}
+                </span>
+              </ToolTip>
             </div>
-            <div className="flex flex-wrap gap-2 mb-2 p-2 pt-0 pb-0">
-              {article.category.map((cat, i) => {
-                const colorClass = NEWS_CATEGORY_COLORS[cat as Category];
-                return (
-                  <Badge
-                    variant={"outline"}
-                    key={`${cat}-${i}`}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${colorClass}`}
-                  >
-                    {cat}
-                  </Badge>
-                );
-              })}
-              <div className="ml-auto flex items-center gap-2">
-                <ToolTip content="Predicted Future insights">
-                  <Badge
-                    className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full bg-linear-to-r from-cyan-600 to-blue-600 text-white flex items-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-150 shadow-lg shadow-cyan-500/10 border-0"
-                    onClick={() => handleFutureClick(article)}
-                    variant="outline"
-                  >
-                    Forecast AI <TrendingUp className="w-3.5 h-3.5 ml-1.5" />
-                  </Badge>
+
+            {/* ── Categories + AI Buttons ── */}
+            <div className="flex items-center justify-between gap-3 px-3 pt-3 pb-0 w-full">
+              <div className="flex flex-wrap gap-1.5 items-center">
+                {article.category.map((cat, idx) => {
+                  const colorClass = NEWS_CATEGORY_COLORS[cat as Category];
+                  return (
+                    <Badge
+                      variant="outline"
+                      key={`${cat}-${idx}`}
+                      className={`rounded-full px-3 h-7 text-xs font-bold capitalize flex items-center justify-center shadow-sm ${colorClass}`}
+                    >
+                      {cat}
+                    </Badge>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <ToolTip content="Forecast AI — See the Future of this Story">
+                  <div className="relative">
+                    <span className="absolute inset-0 rounded-full bg-cyan-400/25 animate-ping-slow" />
+                    <button
+                      onClick={() => handleFutureClick(article)}
+                      className="is-shining relative overflow-hidden w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-cyan-600 text-white flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all duration-200 ring-2 ring-cyan-400/60 shadow-md"
+                    >
+                      <Telescope className="w-4 h-4 relative z-10" />
+                    </button>
+                  </div>
                 </ToolTip>
-                <ToolTip content="Get Insights from AI">
-                  <Badge
-                    className="px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-full bg-linear-to-r from-indigo-600 to-violet-600 text-white flex items-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-150 shadow-lg shadow-indigo-500/10 border-0"
-                    onClick={() => onAskAi(article)}
-                    variant="outline"
-                  >
-                    Ask AI <Sparkles className="w-3.5 h-3.5 ml-1.5" />
-                  </Badge>
+                <ToolTip content="Ask AI — Deep Insights on this Article">
+                  <div className="relative">
+                    <span className="absolute inset-0 rounded-full bg-violet-400/25 animate-ping-slow" />
+                    <button
+                      onClick={() => onAskAi(article)}
+                      className="is-shining relative overflow-hidden w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all duration-200 ring-2 ring-violet-400/60 shadow-md"
+                    >
+                      <Sparkles className="w-4 h-4 relative z-10" />
+                    </button>
+                  </div>
                 </ToolTip>
               </div>
             </div>
-            <CardTitle className="text-lg font-black leading-tight p-2 pt-1 pb-0 line-clamp-2">
+
+            {/* ── Title ── */}
+            <CardTitle className="text-base font-black leading-snug px-3 pt-2 pb-0 line-clamp-2">
               {article.title}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-2 pt-1 pb-4 flex-grow">
+
+          {/* ── Description ── */}
+          <CardContent className="px-3 pt-1.5 pb-3 flex-grow">
             <Typography
               variant="small"
               color="muted"
-              className="line-clamp-2 leading-relaxed italic opacity-80 border-l-2 border-zinc-200 dark:border-zinc-800 pl-3"
+              className="line-clamp-2 leading-relaxed opacity-75"
             >
               {article.description || "No description available."}
             </Typography>
           </CardContent>
-          <CardFooter className="p-4 pt-0 flex items-center justify-between border-t dark:border-zinc-800/20 mt-auto bg-zinc-50/30 dark:bg-zinc-900/10">
-            <div className="flex items-center gap-1.5">
-              <ToolTip
-                content={likes[article.id] ? "Unlike" : "Like this article"}
-              >
+
+          {/* ── Footer ── */}
+          <CardFooter className="px-3 py-2.5 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/60 mt-auto">
+            {/* Like + Bookmark */}
+            <div className="flex items-center gap-0.5">
+              <ToolTip content={likes[article.id] ? "Unlike" : "Like"}>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => toggleLike(article.id)}
-                  className={`h-9 w-9 rounded-full transition-all duration-300 cursor-pointer ${
+                  className={`h-8 w-8 rounded-full transition-all duration-200 cursor-pointer ${
                     likes[article.id]
-                      ? "text-zinc-900 bg-zinc-200 dark:text-zinc-100 dark:bg-zinc-800"
-                      : "text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:text-zinc-100 dark:hover:bg-zinc-800"
+                      ? "text-rose-500 bg-rose-50 dark:bg-rose-950/30"
+                      : "text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30"
                   }`}
                 >
-                  <ThumbsUp
-                    className={`w-4 h-4 ${likes[article.id] ? "fill-current" : ""}`}
-                  />
+                  <ThumbsUp className={`w-3.5 h-3.5 ${likes[article.id] ? "fill-current" : ""}`} />
                 </Button>
               </ToolTip>
 
-              <ToolTip
-                content={
-                  bookmarks[article.id] ? "Remove Bookmark" : "Bookmark this"
-                }
-              >
+              <ToolTip content={bookmarks[article.id] ? "Remove Bookmark" : "Bookmark"}>
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => toggleBookmark(article.id)}
-                  className={`h-9 w-9 rounded-full transition-all duration-300 cursor-pointer ${
+                  className={`h-8 w-8 rounded-full transition-all duration-200 cursor-pointer ${
                     bookmarks[article.id]
-                      ? "text-zinc-900 bg-zinc-200 dark:text-zinc-100 dark:bg-zinc-800"
-                      : "text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 dark:hover:text-zinc-100 dark:hover:bg-zinc-800"
+                      ? "text-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                      : "text-zinc-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30"
                   }`}
                 >
-                  <Bookmark
-                    className={`w-4 h-4 ${bookmarks[article.id] ? "fill-current" : ""}`}
-                  />
+                  <Bookmark className={`w-3.5 h-3.5 ${bookmarks[article.id] ? "fill-current" : ""}`} />
                 </Button>
               </ToolTip>
             </div>
 
-            <div className="flex items-center gap-4">
-              <ToolTip
-                content={formatDistanceToNow(new Date(article.publishedAt), {
-                  addSuffix: true,
-                })}
-              >
-                <div className="hidden sm:flex items-center text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                  {formatDate(new Date(article.publishedAt), "MMM d, yyyy")}
-                </div>
-              </ToolTip>
-              <div className="w-px h-3 bg-zinc-200 dark:bg-zinc-800 mx-1 hidden sm:block" />
+            {/* Read Source */}
+            <ToolTip content={`Read on ${article.source?.name || "Source"}`}>
               <Link
                 href={article.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-zinc-100 hover:underline transition-all"
+                className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors group/link"
               >
-                Read Source
+                Source
+                <ArrowUpRight className="w-3 h-3 transition-transform group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5" />
               </Link>
-            </div>
+            </ToolTip>
           </CardFooter>
         </Card>
       ))}
     </div>
   );
 }
+

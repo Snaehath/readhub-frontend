@@ -162,3 +162,110 @@
     scrollbar-color: hsl(0 0% 25%) transparent;
   }
 }
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-150%);
+  }
+  100% {
+    transform: translateX(150%);
+  }
+}
+
+/**
+ * Usage:
+ *   <div class="is-shining relative overflow-hidden rounded-full ...">
+ */
+.is-shining::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.45) 50%,
+    transparent 70%
+  );
+  animation: shimmer 2s linear infinite;
+  pointer-events: none;
+}
+
+/* Slow Ping — subtle interactivity affordance */
+@keyframes ping-slow {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  80% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.animate-ping-slow {
+  animation: ping-slow 2.5s ease-out infinite;
+}
+
+/* 📊 ELITE TABLE STYLING FOR CHAT */
+.prose table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 1.5rem 0;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+}
+
+.prose thead {
+  background: oklch(0.97 0 0);
+}
+
+.dark .prose thead {
+  background: oklch(0.269 0 0);
+}
+
+.prose th {
+  padding: 1rem;
+  font-weight: 800;
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted-foreground);
+  border-bottom: 1px solid var(--border);
+}
+
+.prose td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  vertical-align: top;
+}
+
+.prose tr:last-child td {
+  border-bottom: none;
+}
+
+.prose tr:hover td {
+  background: oklch(0.99 0 0);
+}
+
+.dark .prose tr:hover td {
+  background: oklch(0.2 0 0);
+}
+
+/* Responsive wrapper for tables */
+.prose {
+  overflow-x: auto;
+}
+
+.prose::-webkit-scrollbar {
+  height: 4px;
+}

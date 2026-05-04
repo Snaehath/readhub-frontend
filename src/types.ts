@@ -1,6 +1,19 @@
+export type AgentEvent = {
+  type: "status" | "tool_call" | "tool_result" | "llm_step" | "final" | "error";
+  message: string;
+  tool?: string;
+  args?: Record<string, unknown>;
+  result?: string;
+  timestamp?: string;
+  sources?: string[];
+};
+
 export type ChatMessage = {
   sender: "user" | "bot";
   message: string;
+  thoughts?: string[];
+  latency?: string;
+  events?: AgentEvent[];
 };
 
 export type NewsArticle = {

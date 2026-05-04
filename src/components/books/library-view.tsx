@@ -25,7 +25,7 @@ const LibraryView = () => {
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery.trim());
-    }, 1000);
+    }, 400);
 
     return () => clearTimeout(handler);
   }, [searchQuery]);
@@ -59,7 +59,6 @@ const LibraryView = () => {
 
   const handleBookSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setSelectedCategory("all");
   };
 
   const categoriesToShow = showAll
@@ -68,8 +67,14 @@ const LibraryView = () => {
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">🏛️ Library</h2>
-
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-2xl font-bold">🏛️ Library</h2>
+        {!isLoading && books.length > 0 && (
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+            {books.length} books found
+          </span>
+        )}
+      </div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex flex-wrap items-center gap-2">
           {categoriesToShow.map((cat) => (
@@ -123,7 +128,7 @@ const LibraryView = () => {
 
       {/* Loading Skeletons */}
       {isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {[...Array(10)].map((_, i) => (
             <BookCardSkeleton key={i} />
           ))}
@@ -148,7 +153,7 @@ const LibraryView = () => {
       )}
 
       {!isLoading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {books.map((book) => (
             <Suspense key={book.work_key} fallback={<BookCardSkeleton />}>
               <BooksCardLoader book={book} />

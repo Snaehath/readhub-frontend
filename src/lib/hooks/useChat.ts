@@ -1,83 +1,120 @@
 import { useState, useEffect, useRef } from "react";
 import { ChatMessage } from "@/types";
-import { sendChatRequest } from "@/api/ai";
+import axios from "axios";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api";
 
 export function useChat(token: string | null) {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
-
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // 🛰️ CLOUD SYNC: Fetch history on mount
   useEffect(() => {
-    const stored = localStorage.getItem("chatHistory");
-    if (stored) setChatHistory(JSON.parse(stored));
-  }, []);
+    const fetchHistory = async () => {
+      if (!token) return;
+      try {
+        const url = sessionId 
+          ? `${API_BASE}/ai/history/${sessionId}` 
+          : `${API_BASE}/ai/history`;
+        
+        const response = await axios.get(url, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (sessionId && response.data.history) {
+          setChatHistory(response.data.history);
+        } else if (!sessionId && response.data.sessions?.length > 0) {
+          // If no sessionId is active, maybe we want to load the latest?
+          // For now, let's keep it clean and let the UI set the sessionId.
+        }
+      } catch (error) {
+        console.error("Failed to fetch cloud history:", error);
+      }
+    };
+
+    fetchHistory();
+  }, [token, sessionId]);
 
   useEffect(() => {
-    if (chatHistory.length)
-      localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [chatHistory]);
 
   const sendMessage = async (message: string) => {
-    if (!message.trim()) return;
+    if (!message.trim() || !token) return;
 
-    if (!token) {
-      setChatHistory((prev) => [
-        ...prev,
-        { sender: "bot", message: "🔒 Please log in to use the AI assistant." },
-      ]);
-      return;
-    }
-
-    const updated = [...chatHistory, { sender: "user" as const, message }];
-    setChatHistory(updated);
+    // 1. Optimistic Update: Add user message
+    const userMsg: ChatMessage = { sender: "user", message };
+    setChatHistory((prev) => [...prev, userMsg]);
     setLoading(true);
 
-    try {
-      const data = await sendChatRequest(token, { userMessage: message });
+    // 2. Prepare Placeholder Bot Message for Streaming
+    const botPlaceholder: ChatMessage = { 
+      sender: "bot", 
+      message: "", 
+      events: [] 
+    };
+    setChatHistory((prev) => [...prev, botPlaceholder]);
+
+    const activeSessionId = sessionId || localStorage.getItem("active_session_id") || "";
+    const url = `${API_BASE}/ai/chat-stream?userMessage=${encodeURIComponent(message)}&token=${token}&sessionId=${activeSessionId}`;
+    
+    // 3. Initialize SSE Connection
+    const eventSource = new EventSource(url);
+
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
       
-      if (!data?.reply) {
-        throw new Error("EMPTY_RESPONSE");
+      if (data.type === 'final') {
+        setChatHistory((prev) => {
+          const newHistory = [...prev];
+          const lastMsg = newHistory[newHistory.length - 1];
+          if (lastMsg && lastMsg.sender === "bot") {
+            lastMsg.message = data.reply || data.message;
+            lastMsg.thoughts = data.thoughts;
+            lastMsg.latency = data.latency;
+          }
+          return newHistory;
+        });
+        eventSource.close();
+        setLoading(false);
+      } else {
+        setChatHistory((prev) => {
+          const newHistory = [...prev];
+          const lastMsg = newHistory[newHistory.length - 1];
+          if (lastMsg && lastMsg.sender === "bot") {
+            // Deduplicate status
+            const lastEvent = lastMsg.events?.[lastMsg.events.length - 1];
+            if (lastEvent?.type === data.type && lastEvent?.message === data.message) return prev;
+            
+            lastMsg.events = [...(lastMsg.events || []), data];
+          }
+          return newHistory;
+        });
       }
+    };
 
-      setChatHistory((prev) => [
-        ...prev,
-        { sender: "bot", message: data.reply.trim() },
-      ]);
-    } catch (error: unknown) {
-      console.error("[ChatError]:", error);
-      let errorMessage =
-        "⚠️ I encountered an synchronization error. Please check your connection or try again shortly.";
-
-      if (error instanceof Error) {
-        if (error.message === "EMPTY_RESPONSE") {
-          errorMessage =
-            "😶 My apologies, I couldn't generate a response for that. Could you try rephrasing your request?";
-        } else if (
-          error.message.includes("401") ||
-          error.message.includes("403")
-        ) {
-          errorMessage =
-            "🔒 Your session has expired. Please log in again to continue our briefing.";
-        }
-      }
-
-      setChatHistory((prev) => [
-        ...prev,
-        { sender: "bot", message: errorMessage },
-      ]);
-    } finally {
+    eventSource.onerror = (err) => {
+      console.error("SSE Streaming Error:", err);
+      setChatHistory((prev) => [...prev, { sender: "bot", message: "⚠️ Connection interrupted." }]);
+      eventSource.close();
       setLoading(false);
-    }
+    };
   };
 
-  const clearChat = () => {
-    localStorage.removeItem("chatHistory");
+  const clearChat = async () => {
     setChatHistory([]);
+    setSessionId(null);
+    localStorage.removeItem("active_session_id");
   };
 
-  return { chatHistory, sendMessage, clearChat, loading, messagesEndRef };
+  const deleteMessage = async (index: number) => {
+    // Local delete for UI feel
+    setChatHistory((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  return { chatHistory, sendMessage, clearChat, deleteMessage, loading, messagesEndRef, sessionId, setSessionId };
 }

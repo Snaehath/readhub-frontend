@@ -1,12 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { BookOpen, ExternalLink } from "lucide-react";
 
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Category, Book } from "@/types";
 import { BOOK_CATEGORY_COLORS } from "@/constants";
-import Typography from "../ui/custom/typography";
+import ToolTip from "../ui/custom/tooltip";
 
 interface BookCardProps {
   book: Book;
@@ -17,100 +17,75 @@ export default function BookCard({ book }: BookCardProps) {
     BOOK_CATEGORY_COLORS[book.tag as Category] ||
     "bg-gray-200 text-gray-700 border-gray-300";
 
+  const coverUrl = book.cover_edition_key
+    ? `https://covers.openlibrary.org/b/olid/${book.cover_edition_key}-M.jpg`
+    : `/ReadHub_PlaceHolder.png`;
+
+  const archiveUrl = `https://archive.org/details/${book.lending_identifier_s}?view=theater`;
+  const openLibraryUrl = `https://openlibrary.org/${book.work_key}`;
+
   return (
-    <>
-      <ul className="flex flex-col gap-4 sm:hidden">
-        <li className="flex gap-4 p-2 rounded-md shadow hover:shadow-md transition">
-          <div className="w-24 h-24 flex-shrink-0 relative">
-            <img
-              src={
-                book.cover_edition_key
-                  ? `https://covers.openlibrary.org/b/olid/${book.cover_edition_key}-M.jpg`
-                  : `https://placehold.co/200x200?text=${book.title}%0ABy%0A${book.author_name[0]}` ||
-                    "/ReadHub_PlaceHolder.png"
-              }
-              onError={(e) => {
-                e.currentTarget.src = "/ReadHub_PlaceHolder.png";
-              }}
-              className="w-full h-full object-contain rounded-md"
-              alt={book.title}
-            />
-          </div>
-          <div className="flex flex-col justify-between flex-1">
-            <div>
-              <h3 className="text-sm font-semibold line-clamp-2">
-                {book.title}
-              </h3>
-              <p className="text-xs text-muted-foreground line-clamp-3 mt-1">
-                by {book.author_name[0] ?? "finding"}
-              </p>
-            </div>
-            <div className="flex justify-between mt-2">
-              <div className="flex gap-2 items-center">
-                <Link
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href={`https://archive.org/details/${book.lending_identifier_s}?view=theater`}
-                  className="text-xs text-primary hover:underline"
-                >
-                  Read more
-                </Link>
-                <Link
-                  href={`https://openlibrary.org/${book.work_key}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-primary hover:underline px-20"
-                >
-                  <BookOpen />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </li>
-      </ul>
-      <Card className="overflow-hidden hidden sm:flex flex-col h-96 sm:w-auto hover:shadow-md hover:shadow-gray-500/50 ">
-        <div className="relative h-48 w-full pb-2 pt-2">
-          <img
-            src={
-              book.cover_edition_key
-                ? `https://covers.openlibrary.org/b/olid/${book.cover_edition_key}-M.jpg`
-                : `https://placehold.co/200x200?text=${book.title}%0ABy%0A${book.author_name[0]}`
-            }
-            alt={book.title}
-            className="object-contain w-full h-full "
-          />
-        </div>
-        <CardHeader className="pl-3 py-2">
+    <Card className="group overflow-hidden flex flex-col hover:-translate-y-1 hover:shadow-xl transition-all duration-300 border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600">
+      {/* Cover Image */}
+      <div className="relative h-52 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+        <img
+          src={coverUrl}
+          onError={(e) => {
+            e.currentTarget.src = "/ReadHub_PlaceHolder.png";
+          }}
+          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+          alt={book.title}
+        />
+        {/* Gradient overlay */}
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
+
+        {/* Category badge — overlaid */}
+        <div className="absolute top-2.5 left-2.5">
           <Badge
             variant="outline"
-            className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${categoryColor}`}
+            className={`rounded-full px-2.5 h-6 text-[10px] font-bold capitalize shadow-sm ${categoryColor}`}
           >
-            <Typography variant="small">{book.tag.slice(0, 12)}</Typography>
+            {book.tag.slice(0, 14)}
           </Badge>
-          <CardTitle className="text-md line-clamp-1">{book.title}</CardTitle>
-          <p className="text-xs text-muted-foreground">
-            by {book.author_name[0] ?? "finding"}
-          </p>
-        </CardHeader>
-        <CardFooter className="p-3 pt-0 flex justify-between">
+        </div>
+      </div>
+
+      {/* Info */}
+      <CardHeader className="px-3 py-2.5 pb-0 flex-grow">
+        <CardTitle className="text-sm font-black leading-snug line-clamp-2">
+          {book.title}
+        </CardTitle>
+        <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
+          by {book.author_name?.[0] ?? "Unknown Author"}
+        </p>
+      </CardHeader>
+
+      {/* Footer */}
+      <CardFooter className="px-3 py-2.5 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/60 mt-auto">
+        <ToolTip content="Read on Internet Archive">
           <Link
             target="_blank"
             rel="noopener noreferrer"
-            href={`https://archive.org/details/${book.lending_identifier_s}?view=theater`}
-            className="text-sm font-medium text-primary hover:underline"
+            href={archiveUrl}
+            className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 hover:underline transition-all"
           >
-            Read now
+            <BookOpen className="w-3.5 h-3.5" />
+            Read Now
           </Link>
+        </ToolTip>
+
+        <ToolTip content="View on OpenLibrary">
           <Link
             target="_blank"
             rel="noopener noreferrer"
-            href={`https://openlibrary.org/${book.work_key}`}
-            className="text-sm font-medium text-primary hover:underline"
+            href={openLibraryUrl}
+            className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors group/link"
           >
-            <BookOpen />
+            Details
+            <ExternalLink className="w-3 h-3 transition-transform group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5" />
           </Link>
-        </CardFooter>
-      </Card>
-    </>
+        </ToolTip>
+      </CardFooter>
+    </Card>
   );
 }

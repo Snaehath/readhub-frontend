@@ -14,6 +14,7 @@ export type ChatMessage = {
   thoughts?: string[];
   latency?: string;
   events?: AgentEvent[];
+  status?: "error" | "success" | "neutral";
 };
 
 export type NewsArticle = {

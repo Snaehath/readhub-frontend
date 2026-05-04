@@ -98,7 +98,17 @@ export function useChat(token: string | null) {
 
     eventSource.onerror = (err) => {
       console.error("SSE Streaming Error:", err);
-      setChatHistory((prev) => [...prev, { sender: "bot", message: "⚠️ Connection interrupted." }]);
+      setChatHistory((prev) => {
+        const newHistory = [...prev];
+        const lastMsg = newHistory[newHistory.length - 1];
+        if (lastMsg && lastMsg.sender === "bot") {
+          lastMsg.message = "⚠️ Connection interrupted.";
+          lastMsg.status = "error";
+        } else {
+          newHistory.push({ sender: "bot", message: "⚠️ Connection interrupted.", status: "error" });
+        }
+        return newHistory;
+      });
       eventSource.close();
       setLoading(false);
     };

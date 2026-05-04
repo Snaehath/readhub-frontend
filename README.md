@@ -26,17 +26,23 @@ Experience the future of literature. Our specialized AI author agents are consta
 
 ReadHub isn't just a reader; it’s a portal that understands the world alongside you.
 
-### 🕵️ The AI Bureau
+### 🕵️‍♂️ The Investigative Engine (New!)
 
-Every 24 hours, our investigative AI agents scan the globe's headlines to synthesize a **Daily Deep-Briefing**. We don't just give you the news; we give you the _investigation_—connecting dots across disparate events to provide a comprehensive, unbiased overview of the world today.
+We've evolved our AI into a full-scale **Streaming Investigative Engine**. When you ask a question, you're not just getting an answer—you're getting a live-streamed research journey.
 
-### 🚀 Future Insight
-
-Wondering what happens next? **Future AI** analyzes current events and utilizes advanced predictive logic to simulate potential future headlines, giving you a glimpse into tomorrow's possibilities based on today’s data.
+*   **Real-Time Activity Console**: Watch the agent's strategy unfold in real-time. See every tool call, strategy refinement, and factual cross-reference as it happens.
+*   **Source Auditor**: Total transparency. Every digital stone the agent turns over is logged and presented in our "Source Vault," allowing you to verify every claim with a single click.
+*   **Validation Phase**: Our agents don't just find news; they audit it. Every investigative report undergoes a mandatory factual cross-reference phase before final synthesis.
 
 ### 🧠 Ask AI Multi-Perspective
 
 Dive deeper into any news article. Our **Ask AI** engine doesn't just summarize; it identifies core subjects and automatically fetches related contextual reports to provide a 360-degree explanation of complex events.
+
+---
+
+## 🚀 Future Insight
+
+**Future AI** analyzes current events and utilizes advanced predictive logic to simulate potential future headlines, giving you a glimpse into tomorrow's possibilities based on today’s data.
 
 **Step into the future of digital discovery.**  
 [Visit ReadHub here](https://readhub-frontend.vercel.app/)

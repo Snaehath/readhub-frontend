@@ -15,7 +15,7 @@ import AiSummaryModal from "./ai-summary-modal";
 import FutureInsightModal from "./future-insight-modal";
 
 import { NewsArticle } from "@/types";
-import { newsCategories, newsCountries } from "@/constants";
+import { newsCategories, newsCountries, API_BASE_URL } from "@/constants";
 import { fetchNews, searchNewsApi, refreshNewsApi } from "@/api/news";
 import { sendChatRequest } from "@/api/ai";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -67,7 +67,7 @@ export default function NewsCard() {
 
     const fetchUserData = async () => {
       try {
-        const res = await fetch(`/api/user/me`, { // Note: Should ideally be in a user api service too
+        const res = await fetch(`${API_BASE_URL}/user/me`, { // Note: Should ideally be in a user api service too
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {

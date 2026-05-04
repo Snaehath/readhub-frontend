@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ChatMessage } from "@/types";
+import { API_BASE_URL } from "@/constants";
 import axios from "axios";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000/api";
 
 export function useChat(token: string | null) {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -16,8 +15,8 @@ export function useChat(token: string | null) {
       if (!token) return;
       try {
         const url = sessionId 
-          ? `${API_BASE}/ai/history/${sessionId}` 
-          : `${API_BASE}/ai/history`;
+          ? `${API_BASE_URL}/ai/history/${sessionId}` 
+          : `${API_BASE_URL}/ai/history`;
         
         const response = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` }
@@ -60,7 +59,7 @@ export function useChat(token: string | null) {
     setChatHistory((prev) => [...prev, botPlaceholder]);
 
     const activeSessionId = sessionId || localStorage.getItem("active_session_id") || "";
-    const url = `${API_BASE}/ai/chat-stream?userMessage=${encodeURIComponent(message)}&token=${token}&sessionId=${activeSessionId}`;
+    const url = `${API_BASE_URL}/ai/chat-stream?userMessage=${encodeURIComponent(message)}&token=${token}&sessionId=${activeSessionId}`;
     
     // 3. Initialize SSE Connection
     const eventSource = new EventSource(url);

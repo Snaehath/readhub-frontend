@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useState, useEffect } from "react";
 import { Book } from "@/types";
-import { BooksSkeleton, CardsSkeleton, StoriesSkeleton } from "./skeletons";
+import { BooksSkeleton, CardsSkeleton } from "./skeletons";
 
 // Dynamically load components (no SSR)
 const NewsCard = dynamic(() => import("../news/news-card"), {
@@ -12,10 +12,6 @@ const NewsCard = dynamic(() => import("../news/news-card"), {
 
 const BookCard = dynamic(() => import("../books/book-card"), {
   loading: () => <BooksSkeleton />,
-  ssr: false,
-});
-
-const StoryLibrary = dynamic(() => import("../story/story-library"), {
   ssr: false,
 });
 
@@ -39,28 +35,6 @@ export function NewsCardLoader() {
   }
 
   return <NewsCard />;
-}
-
-// Wrapper for StoryLibrary with simulated manual loading
-export function StoryLibraryLoader() {
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsInitialLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isInitialLoading) {
-    return (
-      <section className="mt-20">
-        <StoriesSkeleton />
-      </section>
-    );
-  }
-
-  return <StoryLibrary />;
 }
 
 // Wrapper for BookCard with props passed through

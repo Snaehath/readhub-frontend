@@ -65,7 +65,7 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
           Article Not Found
         </Typography>
         <Button asChild variant="outline">
-          <Link href="/ai-hub?tab=news">Back to AI News</Link>
+          <Link href="/ai-news">Back to AI News</Link>
         </Button>
       </div>
     );
@@ -82,9 +82,9 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
             size="sm"
             className="gap-2 font-black text-xs uppercase tracking-widest text-muted-foreground hover:text-indigo-600"
           >
-            <Link href="/ai-hub?tab=news">
+            <Link href="/ai-news">
               <ArrowLeft className="w-4 h-4" />
-              Back to Hub
+              Back to News
             </Link>
           </Button>
           <div className="flex items-center gap-2">

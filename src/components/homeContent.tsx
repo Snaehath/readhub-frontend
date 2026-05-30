@@ -31,8 +31,8 @@ export default function HomeContent() {
 
           <p className="text-xl sm:text-2xl text-muted-foreground font-medium leading-relaxed max-w-2xl mx-auto">
             Explore thousands of news articles, dive into timeless e-books, or
-            immerse yourself in original AI-generated stories and much more to
-            come.
+            immerse yourself in original AI-synthesized news briefings and much
+            more to come.
           </p>
         </div>
 
@@ -98,7 +98,7 @@ export default function HomeContent() {
             </CardFooter>
           </Card>
 
-          {/* AI Story Card (Colorful Exception) */}
+          {/* AI News Card (Colorful Exception) */}
           <Card className="group relative overflow-hidden border-border/50 bg-card/40 backdrop-blur-xl hover:shadow-2xl hover:shadow-black/5 hover:-translate-y-2 transition-all duration-500">
             {/* <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-pink-500/10 opacity-100" /> */}
             <CardHeader className="relative z-10 pb-4">
@@ -106,16 +106,15 @@ export default function HomeContent() {
                 <Sparkles className="h-6 w-6" />
               </div>
               <CardTitle className="text-2xl font-black tracking-tight text-indigo-950 dark:text-indigo-100">
-                AI Epics
+                AI News
               </CardTitle>
               <CardDescription className="text-base font-medium">
-                Original autonomous narratives
+                Synthetic investigative briefings
               </CardDescription>
             </CardHeader>
             <CardContent className="relative z-10">
               <p className="text-muted-foreground leading-relaxed h-20">
-                Immerse yourself in fully-realized stories generated
-                continuously by our specialized AI author agents.
+                Explore continuous automated deep-dive briefings synthesized by our autonomous AI news agents.
               </p>
             </CardContent>
             <CardFooter className="relative z-10 pt-4">
@@ -123,7 +122,7 @@ export default function HomeContent() {
                 asChild
                 className="w-full rounded-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white border-0 shadow-lg shadow-indigo-500/20 transition-all hover:scale-[1.02]"
               >
-                <Link href="/story">Discover Stories</Link>
+                <Link href="/ai-news">Read AI News</Link>
               </Button>
             </CardFooter>
           </Card>

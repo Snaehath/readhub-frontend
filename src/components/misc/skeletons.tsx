@@ -36,28 +36,6 @@ export function CardSkeleton() {
   );
 }
 
-export function StoryCardSkeleton() {
-  return (
-    <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col h-full flex-1">
-      {/* Cover Image Placeholder with shimmer effect */}
-      <div className="relative aspect-[4/5] w-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-      </div>
-
-      {/* Metadata Section */}
-      <div className="p-4 sm:p-5 flex flex-col gap-3 flex-grow bg-gradient-to-b from-transparent to-background/50 z-10">
-        {/* Title */}
-        <div className="h-5 w-full rounded-md bg-zinc-100 dark:bg-zinc-800" />
-
-        {/* Author */}
-        <div className="flex items-center gap-2.5">
-          <div className="w-6 h-6 rounded-full bg-zinc-100 dark:bg-zinc-800 flex-shrink-0" />
-          <div className="h-3 w-1/2 rounded bg-zinc-50 dark:bg-zinc-800/50" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export function BookCardSkeleton() {
   return (
@@ -110,17 +88,6 @@ export function BooksSkeleton() {
   );
 }
 
-export function StoriesSkeleton() {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 sm:gap-8 animate-pulse">
-      <StoryCardSkeleton />
-      <StoryCardSkeleton />
-      <StoryCardSkeleton />
-      <StoryCardSkeleton />
-      <StoryCardSkeleton />
-    </div>
-  );
-}
 
 export function AiInsightSkeleton() {
   return (

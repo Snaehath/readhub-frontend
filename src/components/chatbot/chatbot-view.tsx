@@ -173,22 +173,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import Typography from "@/components/ui/custom/typography";
 import ToolTip from "../ui/custom/tooltip";
 
-const DynamicThinkingDisplay = ({ events = [] }: { events?: AgentEvent[] }) => {
-  const [seconds, setSeconds] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => setSeconds((prev) => +(prev + 0.1).toFixed(1)), 100);
-    return () => clearInterval(timer);
-  }, []);
-
-  return (
-    <ThinkingContext
-      events={events}
-      latency={seconds.toString()}
-      status="active"
-    />
-  );
-};
 
 export const ChatbotView = () => {
   const [token, setToken] = useState<string | null>(null);

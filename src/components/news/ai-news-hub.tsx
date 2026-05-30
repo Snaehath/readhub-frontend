@@ -143,7 +143,7 @@ const AiNewsHub = () => {
             {articles.map((article) => (
               <Link
                 key={article._id}
-                href={`/ai-hub/news/${article._id}`}
+                href={`/ai-news/${article._id}`}
                 className="group flex flex-col h-full bg-card hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 rounded-[2.5rem] border border-zinc-200/60 dark:border-zinc-800/60 p-6 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/5 hover:-translate-y-2 relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-10 transition-opacity">

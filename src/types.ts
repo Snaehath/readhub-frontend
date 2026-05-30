@@ -106,57 +106,7 @@ export type Category =
   | "horror"
   | "children";
 
-export type StorySummary = {
-  id: string;
-  index: string;
-  title: string;
-  authorName: string;
-  genre: string;
-  subject: string;
-  synopsis?: string;
-  worldBuilding?: string;
-  characters?: {
-    name: string;
-    description: string;
-  }[];
-  coverImage?: string;
-  currentChapterCount: number;
-  maxChapters: number;
-  isCompleted?: boolean;
-  averageRating?: number;
-  ratingSum?: number;
-  reviewCount?: number;
-};
 
-export type AIStory = StorySummary & {
-  tableOfContents?: {
-    chapterNumber: number;
-    title: string;
-  }[];
-  chapters?: {
-    chapterNumber: number;
-    title: string;
-    content: string;
-  }[];
-  reviews?: {
-    userId?: string;
-    reviewerName?: string;
-    rating: number;
-    review?: string;
-    createdAt: string;
-  }[];
-};
-
-export type StoryResponse = {
-  message: string;
-  story: AIStory;
-  isInitializing?: boolean;
-};
-
-export type AllStoriesResponse = {
-  message: string;
-  stories: StorySummary[];
-};
 
 export type AiNews = {
   _id: string;

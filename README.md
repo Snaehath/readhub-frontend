@@ -1,48 +1,104 @@
-# 📚 ReadHub: Your Intelligent Digital Companion
+# 📚 ReadHub: Intelligent News & Digital Reading Ecosystem
 
-**Where Creative Narratives Meet Factual Intelligence.**
+An intelligent, full-stack digital reading platform that brings together real-time global news, an expansive e-book archive, autonomous AI-synthesized investigative news briefings, and an agentic research chatbot.
 
-Welcome to **ReadHub**, the next-generation reading ecosystem designed for the modern explorer. We’ve reinvented the digital library by fusing real-time global news, an expansive archive of timeless literature, and a revolutionary bureau of autonomous AI storytellers.
-
----
-
-## 🏛️ The Three Pillars
-
-### 🌍 Global News Grid
-
-Stay ahead of the curve with a real-time pulse on the planet. Our news engine fetches thousands of breaking articles from the world’s most trusted sources, delivered in a clean, sophisticated, and editorial-first interface.
-
-### 📜 Timeless E-Book Archive
-
-Step into a library of legends. From high-fantasy epics to historical masterpieces, our e-book archive is home to thousands of digital books across every genre. Read anytime, anywhere, on a platform designed for deep focus.
-
-### 🧪 ReadHub AI Originals
-
-Experience the future of literature. Our specialized AI author agents are constantly at work, weaving complex, multi-chapter epics and original narratives that evolve daily. Step into worlds that were purely forged by silicon intelligence.
+[**Explore Live Demo →**](https://readhub-frontend.vercel.app/)
 
 ---
 
-## 🤖 Engineered with Intelligence
+## ✨ Key Features
 
-ReadHub isn't just a reader; it’s a portal that understands the world alongside you.
+### 🌍 1. Global News Grid
+- **Real-Time Coverage**: Aggregated breaking news from trusted global publishers across technology, business, politics, health, science, sports, and entertainment.
+- **Regional & Categorical Filtering**: Instant filtering by country (US, India, etc.) and category tags.
+- **Live News Ticker**: Marquee ticker highlighting breaking headlines at a glance.
+- **Deep Reader View**: Distraction-free article preview and reading mode.
 
-### 🕵️‍♂️ The Investigative Engine (New!)
+### 📜 2. Timeless E-Book Archive
+- **Curated Digital Library**: Browse books across diverse genres including History, Science, Business, Health, Horror, and Children's literature.
+- **Category Filter & Search**: Quick discovery with instant search and category tags.
+- **Interactive Reader**: Clean in-browser e-book reader experience.
 
-We've evolved our AI into a full-scale **Streaming Investigative Engine**. When you ask a question, you're not just getting an answer—you're getting a live-streamed research journey.
+### ⚡ 3. AI News (Autonomous Investigative Briefings)
+- **Synthetic Journalism**: Continuous, in-depth briefings researched and synthesized by autonomous AI news agents.
+- **Deep Context & Analysis**: Detailed breakdown of complex trends across technology, global markets, and emerging science.
 
-*   **Real-Time Activity Console**: Watch the agent's strategy unfold in real-time. See every tool call, strategy refinement, and factual cross-reference as it happens.
-*   **Source Auditor**: Total transparency. Every digital stone the agent turns over is logged and presented in our "Source Vault," allowing you to verify every claim with a single click.
-*   **Validation Phase**: Our agents don't just find news; they audit it. Every investigative report undergoes a mandatory factual cross-reference phase before final synthesis.
+### 🤖 4. Agentic AI ChatBot (Streaming Investigative Assistant)
+- **Real-Time Activity Console**: Live transparency into the agent's thoughts, strategy formation, tool calls, and execution steps.
+- **Source Auditor & Vault**: Complete citation tracking with direct links to verified sources used during fact-checking and synthesis.
+- **Quick-Start Prompts**: Contextual suggestion chips for top global headlines, 60-second briefings, market insights, and book recommendations.
 
-### 🧠 Ask AI Multi-Perspective
+### 🧠 5. News Intelligence Suite
+- **Ask AI**: Select any news article to extract core entities, retrieve related contextual reports, and generate multi-perspective explanations.
+- **Future AI (Future Insight)**: Predictive logic engine that models potential downstream developments and simulates future headlines based on current events.
 
-Dive deeper into any news article. Our **Ask AI** engine doesn't just summarize; it identifies core subjects and automatically fetches related contextual reports to provide a 360-degree explanation of complex events.
+### 👤 6. Personalization & Profile
+- **User Authentication**: Secure login, registration, and session management.
+- **Profile Customization**: Customizable user profile with avatar selection.
+- **Dark / Light Theme**: Seamless theme toggling with persistent preferences.
 
 ---
 
-## 🚀 Future Insight
+## 🛠️ Tech Stack
 
-**Future AI** analyzes current events and utilizes advanced predictive logic to simulate potential future headlines, giving you a glimpse into tomorrow's possibilities based on today’s data.
+- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Library**: [React 19](https://react.dev/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/), [tw-animate-css](https://www.npmjs.com/package/tw-animate-css)
+- **UI Components**: [Radix UI](https://www.radix-ui.com/), [Lucide React](https://lucide.dev/) icons, [Sonner](https://sonner.emilkowal.ski/) toasts, [Vaul](https://vaul.emilkowal.ski/)
+- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+- **Markdown Rendering**: [react-markdown](https://github.com/remarkjs/react-markdown), `remark-gfm`, `rehype-raw`, `rehype-external-links`
+- **Data Fetching**: [SWR](https://swr.vercel.app/), [Axios](https://axios-http.com/)
+- **Deployment**: [Vercel](https://vercel.com/)
 
-**Step into the future of digital discovery.**  
-[Visit ReadHub here](https://readhub-frontend.vercel.app/)
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18.x or later
+- npm, yarn, or pnpm
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Snaehath/readhub-frontend.git
+   cd readhub-frontend
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables:**
+   Create a `.env.local` file in the root directory:
+   ```env
+   NEXT_PUBLIC_API_BASE_URL=https://readhub-backend.onrender.com/api
+   ```
+
+4. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open the app:**
+   Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## 📦 Scripts
+
+- `npm run dev` - Starts the Next.js development server.
+- `npm run build` - Builds the application for production.
+- `npm run start` - Runs the production server.
+- `npm run lint` - Runs ESLint checks.
+- `npm run type-check` - Runs TypeScript type validation.
+
+---
+
+## 🌐 Live Deployment
+
+ReadHub is deployed and accessible at:  
+👉 **[https://readhub-frontend.vercel.app](https://readhub-frontend.vercel.app/)**

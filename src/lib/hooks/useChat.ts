@@ -59,44 +59,80 @@ export function useChat(token: string | null) {
     setChatHistory((prev) => [...prev, botPlaceholder]);
 
     const activeSessionId = sessionId || localStorage.getItem("active_session_id") || "";
-    const url = `${API_BASE_URL}/ai/chat-stream?userMessage=${encodeURIComponent(message)}&token=${token}&sessionId=${activeSessionId}`;
-    
-    // 3. Initialize SSE Connection
-    const eventSource = new EventSource(url);
+    const url = `${API_BASE_URL}/ai/chat-stream`;
 
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      if (data.type === 'final') {
-        setChatHistory((prev) => {
-          const newHistory = [...prev];
-          const lastMsg = newHistory[newHistory.length - 1];
-          if (lastMsg && lastMsg.sender === "bot") {
-            lastMsg.message = data.reply || data.message;
-            lastMsg.thoughts = data.thoughts;
-            lastMsg.latency = data.latency;
-          }
-          return newHistory;
-        });
-        eventSource.close();
-        setLoading(false);
-      } else {
-        setChatHistory((prev) => {
-          const newHistory = [...prev];
-          const lastMsg = newHistory[newHistory.length - 1];
-          if (lastMsg && lastMsg.sender === "bot") {
-            // Deduplicate status
-            const lastEvent = lastMsg.events?.[lastMsg.events.length - 1];
-            if (lastEvent?.type === data.type && lastEvent?.message === data.message) return prev;
-            
-            lastMsg.events = [...(lastMsg.events || []), data];
-          }
-          return newHistory;
-        });
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userMessage: message, sessionId: activeSessionId }),
+      });
+
+      if (!response.ok || !response.body) {
+        throw new Error("Unable to start the chat stream.");
       }
-    };
 
-    eventSource.onerror = (err) => {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let receivedFinal = false;
+
+      while (!receivedFinal) {
+        const { value, done } = await reader.read();
+        buffer += decoder.decode(value, { stream: !done });
+
+        let boundary = /\r?\n\r?\n/.exec(buffer);
+        while (boundary) {
+          const eventBlock = buffer.slice(0, boundary.index);
+          buffer = buffer.slice(boundary.index + boundary[0].length);
+          boundary = /\r?\n\r?\n/.exec(buffer);
+
+          const eventData = eventBlock
+            .split(/\r?\n/)
+            .filter((line) => line.startsWith("data:"))
+            .map((line) => line.slice(5).trimStart())
+            .join("\n");
+          if (!eventData) continue;
+
+          const data = JSON.parse(eventData);
+          if (data.type === "final") {
+            setChatHistory((prev) => {
+              const newHistory = [...prev];
+              const lastMsg = newHistory[newHistory.length - 1];
+              if (lastMsg && lastMsg.sender === "bot") {
+                lastMsg.message = data.reply || data.message;
+                lastMsg.thoughts = data.thoughts;
+                lastMsg.latency = data.latency;
+              }
+              return newHistory;
+            });
+            receivedFinal = true;
+            await reader.cancel();
+            break;
+          }
+
+          setChatHistory((prev) => {
+            const newHistory = [...prev];
+            const lastMsg = newHistory[newHistory.length - 1];
+            if (lastMsg && lastMsg.sender === "bot") {
+              const lastEvent = lastMsg.events?.[lastMsg.events.length - 1];
+              if (lastEvent?.type === data.type && lastEvent?.message === data.message) return prev;
+              lastMsg.events = [...(lastMsg.events || []), data];
+            }
+            return newHistory;
+          });
+        }
+
+        if (done) break;
+      }
+
+      if (!receivedFinal) {
+        throw new Error("The chat stream ended before a response was received.");
+      }
+    } catch (err) {
       console.error("SSE Streaming Error:", err);
       setChatHistory((prev) => {
         const newHistory = [...prev];
@@ -109,9 +145,9 @@ export function useChat(token: string | null) {
         }
         return newHistory;
       });
-      eventSource.close();
+    } finally {
       setLoading(false);
-    };
+    }
   };
 
   const clearChat = async () => {

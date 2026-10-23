@@ -58,13 +58,13 @@ export type NewsCardProps = {
 };
 
 export type Book = {
-  key: string;
+  key?: string;
   cover_edition_key?: string;
   cover_id?: number;
   title: string;
   author_name: string[];
   author_key: string[];
-  lending_identifier_s: string;
+  lending_identifier_s?: string;
   work_key: string;
   tag: string;
 };
@@ -78,6 +78,7 @@ export interface OpenLibraryBook {
   key: string;
   lending_identifier_s?: string;
   cover_i?: number;
+  authors?: Array<{ key?: string; name?: string }>;
 }
 export type BookCopy = {
   authors: string;
@@ -119,6 +120,11 @@ export type AiNews = {
   hashtags: string[];
   isCompleted: boolean;
   createdAt: string;
+  sources?: Array<{
+    title?: string;
+    url?: string;
+    sourceName?: string;
+  }>;
 };
 
 export type AiNewsResponse = {

@@ -21,7 +21,15 @@ export async function getNewsPaginated(
       params.append("category", category);
     }
 
-    const baseUrl = API_BASE_URL;
+    const configuredBackendUrl =
+      process.env.BACKEND_API_URL ||
+      (process.env.NODE_ENV === "development"
+        ? "http://localhost:5000"
+        : "https://readhub-backend.onrender.com");
+    const normalizedBackendUrl = configuredBackendUrl.replace(/\/+$/, "");
+    const baseUrl = normalizedBackendUrl.endsWith("/api")
+      ? normalizedBackendUrl
+      : `${normalizedBackendUrl}/api`;
     const endpoint =
       country === "in"
         ? `${baseUrl}/news/newIn/pagination`

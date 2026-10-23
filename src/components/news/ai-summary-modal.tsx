@@ -214,8 +214,9 @@ export default function AiSummaryModal({
                       variant="muted"
                       className="text-center text-xs italic tracking-wide pt-6 border-t border-zinc-100 dark:border-zinc-800"
                     >
-                      Briefing provided by ReadHub AI Bureau • Intelligence
-                      curated in real-time
+                      AI-generated summary based on the selected article and
+                      available ReadHub news context. Verify important details
+                      with the original sources.
                     </Typography>
                   </div>
                 )}

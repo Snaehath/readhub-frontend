@@ -21,8 +21,14 @@ export default function BookCard({ book }: BookCardProps) {
     ? `https://covers.openlibrary.org/b/olid/${book.cover_edition_key}-M.jpg`
     : `/ReadHub_PlaceHolder.png`;
 
-  const archiveUrl = `https://archive.org/details/${book.lending_identifier_s}?view=theater`;
-  const openLibraryUrl = `https://openlibrary.org/${book.work_key}`;
+  const lendingId = book.lending_identifier_s?.trim();
+  const archiveUrl = lendingId
+    ? `https://archive.org/details/${encodeURIComponent(lendingId)}?view=theater`
+    : null;
+  const workPath = book.work_key?.startsWith("/works/")
+    ? book.work_key
+    : `/works/${book.work_key || ""}`;
+  const openLibraryUrl = new URL(workPath, "https://openlibrary.org").toString();
 
   return (
     <Card className="group overflow-hidden flex flex-col hover:-translate-y-1 hover:shadow-xl transition-all duration-300 border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600">
@@ -45,7 +51,7 @@ export default function BookCard({ book }: BookCardProps) {
             variant="outline"
             className={`rounded-full px-2.5 h-6 text-[10px] font-bold capitalize shadow-sm ${categoryColor}`}
           >
-            {book.tag.slice(0, 14)}
+            {book.tag ? book.tag.slice(0, 14) : "Book"}
           </Badge>
         </div>
       </div>
@@ -62,17 +68,23 @@ export default function BookCard({ book }: BookCardProps) {
 
       {/* Footer */}
       <CardFooter className="px-3 py-2.5 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/60 mt-auto">
-        <ToolTip content="Read on Internet Archive">
-          <Link
-            target="_blank"
-            rel="noopener noreferrer"
-            href={archiveUrl}
-            className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 hover:underline transition-all"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            Read Now
-          </Link>
-        </ToolTip>
+        {archiveUrl ? (
+          <ToolTip content="Read on Internet Archive">
+            <Link
+              target="_blank"
+              rel="noopener noreferrer"
+              href={archiveUrl}
+              className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 hover:underline transition-all"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              Read Now
+            </Link>
+          </ToolTip>
+        ) : (
+          <span className="text-[10px] font-semibold text-muted-foreground">
+            Preview unavailable
+          </span>
+        )}
 
         <ToolTip content="View on OpenLibrary">
           <Link

@@ -4,7 +4,7 @@ import AiNewsHub from "@/components/news/ai-news-hub";
 export const metadata: Metadata = {
   title: "AI News",
   description:
-    "Explore continuous automated deep-dive briefings synthesized by our autonomous AI news agents.",
+    "Read AI-generated research reports with links to available source articles.",
 };
 
 const AiNewsPage = () => {
@@ -16,7 +16,7 @@ const AiNewsPage = () => {
           AI News
         </h1>
         <p className="text-muted-foreground max-w-2xl text-lg font-medium">
-          Original synthetic investigative journalism generated continuously by our specialized AI nodes.
+          AI-generated research based on saved news articles. Reports may contain errors; open the source links to verify important claims.
         </p>
       </div>
 

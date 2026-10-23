@@ -6,7 +6,7 @@ import { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Global News",
   description:
-    "Stay updated with real-time continuous worldwide headlines and articles.",
+    "Browse recent news headlines from the US and India by topic.",
 };
 
 export const dynamic = "force-dynamic";

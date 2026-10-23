@@ -22,7 +22,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Input } from "../ui/input";
 import { differenceInHours } from "date-fns";
 import { useFutureAi } from "@/lib/hooks/useFutureAi";
-import { Badge } from "../ui/badge";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { useUserStore } from "@/lib/store/userStore";
 
@@ -34,6 +33,7 @@ export default function NewsCard() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedCountry, setSelectedCountry] = useState<string>("us");
   const [articles, setArticles] = useState<NewsArticle[]>([]);
+  const [totalArticles, setTotalArticles] = useState(0);
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -111,6 +111,7 @@ export default function NewsCard() {
           setArticles((prev) => [...prev, ...res.news]);
         }
 
+        setTotalArticles(res.totalArticles);
         setHasMore(res.currentPage < res.totalPages);
       } catch (err) {
         console.error("Error fetching news:", err);
@@ -301,8 +302,8 @@ Please try again in a few moments.`,
           {/* Category buttons + refresh */}
           <div className="flex flex-wrap items-center gap-2">
             {categoriesToShow.map((cat) => (
-              <Badge
-                variant="outline"
+              <button
+                type="button"
                 key={cat.id}
                 onClick={() => {
                   setSelectedCategory(cat.id);
@@ -311,34 +312,34 @@ Please try again in a few moments.`,
                 className={`rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 transition-all duration-150 flex items-center justify-center ${
                   selectedCategory === cat.id
                     ? "bg-blue-600 text-white scale-95"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-zinc-800 dark:text-zinc-200"
                 }`}
                 aria-pressed={selectedCategory === cat.id}
               >
                 {cat.name}
-              </Badge>
+              </button>
             ))}
             {!showAll && newsCategories.length > MAX_CATEGORIES && (
-              <Badge
-                variant="outline"
+              <button
+                type="button"
                 onClick={() => setShowAll(true)}
                 className="rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all duration-150 flex items-center justify-center gap-1"
                 aria-label="Show all categories"
               >
                 More
                 <ChevronDown className="w-3 h-3" />
-              </Badge>
+              </button>
             )}
             {showAll && newsCategories.length > MAX_CATEGORIES && (
-              <Badge
-                variant="outline"
+              <button
+                type="button"
                 onClick={() => setShowAll(false)}
                 className="rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all duration-150 flex items-center justify-center gap-1"
                 aria-label="Show less categories"
               >
                 Less
                 <ChevronUp className="w-3 h-3" />
-              </Badge>
+              </button>
             )}
 
             {isAdmin && (
@@ -365,11 +366,12 @@ Please try again in a few moments.`,
           <div className="flex items-center gap-2">
             <Input
               type="search"
+              aria-label="Search news articles"
               onClear={() => {
                 setSearchQuery("");
                 setPage(1);
               }}
-              placeholder={"Search News..."}
+              placeholder="Search news…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="rounded-full"
@@ -382,7 +384,8 @@ Please try again in a few moments.`,
                 }`}
               />
               {newsCountries.map((country) => (
-                <div
+                <button
+                  type="button"
                   key={country.id}
                   onClick={() => setSelectedCountry(country.id)}
                   className={`relative z-10 flex-1 flex gap-2 items-center justify-center cursor-pointer px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 transform active:scale-95 ${
@@ -391,6 +394,7 @@ Please try again in a few moments.`,
                       : "text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
                   }`}
                   aria-pressed={selectedCountry === country.id}
+                  aria-label={`Show ${country.name} news`}
                 >
                   <ReactCountryFlag
                     countryCode={country.id === "in" ? "IN" : "US"}
@@ -409,10 +413,18 @@ Please try again in a few moments.`,
                   >
                     {country.tag}
                   </Typography>
-                </div>
+                </button>
               ))}
             </div>
           </div>
+        </div>
+
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+          <p aria-live="polite" aria-atomic="true">
+            {isLoading
+              ? "Updating articles…"
+              : `Showing ${articles.length} of ${totalArticles} ${totalArticles === 1 ? "article" : "articles"}`}
+          </p>
         </div>
 
         {/* Articles */}
@@ -431,7 +443,9 @@ Please try again in a few moments.`,
         {/* No Results */}
         {articles.length === 0 && !isLoading && (
           <Typography variant="muted" className="text-center mt-6">
-            No articles found.
+            {searchQuery.trim()
+              ? `No articles match “${searchQuery.trim()}”. Try another search or clear the query.`
+              : "No articles found for these filters."}
           </Typography>
         )}
 

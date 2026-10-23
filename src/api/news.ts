@@ -136,6 +136,7 @@ export const getTickerNewsApi = async (
   return data.articles.map((article: RawNewsArticle) => ({
     id: article._id?.toString() || article.id || "",
     title: article.title,
+    url: article.url,
     category: article.category ?? [],
     publishedAt: article.publishedAt,
   }));

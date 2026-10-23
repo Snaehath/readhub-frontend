@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { BookOpen, Newspaper, Sparkles, Bot, Rocket, Zap } from "lucide-react";
+import { BookOpen, Newspaper, Sparkles, Bot, Rocket } from "lucide-react";
 
 import {
   Card,
@@ -16,13 +16,6 @@ export default function HomeContent() {
   return (
     <>
       <section className="relative mb-24 mt-12 w-full animate-in fade-in slide-in-from-bottom-8 duration-1000">
-        {/* Background Ambience */}
-        <div
-          className="absolute inset-x-0 -top-20 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-40"
-          aria-hidden="true"
-        >
-        </div>
-
         <div className="text-center max-w-4xl mx-auto px-4 mb-20 space-y-8">
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.1] text-foreground">
             Your Digital Reading <br className="hidden sm:block" />
@@ -30,9 +23,8 @@ export default function HomeContent() {
           </h1>
 
           <p className="text-xl sm:text-2xl text-muted-foreground font-medium leading-relaxed max-w-2xl mx-auto">
-            Explore thousands of news articles, dive into timeless e-books, or
-            immerse yourself in original AI-synthesized news briefings and much
-            more to come.
+            Browse recent US and India headlines, explore books, and use AI tools
+            to get more context on the stories you care about.
           </p>
         </div>
 
@@ -45,16 +37,16 @@ export default function HomeContent() {
                 <Newspaper className="h-6 w-6" />
               </div>
               <CardTitle className="text-2xl font-black tracking-tight">
-                Global News
+                News Feed
               </CardTitle>
               <CardDescription className="text-base font-medium">
-                Real-time worldwide updates
+                Recent headlines from the US and India
               </CardDescription>
             </CardHeader>
             <CardContent className="relative z-10">
-              <p className="text-muted-foreground leading-relaxed h-20">
-                Access thousands of breaking articles from trusted sources
-                globally, curated seamlessly in one place.
+              <p className="text-muted-foreground leading-relaxed min-h-[5rem]">
+                Browse headlines by region and topic, search saved stories, and
+                open the original publisher source.
               </p>
             </CardContent>
             <CardFooter className="relative z-10 pt-4">
@@ -78,13 +70,13 @@ export default function HomeContent() {
                 E-Book Archive
               </CardTitle>
               <CardDescription className="text-base font-medium">
-                Timeless classics & features
+                Find books and available reading links
               </CardDescription>
             </CardHeader>
             <CardContent className="relative z-10">
-              <p className="text-muted-foreground leading-relaxed h-20">
-                Step into an expansive library of digital books across every
-                genre. Read anytime, anywhere.
+              <p className="text-muted-foreground leading-relaxed min-h-[5rem]">
+                Browse popular fiction or search the catalog. Reading links
+                appear when a copy is available.
               </p>
             </CardContent>
             <CardFooter className="relative z-10 pt-4">
@@ -109,12 +101,13 @@ export default function HomeContent() {
                 AI News
               </CardTitle>
               <CardDescription className="text-base font-medium">
-                Synthetic investigative briefings
+                AI-generated research reports
               </CardDescription>
             </CardHeader>
             <CardContent className="relative z-10">
-              <p className="text-muted-foreground leading-relaxed h-20">
-                Explore continuous automated deep-dive briefings synthesized by our autonomous AI news agents.
+              <p className="text-muted-foreground leading-relaxed min-h-[5rem]">
+                Read AI-generated reports with available source links. Check
+                those sources before relying on a claim.
               </p>
             </CardContent>
             <CardFooter className="relative z-10 pt-4">
@@ -150,10 +143,8 @@ export default function HomeContent() {
               </div>
               <h3 className="text-xl font-bold tracking-tight">Ask AI</h3>
               <p className="text-muted-foreground leading-relaxed text-sm">
-                Dive deeper into any news article. Ask AI intelligently scans
-                your selected news, automatically extracts core subjects, and
-                fetches related contextual articles to provide a comprehensive,
-                unbiased explanation of the event.
+                Ask for a summary or background on a story using the news
+                context available in ReadHub.
               </p>
             </div>
 
@@ -164,26 +155,22 @@ export default function HomeContent() {
               </div>
               <h3 className="text-xl font-bold tracking-tight">Future AI</h3>
               <p className="text-muted-foreground leading-relaxed text-sm">
-                Curious about what happens next? Future AI analyzes the current
-                events within a news article and utilizes advanced generative
-                logic to predict and simulate potential future headlines and
-                outcomes based on real-time data.
+                Explore possible outcomes based on an article. Treat these
+                scenarios as ideas, not predictions.
               </p>
             </div>
 
             {/* More to Come */}
             <div className="flex flex-col gap-4 p-8 rounded-[2rem] bg-orange-50/30 dark:bg-orange-950/20 border border-orange-500/10 hover:border-orange-500/30 transition-colors">
               <div className="w-12 h-12 rounded-full bg-white dark:bg-zinc-900 border border-orange-100 dark:border-orange-900 flex items-center justify-center shadow-sm">
-                <Zap className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                <BookOpen className="w-5 h-5 text-orange-600 dark:text-orange-400" />
               </div>
               <h3 className="text-xl font-bold tracking-tight">
-                Much More To Come
+                Book recommendations
               </h3>
               <p className="text-muted-foreground leading-relaxed text-sm">
-                Artificial Intelligence is evolving rapidly every single day,
-                bringing limitless possibilities. As new ideas emerge at
-                ReadHub, expect to discover exciting, unannounced AI-powered
-                experiences seamlessly integrated into your reading journey.
+                Tell the assistant what you enjoy and get recommendations from
+                the ReadHub catalog.
               </p>
             </div>
           </div>

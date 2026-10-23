@@ -56,6 +56,8 @@ const FeaturedNewsCard: React.FC<FeaturedNewsCardProps> = ({ article }) => {
                 : article.urlToImage || "/ReadHub_PlaceHolder.png"
             }
             alt={article.title}
+            referrerPolicy="no-referrer"
+            decoding="async"
             className={`object-cover w-full h-full transition-opacity duration-500 ${isImageLoading ? "opacity-0" : "opacity-100"}`}
             onLoad={() => setIsImageLoading(false)}
             onError={() => {

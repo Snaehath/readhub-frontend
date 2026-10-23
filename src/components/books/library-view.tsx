@@ -8,7 +8,6 @@ import { Book } from "@/types";
 import { booksCategories } from "@/constants";
 import { searchOpenLibrary } from "@/api/books";
 
-import { Badge } from "@/components/ui/badge";
 import { Search, ChevronDown, ChevronUp } from "lucide-react";
 
 const LibraryView = () => {
@@ -37,7 +36,7 @@ const LibraryView = () => {
 
       try {
         const cleaned = await searchOpenLibrary(
-          debouncedSearchQuery || "all",
+          debouncedSearchQuery,
           debouncedSearchQuery ? 4 : 15,
           selectedCategory
         );
@@ -78,38 +77,39 @@ const LibraryView = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex flex-wrap items-center gap-2">
           {categoriesToShow.map((cat) => (
-            <Badge
-              variant="outline"
+            <button
+              type="button"
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
               className={`rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 transition-all duration-150 flex items-center justify-center ${
                 selectedCategory === cat.id
                   ? "bg-stone-600 text-white scale-95"
-                  : "bg-stone-100 text-stone-700 hover:bg-stone-200"
+                  : "bg-stone-100 text-stone-700 hover:bg-stone-200 dark:bg-zinc-800 dark:text-zinc-200"
               }`}
+              aria-pressed={selectedCategory === cat.id}
             >
               {cat.name}
-            </Badge>
+            </button>
           ))}
           {!showAll && booksCategories.length > MAX_CATEGORIES && (
-            <Badge
-              variant="outline"
+            <button
+              type="button"
               onClick={() => setShowAll(true)}
               className="rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-stone-100 text-stone-700 hover:bg-stone-200 transition-all duration-150 flex items-center justify-center gap-1"
             >
               More
               <ChevronDown className="w-3 h-3" />
-            </Badge>
+            </button>
           )}
           {showAll && booksCategories.length > MAX_CATEGORIES && (
-            <Badge
-              variant="outline"
+            <button
+              type="button"
               onClick={() => setShowAll(false)}
               className="rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-stone-100 text-stone-700 hover:bg-stone-200 transition-all duration-150 flex items-center justify-center gap-1"
             >
               Less
               <ChevronUp className="w-3 h-3" />
-            </Badge>
+            </button>
           )}
         </div>
 

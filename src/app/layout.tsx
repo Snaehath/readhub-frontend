@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     default: "ReadHub | Your Digital Reading Companion",
   },
   description:
-    "Explore thousands of news articles, timeless e-books, and original AI-generated stories.",
+    "Browse recent US and India news, explore books, and get AI-assisted context on current stories.",
 };
 
 export default function RootLayout({
@@ -42,7 +42,7 @@ export default function RootLayout({
             <Toaster />
             <footer className="border-t py-6">
               <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-                2025 ReadHub
+                © {new Date().getFullYear()} ReadHub
               </div>
             </footer>
           </div>

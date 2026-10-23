@@ -2,17 +2,15 @@ import { API_BASE_URL } from "@/constants";
 import { Book, OpenLibraryBook } from "@/types";
 
 export const searchOpenLibrary = async (
-  query: string = "all",
+  query: string = "",
   limit: number = 15,
   category?: string
 ): Promise<Book[]> => {
-  let url = `https://openlibrary.org/search.json?q=${encodeURIComponent(
-    query
-  )}&lang=en&limit=${limit}`;
-
-  if (category && category !== "all") {
-    url += `&subject=${encodeURIComponent(category)}`;
-  }
+  const searchTerm = query.trim();
+  const selectedSubject = category && category !== "all" ? category : "fiction";
+  const url = searchTerm
+    ? `https://openlibrary.org/search.json?q=${encodeURIComponent(searchTerm)}&lang=en&limit=${limit}${category && category !== "all" ? `&subject=${encodeURIComponent(category)}` : ""}`
+    : `https://openlibrary.org/subjects/${encodeURIComponent(selectedSubject)}.json?limit=${limit}`;
 
   const res = await fetch(url, { cache: "no-store" });
 
@@ -22,15 +20,17 @@ export const searchOpenLibrary = async (
 
   const data = await res.json();
 
-  return (data.docs || []).map((book: OpenLibraryBook) => ({
+  const results: OpenLibraryBook[] = data.docs || data.works || [];
+
+  return results.map((book: OpenLibraryBook) => ({
     title: book.title,
-    author_key: book.author_key ?? [],
-    author_name: book.author_name ?? [],
+    author_key: book.author_key ?? book.authors?.map((author) => author.key).filter((key): key is string => Boolean(key)) ?? [],
+    author_name: book.author_name ?? book.authors?.map((author) => author.name).filter((name): name is string => Boolean(name)) ?? [],
     cover_id: book.cover_id,
     cover_edition_key: book.cover_edition_key,
     work_key: book.key,
     lending_identifier_s: book.lending_identifier_s || "",
-    tag: query,
+    tag: category && category !== "all" ? category : "fiction",
   }));
 };
 

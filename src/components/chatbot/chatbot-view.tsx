@@ -264,8 +264,8 @@ export const ChatbotView = () => {
       </div>
 
       {/* Immersive Chat Canvas */}
-      <ScrollArea className="flex-1 px-4 mb-2 mt-4">
-        <div className="max-w-4xl mx-auto space-y-10 pb-12 scroll-smooth">
+      <ScrollArea className="min-h-0 flex-1 px-4 mb-2 mt-4">
+        <div className="max-w-4xl mx-auto space-y-10 pb-32 scroll-smooth">
           {chatHistory.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-10">
               <div className="max-w-xl space-y-4">

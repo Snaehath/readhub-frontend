@@ -1,33 +1,29 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import useSWR from "swr";
 import {
   ArrowLeft,
   Share2,
+  ExternalLink,
+  Check,
   Clock,
-  Hash,
-  BookOpen,
-  ThumbsUp,
   Newspaper,
-  Info,
-  ShieldCheck,
-  Globe,
-  Bookmark,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Typography from "@/components/ui/custom/typography";
-import ToolTip from "@/components/ui/custom/tooltip";
 import { API_BASE_URL } from "@/constants";
 import { SingleAiNewsResponse } from "@/types";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { fetcher } from "@/lib/fetcher";
 import ReactMarkdown from "react-markdown";
+import { toast } from "sonner";
 
 export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
   const resolvedParams = use(params);
   const id = resolvedParams.id;
+  const [isCopied, setIsCopied] = useState(false);
 
   const { data, isLoading, error } = useSWR<SingleAiNewsResponse>(
     id ? `${API_BASE_URL}/ai-hub/news/${id}` : null,
@@ -35,6 +31,33 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
   );
 
   const news = data?.news;
+  const linkedSources = (news?.sources ?? []).flatMap((source) => {
+    try {
+      const parsed = new URL(source.url || "");
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return [];
+      return [{ ...source, safeUrl: parsed.toString(), host: parsed.hostname }];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: news?.title, url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setIsCopied(true);
+        window.setTimeout(() => setIsCopied(false), 2000);
+        toast.success("Report link copied.");
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name !== "AbortError") {
+        toast.error("Could not share this report.");
+      }
+    }
+  };
 
   // Filter content to remove duplicate headings/bylines
   const filteredContent = news
@@ -46,6 +69,10 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
 
   const wordCount = news ? news.content.trim().split(/\s+/).length : 0;
   const readTime = Math.ceil(wordCount / 238); // avg reading speed 238 wpm
+  const createdAt = news ? new Date(news.createdAt) : null;
+  const formattedCreatedAt = createdAt && isValid(createdAt)
+    ? format(createdAt, "MMMM dd, yyyy")
+    : "Date unavailable";
 
   if (isLoading) {
     return (
@@ -91,21 +118,13 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
             <Button
               variant="ghost"
               size="icon"
-              disabled
-              className="rounded-full rounded-2xl opacity-50 cursor-not-allowed"
+              onClick={handleShare}
+              aria-label={isCopied ? "Report link copied" : "Share this report"}
+              title={isCopied ? "Report link copied" : "Share this report"}
+              className="rounded-full rounded-2xl"
             >
-              <Share2 className="w-4 h-4" />
+              {isCopied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
             </Button>
-            <div className="w-px h-6 bg-border mx-2" />
-            <ToolTip content="Save to Bookmarks">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 rounded-full transition-all duration-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-zinc-500 hover:text-emerald-600"
-              >
-                <Bookmark className="w-4.5 h-4.5" />
-              </Button>
-            </ToolTip>
           </div>
         </div>
       </nav>
@@ -126,7 +145,7 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
               variant="muted"
               className="text-[10px] uppercase font-black tracking-widest"
             >
-              {format(new Date(news.createdAt), "MMMM dd, yyyy")}
+              {formattedCreatedAt}
             </Typography>
           </div>
 
@@ -141,104 +160,61 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
             {/* Author Info */}
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-lg font-black uppercase shadow-lg shadow-indigo-500/20">
-                {news.authorName.charAt(0)}
+                  R
               </div>
               <div className="text-left space-y-0.5">
                 <Typography
                   variant="small"
                   className="font-black text-sm uppercase tracking-wider block leading-none"
                 >
-                  {news.authorName}
+                  ReadHub AI
                 </Typography>
                 <Typography
                   variant="muted"
                   className="text-[10px] uppercase font-bold tracking-widest block opacity-70 leading-none"
                 >
-                  AI Integrity Fellow
+                  AI-generated report
                 </Typography>
               </div>
             </div>
 
-            {/* Quick Metadata Stats */}
-            <div className="flex items-center gap-8">
-              <div className="h-10 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block" />
-
-              <div className="space-y-1 text-left">
-                <Typography
-                  variant="muted"
-                  className="text-[9px] uppercase font-black opacity-60 tracking-wider flex items-center gap-1.5"
-                >
-                  <Globe className="w-3 h-3 text-indigo-500" />
-                  Scope
-                </Typography>
-                <Typography
-                  variant="p"
-                  className="font-black text-[11px] uppercase tracking-widest"
-                >
-                  Global Grids
-                </Typography>
-              </div>
-
-              <div className="h-10 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block" />
-
-              <div className="space-y-1 text-left">
-                <div className="flex items-center gap-1.5">
-                  <Typography
-                    variant="muted"
-                    className="text-[9px] uppercase font-black opacity-60 tracking-wider flex items-center gap-1.5"
-                  >
-                    <ShieldCheck className="w-3 h-3 text-emerald-500" />
-                    Reliability
-                  </Typography>
-                  <ToolTip content="Validated via combined human/AI audit.">
-                    <Info className="w-2.5 h-2.5 text-indigo-400 cursor-help" />
-                  </ToolTip>
-                </div>
-                <Typography
-                  variant="p"
-                  className="font-black text-[11px] uppercase tracking-widest text-emerald-600 dark:text-emerald-400"
-                >
-                  99.4% Validated
-                </Typography>
-              </div>
-            </div>
           </div>
         </header>
 
         {/* Centered Content Area */}
         <article className="w-full max-w-[850px] space-y-10">
-          {/* Interactive Stats */}
-          <div className="flex flex-wrap items-center justify-center gap-10 py-6 border-y border-zinc-100 dark:border-zinc-800/60">
-            <div className="flex items-center gap-2 group cursor-pointer">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="rounded-full gap-2 font-bold hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-950/20"
-              >
-                <ThumbsUp className="w-4 h-4" />0
-              </Button>
-            </div>
-            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
-            <div className="flex items-center gap-2">
-              <Hash className="w-4 h-4 text-muted-foreground" />
-              <Typography
-                variant="small"
-                className="text-muted-foreground font-bold"
-              >
-                {wordCount} Words
-              </Typography>
-            </div>
-            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800" />
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-muted-foreground" />
-              <Typography
-                variant="small"
-                className="text-muted-foreground font-bold uppercase tracking-widest text-[10px]"
-              >
-                Deep Briefing
-              </Typography>
-            </div>
+          <div className="flex items-center justify-center py-4 border-y border-zinc-100 dark:border-zinc-800/60 text-sm text-muted-foreground">
+            {readTime} min read · {wordCount} words
           </div>
+
+          <section aria-labelledby="report-sources-heading" className="rounded-2xl border border-indigo-500/15 bg-indigo-500/[0.03] p-5 sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 id="report-sources-heading" className="font-bold text-foreground">Sources</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Open the original articles to verify details. AI-generated reports can contain errors.</p>
+              </div>
+              <span className="shrink-0 rounded-full bg-indigo-500/10 px-3 py-1 text-xs font-semibold text-indigo-700 dark:text-indigo-300">
+                {linkedSources.length}
+              </span>
+            </div>
+            {linkedSources.length ? (
+              <ul className="mt-4 space-y-2">
+                {linkedSources.map((source, index) => (
+                    <li key={`${source.safeUrl}-${index}`}>
+                      <a href={source.safeUrl} target="_blank" rel="noopener noreferrer" className="flex items-start justify-between gap-3 rounded-xl border border-border/70 bg-background px-4 py-3 text-sm hover:border-indigo-500/50 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
+                        <span>
+                          <span className="block font-medium">{source.title || "Open source article"}</span>
+                          <span className="mt-1 block text-xs text-muted-foreground">{source.sourceName || source.host}</span>
+                        </span>
+                        <ExternalLink aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+                      </a>
+                    </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-4 rounded-xl border border-dashed border-border px-4 py-3 text-sm text-muted-foreground">Source links were not saved for this report.</p>
+            )}
+          </section>
 
           {/* Article Body */}
           <article className="prose prose-zinc dark:prose-invert max-w-none">
@@ -288,7 +264,7 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
               {news.hashtags.map((tag, i) => (
                 <span
                   key={i}
-                  className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-zinc-100 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400 rounded-full hover:bg-indigo-500 hover:text-white transition-colors cursor-pointer"
+                  className="text-[10px] font-black uppercase tracking-widest px-4 py-2 bg-zinc-100 dark:bg-zinc-800/50 text-zinc-600 dark:text-zinc-400 rounded-full"
                 >
                   #{tag}
                 </span>

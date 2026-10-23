@@ -136,9 +136,9 @@ export default function NewsCardItems({
   };
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {filteredArticles.map((article, i) => (
+      {filteredArticles.map((article) => (
         <Card
-          key={i}
+          key={article.id || article.url}
           className="group/card overflow-hidden p-0 flex flex-col h-full border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
         >
           {/* ── Image ── */}
@@ -153,9 +153,15 @@ export default function NewsCardItems({
               <img
                 src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
                 alt={article.title}
+                referrerPolicy="no-referrer"
+                decoding="async"
                 onLoad={() => handleImageLoad(article.id)}
                 onError={(e) => {
-                  e.currentTarget.src = "/ReadHub_PlaceHolder.png";
+                  const image = e.currentTarget;
+                  if (image.dataset.fallbackApplied !== "true") {
+                    image.dataset.fallbackApplied = "true";
+                    image.src = "/ReadHub_PlaceHolder.png";
+                  }
                   handleImageLoad(article.id);
                 }}
                 className={`object-cover w-full h-full transition-all duration-500 contrast-[1.05] group-hover/card:scale-105 ${
@@ -211,6 +217,8 @@ export default function NewsCardItems({
                   <div className="relative">
                     <span className="absolute inset-0 rounded-full bg-cyan-400/25 animate-ping-slow" />
                     <button
+                      type="button"
+                      aria-label={`Explore possible future outcomes for: ${article.title}`}
                       onClick={() => handleFutureClick(article)}
                       className="is-shining relative overflow-hidden w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-cyan-600 text-white flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all duration-200 ring-2 ring-cyan-400/60 shadow-md"
                     >
@@ -222,6 +230,8 @@ export default function NewsCardItems({
                   <div className="relative">
                     <span className="absolute inset-0 rounded-full bg-violet-400/25 animate-ping-slow" />
                     <button
+                      type="button"
+                      aria-label={`Ask AI about: ${article.title}`}
                       onClick={() => onAskAi(article)}
                       className="is-shining relative overflow-hidden w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all duration-200 ring-2 ring-violet-400/60 shadow-md"
                     >
@@ -258,6 +268,8 @@ export default function NewsCardItems({
                   variant="ghost"
                   size="icon"
                   onClick={() => toggleLike(article.id)}
+                  aria-label={likes[article.id] ? `Unlike: ${article.title}` : `Like: ${article.title}`}
+                  aria-pressed={Boolean(likes[article.id])}
                   className={`h-8 w-8 rounded-full transition-all duration-200 cursor-pointer ${
                     likes[article.id]
                       ? "text-rose-500 bg-rose-50 dark:bg-rose-950/30"
@@ -273,6 +285,8 @@ export default function NewsCardItems({
                   variant="ghost"
                   size="icon"
                   onClick={() => toggleBookmark(article.id)}
+                  aria-label={bookmarks[article.id] ? `Remove bookmark: ${article.title}` : `Bookmark: ${article.title}`}
+                  aria-pressed={Boolean(bookmarks[article.id])}
                   className={`h-8 w-8 rounded-full transition-all duration-200 cursor-pointer ${
                     bookmarks[article.id]
                       ? "text-amber-500 bg-amber-50 dark:bg-amber-950/30"

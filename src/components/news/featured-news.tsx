@@ -5,6 +5,8 @@ import Typography from "../ui/custom/typography";
 export default async function FeaturedNews() {
   const { news: featuredNews } = await getNewsPaginated(1, 3, "science");
 
+  if (featuredNews.length === 0) return null;
+
   return (
     <section className="mb-32">
       <div className="max-w-6xl mx-auto px-4">

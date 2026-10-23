@@ -18,21 +18,22 @@ import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
 import { AiNewsResponse } from "@/types";
 import { useUserStore } from "@/lib/store/userStore";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 
 const AiNewsHub = () => {
   const { user, _hasHydrated } = useUserStore();
   const [loading, setLoading] = useState(false);
 
-  const { data, isLoading } = useSWR<AiNewsResponse>(
-    `${API_BASE_URL}/ai-hub/news/all`,
+  const aiNewsKey = `${API_BASE_URL}/ai-hub/news/all`;
+  const { data, isLoading, error } = useSWR<AiNewsResponse>(
+    aiNewsKey,
     fetcher,
   );
 
   const handleGenerateNews = async () => {
     if (!user) return;
     setLoading(true);
-    toast.loading("AI Agents are drafting today's news...", { id: "gen-news" });
+    toast.loading("Generating an AI research report...", { id: "gen-news" });
 
     try {
       const res = await fetch(`${API_BASE_URL}/ai-hub/news/trigger`, {
@@ -45,7 +46,7 @@ const AiNewsHub = () => {
       });
 
       if (res.ok) {
-        toast.success("AI Investigation Complete!", { id: "gen-news" });
+        toast.success("AI research report generated.", { id: "gen-news" });
         mutate(`${API_BASE_URL}/ai-hub/news/all`);
       } else {
         const errorData = await res.json();
@@ -69,7 +70,7 @@ const AiNewsHub = () => {
           variant="muted"
           className="text-sm font-black uppercase tracking-widest animate-pulse"
         >
-          Scanning Global Data Grids...
+          Loading AI reports...
         </Typography>
       </div>
     );
@@ -78,7 +79,7 @@ const AiNewsHub = () => {
   const articles = data?.news || [];
 
   return (
-    <div className="space-y-16">
+      <div className="space-y-16">
       {/* Generate Interface (Admin Only) */}
       {_hasHydrated && user?.role === "admin" && (
         <div className="relative group bg-linear-to-br from-indigo-600/5 via-violet-600/5 to-fuchsia-600/5 backdrop-blur-md p-10 sm:p-14 rounded-[3rem] border border-indigo-500/10 shadow-sm overflow-hidden flex flex-col items-center text-center">
@@ -90,12 +91,11 @@ const AiNewsHub = () => {
               <Microscope className="w-6 h-6" />
             </div>
             <Typography variant="h2" className="text-3xl font-black">
-              Daily AI Insights
+              AI research reports
             </Typography>
             <Typography variant="p" className="text-muted-foreground">
-              Our AI Bureau analyzes all globally fetched news from the past 24
-              hours to synthesize a comprehensive, deep-dive investigation. One
-              major briefing is generated daily.
+              Generate a report from saved news articles. Each report is
+              AI-generated and should be checked against its linked sources.
             </Typography>
 
             <div className="pt-4">
@@ -109,7 +109,7 @@ const AiNewsHub = () => {
                 ) : (
                   <Sparkles className="w-4.5 h-4.5 text-indigo-200 group-hover:rotate-12 transition-transform" />
                 )}
-                {loading ? "Drafting..." : "Synthesize Today's Briefing"}
+                {loading ? "Generating report..." : "Generate a report"}
               </Button>
             </div>
           </div>
@@ -123,12 +123,17 @@ const AiNewsHub = () => {
             variant="muted"
             className="text-xs font-black uppercase tracking-[0.3em] whitespace-nowrap text-indigo-600"
           >
-            Daily Briefings
+            AI-generated reports
           </Typography>
           <div className="h-px w-full bg-indigo-500/10" />
         </div>
 
-        {articles.length === 0 ? (
+        {error ? (
+          <div role="alert" className="py-16 text-center space-y-4">
+            <Typography variant="muted">Could not load AI reports. Check your connection and try again.</Typography>
+            <Button variant="outline" onClick={() => mutate(aiNewsKey)}>Try again</Button>
+          </div>
+        ) : articles.length === 0 ? (
           <div className="py-20 text-center space-y-4">
             <div className="w-16 h-16 bg-zinc-50 dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-full flex items-center justify-center mx-auto">
               <Newspaper className="w-8 h-8 text-zinc-300" />
@@ -151,11 +156,13 @@ const AiNewsHub = () => {
 
                 <div className="flex items-center gap-2 mb-6">
                   <span className="text-[10px] font-black uppercase tracking-widest bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 px-3 py-1 rounded-full">
-                    {article.category || "AI Intel"}
+                    AI-generated
                   </span>
                   <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-bold tracking-widest ml-auto">
                     <Calendar className="w-3 h-3" />
-                    {format(new Date(article.createdAt), "MMM d")}
+                    {isValid(new Date(article.createdAt))
+                      ? format(new Date(article.createdAt), "MMM d, yyyy")
+                      : "Date unavailable"}
                   </div>
                 </div>
 
@@ -171,24 +178,31 @@ const AiNewsHub = () => {
                     variant="muted"
                     className="text-sm line-clamp-3 mb-6"
                   >
-                    {article.content}
+                    {article.summary || article.content}
                   </Typography>
 
                   <div className="mt-auto pt-6 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/50">
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-full bg-linear-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-[10px] font-black uppercase">
-                        {article.authorName.charAt(0)}
+                        R
                       </div>
                       <Typography
                         variant="small"
                         className="text-[11px] font-black uppercase tracking-wider truncate max-w-[120px]"
                       >
-                        {article.authorName}
+                        ReadHub AI
                       </Typography>
                     </div>
 
-                    <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-full group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                    <div className="flex items-center gap-2">
+                      {article.sources?.length ? (
+                        <span className="text-[10px] text-muted-foreground">
+                          {article.sources.length} {article.sources.length === 1 ? "source" : "sources"}
+                        </span>
+                      ) : null}
+                      <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-full group-hover:bg-indigo-600 group-hover:text-white transition-all">
                       <ArrowRight className="w-4 h-4" />
+                      </div>
                     </div>
                   </div>
                 </div>

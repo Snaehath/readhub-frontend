@@ -93,14 +93,12 @@ const ProfileView = () => {
       return;
     }
 
-    if (!user.id) {
-      toast.error("User ID is missing. Please log in again.");
-      return;
-    }
-
     setLoading(true);
     try {
       const token = localStorage.getItem("jwt");
+      if (!token) {
+        throw new Error("Please log in again to update your profile.");
+      }
 
       const response = await fetch(`${API_BASE_URL}/user/update`, {
         method: "PUT",
@@ -109,7 +107,6 @@ const ProfileView = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          userId: user.id,
           username: newUsername,
           avatar: newAvatar,
         }),

@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
 import rehypeExternalLinks from "rehype-external-links";
 import { suggestions } from "@/constants";
 import { useChat } from "@/lib/hooks/useChat";
@@ -369,7 +368,6 @@ export const ChatbotView = () => {
                                 <ReactMarkdown
                                   remarkPlugins={[remarkGfm]}
                                   rehypePlugins={[
-                                    rehypeRaw,
                                     [
                                       rehypeExternalLinks,
                                       {

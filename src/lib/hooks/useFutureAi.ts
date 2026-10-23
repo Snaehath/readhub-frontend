@@ -21,15 +21,17 @@ export function useFutureAi(isAuthenticated: boolean, selectedCountry: string) {
     }
 
     try {
+      // The UI tracks forecast steps (Year 1, Year 2, ...); the API expects a calendar year.
+      const forecastCalendarYear = new Date().getFullYear() + targetYear;
       const data = await fetchFutureNews({
         userMessage: {
           id,
           selectedCountry,
-          targetYear,
+          targetYear: forecastCalendarYear,
           previousForecast: previousForecast.slice(-2000), // Send last 2000 chars as context only
         },
       });
-      const newPart = data?.futureArticle?.trim() || "Simulation path interrupted.";
+      const newPart = data?.reply?.trim() || "Simulation path interrupted.";
       
       if (targetYear === 1) {
         setFutureAiArticle(newPart);

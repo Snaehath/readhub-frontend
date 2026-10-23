@@ -44,7 +44,9 @@ export const fetchFutureNews = async (payload: FutureNewsRequest) => {
   });
 
   if (!res.ok) {
-    throw new Error(`Future News forecast failed with status ${res.status}`);
+    const errorBody = await res.json().catch(() => null);
+    const message = errorBody?.error || errorBody?.message;
+    throw new Error(message || `Future News forecast failed with status ${res.status}`);
   }
 
   return res.json();

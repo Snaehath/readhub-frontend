@@ -42,7 +42,7 @@ const AiNewsHub = () => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ suggestion: "auto" }),
+        body: JSON.stringify({ topic: "Top trending global news" }),
       });
 
       if (res.ok) {

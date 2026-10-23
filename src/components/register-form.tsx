@@ -102,6 +102,7 @@ export default function RegisterForm() {
               id="username"
               autoComplete="username"
               required
+              maxLength={40}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Your username"
@@ -152,6 +153,8 @@ export default function RegisterForm() {
                 type={showPassword ? "text" : "password"}
                 autoComplete="new-password"
                 required
+                minLength={10}
+                maxLength={72}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Create a password"
@@ -166,6 +169,9 @@ export default function RegisterForm() {
                 {showPassword ? <Eye size={18} /> : <EyeClosed size={18} />}
               </button>
             </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Use 10–72 characters for your password.
+            </p>
           </div>
 
           <div>

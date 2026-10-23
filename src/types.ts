@@ -13,8 +13,16 @@ export type ChatMessage = {
   message: string;
   thoughts?: string[];
   latency?: string;
+  sources?: ChatSourceReference[];
   events?: AgentEvent[];
   status?: "error" | "success" | "neutral";
+};
+
+export type ChatSourceReference = {
+  citationNumber: number;
+  title: string;
+  publisher: string;
+  url: string;
 };
 
 export type NewsArticle = {

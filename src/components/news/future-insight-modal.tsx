@@ -162,8 +162,9 @@ export default function FutureInsightModal({
                         variant="muted"
                         className="text-base leading-relaxed"
                       >
-                        Authenticate to grant our **AI Bureau** full access to
-                        project future trajectories for this news narrative.
+                        Sign in to explore possible outcomes based on this
+                        article. These scenarios are possibilities, not
+                        predictions.
                       </Typography>
                     </div>
                     <Button
@@ -171,9 +172,16 @@ export default function FutureInsightModal({
                       className="rounded-full px-12 h-12 font-black uppercase tracking-widest text-[10px] cursor-pointer bg-cyan-600 hover:bg-cyan-700 shadow-xl shadow-cyan-600/20"
                     >
                       <Link href="/login" onClick={() => onOpenChange(false)}>
-                        Request Access
+                        Sign in to continue
                       </Link>
                     </Button>
+                    <Link
+                      href="/register"
+                      onClick={() => onOpenChange(false)}
+                      className="text-sm font-medium text-cyan-700 underline-offset-4 hover:underline dark:text-cyan-400"
+                    >
+                      Create a free account
+                    </Link>
                   </div>
                 ) : insightLoading && !insightResponse ? (
                   <div className="py-32 flex flex-col items-center justify-center gap-10">

@@ -106,6 +106,7 @@ export function useChat(isAuthenticated: boolean) {
                 lastMsg.message = data.reply || data.message;
                 lastMsg.thoughts = data.thoughts;
                 lastMsg.latency = data.latency;
+                lastMsg.sources = Array.isArray(data.sources) ? data.sources : [];
               }
               return newHistory;
             });

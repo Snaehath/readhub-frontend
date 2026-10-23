@@ -148,9 +148,8 @@ export default function AiSummaryModal({
                         variant="muted"
                         className="text-base leading-relaxed"
                       >
-                        Authenticate to grant our **AI Agent** full access to
-                        this news narrative for deep synthesis and context
-                        mapping.
+                        Sign in to get an AI summary and added context for this
+                        article.
                       </Typography>
                     </div>
                     <Button
@@ -158,9 +157,16 @@ export default function AiSummaryModal({
                       className="rounded-full px-12 h-12 font-black uppercase tracking-widest text-[10px] cursor-pointer bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-600/20"
                     >
                       <Link href="/login" onClick={() => onOpenChange(false)}>
-                        Request Access
+                        Sign in to continue
                       </Link>
                     </Button>
+                    <Link
+                      href="/register"
+                      onClick={() => onOpenChange(false)}
+                      className="text-sm font-medium text-indigo-600 underline-offset-4 hover:underline dark:text-indigo-400"
+                    >
+                      Create a free account
+                    </Link>
                   </div>
                 ) : aiLoading ? (
                   <div className="py-32 flex flex-col items-center justify-center gap-10">

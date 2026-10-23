@@ -67,7 +67,9 @@ const LibraryView = () => {
   return (
     <div className="p-4">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">🏛️ Library</h2>
+          <div>
+            <h2 className="text-2xl font-bold">Books</h2>
+          </div>
         {!isLoading && books.length > 0 && (
           <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
             {books.length} books found
@@ -136,7 +138,9 @@ const LibraryView = () => {
       )}
 
       {error && (
-        <div className="text-center text-red-600 mb-4">Error: {error}</div>
+        <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-300">
+          We couldn&apos;t load the book catalog. Check your connection and try again.
+        </div>
       )}
 
       {!isLoading && !error && books.length === 0 && (
@@ -144,7 +148,7 @@ const LibraryView = () => {
           <div className="bg-stone-100 p-6 rounded-full mb-4">
             <Search className="w-8 h-8 text-stone-400" />
           </div>
-          <h3 className="text-lg font-bold text-stone-800">No books found</h3>
+          <h3 className="text-lg font-bold text-stone-800">No books match those filters</h3>
           <p className="text-muted-foreground max-w-xs mx-auto">
             Try adjusting your search or category filters to find what
             you&apos;re looking for.

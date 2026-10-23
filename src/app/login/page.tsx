@@ -10,7 +10,7 @@ export default function LoginPage() {
           href="/register"
           className="block text-sm text-center text-muted-foreground hover:text-primary transition"
         >
-          New user? Create an account
+          New to ReadHub? Create a free account
         </Link>
       </div>
     </div>

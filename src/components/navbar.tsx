@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, Menu, Newspaper, Sparkles } from "lucide-react";
+import { BookOpen, Bot, Menu, Newspaper, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUserStore } from "@/lib/store/userStore";
 import { toast } from "sonner";
 
+const navigationItems = [
+  { href: "/news", label: "News", description: "Browse headlines", icon: <Newspaper className="h-4 w-4" /> },
+  { href: "/library", label: "Books", description: "Explore the library", icon: <BookOpen className="h-4 w-4" /> },
+  { href: "/ai-news", label: "AI Reports", description: "Read research reports", icon: <Sparkles className="h-4 w-4" /> },
+  { href: "/chatbot", label: "AI Assistant", description: "Sign in required", icon: <Bot className="h-4 w-4" /> },
+];
+
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
@@ -25,7 +32,8 @@ export default function Navbar() {
   const user = useUserStore((state) => state.user);
   const logout = useUserStore((state) => state.logout);
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path: string) =>
+    pathname === path || pathname.startsWith(`${path}/`);
 
   const handleLogout = () => {
     logout();
@@ -49,27 +57,11 @@ export default function Navbar() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            {[
-              {
-                href: "/news",
-                label: "News",
-                icon: <Newspaper className="h-4 w-4" />,
-              },
-              {
-                href: "/library",
-                label: "E-Books",
-                icon: <BookOpen className="h-4 w-4" />,
-              },
-              {
-                href: "/ai-news",
-                label: "AI News",
-                icon: <Sparkles className="h-4 w-4" />,
-              },
-              { href: "/chatbot", label: "ChatBot", icon: "🤖" },
-            ].map(({ href, label, icon }) => (
+            {navigationItems.map(({ href, label, icon }) => (
               <Link
                 key={href}
                 href={href}
+                aria-current={isActive(href) ? "page" : undefined}
                 className={`relative flex items-center gap-1 text-sm font-medium transition-colors hover:text-primary group ${
                   isActive(href) ? "text-primary" : "text-muted-foreground"
                 }`}
@@ -122,7 +114,7 @@ export default function Navbar() {
                 href="/login"
                 className="px-6 py-2 rounded-md bg-blue-600 hover:bg-blue-700 font-medium transition duration-200"
               >
-                Login
+                Sign in
               </Link>
             </Button>
           )}
@@ -145,33 +137,20 @@ export default function Navbar() {
               </DrawerDescription>
 
               <nav className="flex flex-col gap-6 px-6 py-4">
-                {[
-                  {
-                    href: "/news",
-                    label: "News",
-                    icon: <Newspaper className="h-5 w-5" />,
-                  },
-                  {
-                    href: "/library",
-                    label: "E-Books",
-                    icon: <BookOpen className="h-5 w-5" />,
-                  },
-                  {
-                    href: "/ai-news",
-                    label: "AI News",
-                    icon: <Sparkles className="h-5 w-5" />,
-                  },
-                  { href: "/chatbot", label: "ChatBot", icon: "🤖" },
-                ].map(({ href, label, icon }) => (
+                {navigationItems.map(({ href, label, description, icon }) => (
                   <Link
                     key={href}
                     href={href}
+                    aria-current={isActive(href) ? "page" : undefined}
                     className={`flex items-center gap-2 text-lg font-medium transition-colors hover:text-primary ${
                       isActive(href) ? "text-primary" : "text-muted-foreground"
                     }`}
                   >
                     {icon}
-                    {label}
+                    <span className="flex flex-col">
+                      <span>{label}</span>
+                      <span className="text-xs font-normal text-muted-foreground">{description}</span>
+                    </span>
                   </Link>
                 ))}
 

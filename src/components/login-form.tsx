@@ -67,7 +67,7 @@ export default function LoginForm() {
           Welcome back 👋
         </CardTitle>
         <p className="text-sm text-center text-muted-foreground">
-          Login to ReadHub
+          Sign in to access your AI tools and saved stories.
         </p>
       </CardHeader>
 
@@ -128,7 +128,7 @@ export default function LoginForm() {
           </div>
 
           <Button type="submit" className="w-full mt-2" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
       </CardContent>

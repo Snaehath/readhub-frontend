@@ -22,7 +22,53 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { AgentEvent } from "@/types";
+import { AgentEvent, ChatSourceReference } from "@/types";
+
+const SourceReferences = ({ sources = [] }: { sources?: ChatSourceReference[] }) => {
+  const safeSources = sources.flatMap((source) => {
+    try {
+      const url = new URL(source.url);
+      if (url.protocol !== "https:" && url.protocol !== "http:") return [];
+      return [{ ...source, url: url.toString(), hostname: url.hostname.replace(/^www\./, "") }];
+    } catch {
+      return [];
+    }
+  });
+
+  if (safeSources.length === 0) return null;
+
+  return (
+    <section aria-label="Sources" className="mt-3 max-w-2xl space-y-2">
+      <div className="flex items-center gap-2 px-1">
+        <Search className="h-3.5 w-3.5 text-indigo-500" aria-hidden="true" />
+        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-500">
+          Sources · {safeSources.length}
+        </span>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {safeSources.map((source) => (
+          <a
+            key={`${source.citationNumber}-${source.url}`}
+            href={source.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group rounded-xl border border-zinc-200 bg-white px-3 py-2.5 transition-colors hover:border-indigo-400 hover:bg-indigo-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-indigo-950/20"
+          >
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <span className="truncate text-[10px] font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
+                [{source.citationNumber}] {source.publisher || source.hostname}
+              </span>
+              <span className="shrink-0 text-[9px] text-zinc-400">{source.hostname}</span>
+            </div>
+            <span className="line-clamp-2 text-xs font-medium leading-snug text-zinc-700 group-hover:text-indigo-700 dark:text-zinc-200 dark:group-hover:text-indigo-300">
+              {source.title}
+            </span>
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+};
 
 // --- 🧠 AGENTIC UI: REAL-TIME ACTIVITY SYSTEM ---
 const ThinkingContext = ({
@@ -227,21 +273,27 @@ export const ChatbotView = () => {
           variant="h2"
           className="mb-3 font-black uppercase tracking-tight"
         >
-          Restricted Access
+          AI Assistant
         </Typography>
         <Typography
           variant="muted"
           className="text-[10px] font-black uppercase tracking-[0.2em] max-w-sm mb-8 leading-relaxed opacity-60"
         >
-          Sign in to your ReadHub account to unlock your AI investigative
-          assistant.
+          Sign in to ask questions about current news, get article context, or
+          find books. News and book browsing are available without an account.
         </Typography>
         <Button
           asChild
           className="rounded-full px-8 h-12 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-widest shadow-xl transition-all hover:scale-105 active:scale-95"
         >
-          <Link href="/login">Authenticate to Access</Link>
+          <Link href="/login">Sign in to continue</Link>
         </Button>
+        <Link
+          href="/register"
+          className="mt-4 text-sm font-medium text-primary underline-offset-4 hover:underline"
+        >
+          Create a free account
+        </Link>
       </div>
     );
   }
@@ -275,6 +327,11 @@ export const ChatbotView = () => {
                 >
                   Hello, {user?.username || "Guest"}
                 </Typography>
+                <p className="mx-auto max-w-lg text-sm leading-relaxed text-muted-foreground">
+                  Ask about a current story, request source-backed context, or
+                  get a book recommendation. You can start with a suggestion
+                  below.
+                </p>
               </div>
 
               <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 px-2 lg:px-6">
@@ -380,6 +437,10 @@ export const ChatbotView = () => {
                               </div>
                             </div>
                           </div>
+
+                          {chat.sender === "bot" && (
+                            <SourceReferences sources={chat.sources} />
+                          )}
 
                           {/* Bot Message Action Bar */}
                           {chat.sender === "bot" && (

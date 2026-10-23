@@ -10,7 +10,7 @@ export default function RegisterPage() {
           href="/login"
           className="block text-sm text-center text-muted-foreground hover:text-primary transition"
         >
-          Existing user? Log in
+          Already have an account? Sign in
         </Link>
       </div>
     </div>

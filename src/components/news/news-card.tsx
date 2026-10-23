@@ -47,6 +47,7 @@ export default function NewsCard() {
   const [showDialog, setShowDialog] = useState<boolean>(false);
   const [showFutureDialog, setShowFutureDialog] = useState<boolean>(false);
   const [token, setToken] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [userLikes, setUserLikes] = useState<string[]>([]);
   const [userBookmarks, setUserBookmarks] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>(
@@ -72,6 +73,7 @@ export default function NewsCard() {
         });
         if (res.ok) {
           const data = await res.json();
+          setIsAdmin(data.role === "admin");
           setUserLikes([...(data.likes_us || []), ...(data.likes_in || [])]);
           setUserBookmarks([
             ...(data.bookmarks_us || []),
@@ -142,63 +144,34 @@ export default function NewsCard() {
     new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleRefreshNews = async () => {
-    // GUARDRAILS: Rate Limiting
-    const now = Date.now();
-    const isGuest = !token;
-
-    if (isGuest) {
-      const guestRefreshData = JSON.parse(
-        localStorage.getItem("guest_refresh_stats") ||
-          '{"count": 0, "firstClick": 0}',
-      );
-
-      // Check if 24h window has passed to reset
-      if (now - guestRefreshData.firstClick > 24 * 60 * 60 * 1000) {
-        guestRefreshData.count = 0;
-        guestRefreshData.firstClick = now;
-      }
-
-      if (guestRefreshData.count >= 3) {
-        const hoursLeft = Math.ceil(
-          (24 * 60 * 60 * 1000 - (now - guestRefreshData.firstClick)) /
-            (1000 * 60 * 60),
-        );
-        toast.error(
-          `Guest limit reached! Please sign in to get more updates or try again in ${hoursLeft} hours.`,
-        );
-        return;
-      }
-
-      // Update guest stats
-      guestRefreshData.count += 1;
-      localStorage.setItem(
-        "guest_refresh_stats",
-        JSON.stringify(guestRefreshData),
-      );
-    } else {
-      // Authenticated User: 5-minute cooldown
-      const lastAuthRefresh = parseInt(
-        localStorage.getItem("last_auth_refresh") || "0",
-      );
-      const cooldownPeriod = 5 * 60 * 1000;
-
-      if (now - lastAuthRefresh < cooldownPeriod) {
-        const minsLeft = Math.ceil(
-          (cooldownPeriod - (now - lastAuthRefresh)) / 60000,
-        );
-        toast.warning(
-          `Please wait ${minsLeft} minute${minsLeft > 1 ? "s" : ""} before refreshing again. Stay updated with the ticker!`,
-        );
-        return;
-      }
-      localStorage.setItem("last_auth_refresh", now.toString());
+    if (!token || !isAdmin) {
+      toast.error("Only administrators can refresh news.");
+      return;
     }
+
+    // GUARDRAILS: Client-side cooldown for administrator refreshes
+    const now = Date.now();
+    const lastAuthRefresh = parseInt(
+      localStorage.getItem("last_auth_refresh") || "0",
+    );
+    const cooldownPeriod = 5 * 60 * 1000;
+
+    if (now - lastAuthRefresh < cooldownPeriod) {
+      const minsLeft = Math.ceil(
+        (cooldownPeriod - (now - lastAuthRefresh)) / 60000,
+      );
+      toast.warning(
+        `Please wait ${minsLeft} minute${minsLeft > 1 ? "s" : ""} before refreshing again.`,
+      );
+      return;
+    }
+    localStorage.setItem("last_auth_refresh", now.toString());
 
     try {
       setIsLoading(true);
 
-      await refreshNewsApi("us");
-      await refreshNewsApi("in");
+      await refreshNewsApi("us", token);
+      await refreshNewsApi("in", token);
 
       await delay(1000);
 
@@ -374,20 +347,24 @@ Please try again in a few moments.`,
               </Badge>
             )}
 
-            <Button
-              className="cursor-pointer rounded-full text-xs sm:text-sm px-4 py-1.5 sm:px-6 sm:py-3 font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-              onClick={handleRefreshNews}
-              disabled={isLoading}
-              aria-label="Fetch latest news"
-            >
-              <RefreshCcw
-                className={`${isLoading ? "animate-spin" : ""} w-4 h-4`}
-              />
-              <span className="hidden sm:inline">
-                {isLoading ? "Updating..." : "Get Latest"}
-              </span>
-              <span className="sm:hidden">{isLoading ? "..." : "Latest"}</span>
-            </Button>
+            {isAdmin && (
+              <Button
+                className="cursor-pointer rounded-full text-xs sm:text-sm px-4 py-1.5 sm:px-6 sm:py-3 font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
+                onClick={handleRefreshNews}
+                disabled={isLoading}
+                aria-label="Fetch latest news"
+              >
+                <RefreshCcw
+                  className={`${isLoading ? "animate-spin" : ""} w-4 h-4`}
+                />
+                <span className="hidden sm:inline">
+                  {isLoading ? "Updating..." : "Get Latest"}
+                </span>
+                <span className="sm:hidden">
+                  {isLoading ? "..." : "Latest"}
+                </span>
+              </Button>
+            )}
           </div>
 
           {/* Country buttons */}

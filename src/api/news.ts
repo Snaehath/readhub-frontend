@@ -106,8 +106,11 @@ export const searchNewsApi = async (
   };
 };
 
-export const refreshNewsApi = async (country: "us" | "in") => {
-  const res = await fetch(`${API_BASE_URL}/news/fetch-categories/${country}`);
+export const refreshNewsApi = async (country: "us" | "in", token: string) => {
+  const res = await fetch(`${API_BASE_URL}/news/fetch-categories/${country}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
   if (!res.ok) {
     throw new Error(`Failed to refresh ${country.toUpperCase()} news`);
   }

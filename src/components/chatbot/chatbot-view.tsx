@@ -174,12 +174,10 @@ import ToolTip from "../ui/custom/tooltip";
 
 
 export const ChatbotView = () => {
-  const [token, setToken] = useState<string | null>(null);
+  const isAuthenticated = useUserStore((state) => state.isAuthenticated);
   const user = useUserStore((state) => state.user);
 
   useEffect(() => {
-    setToken(localStorage.getItem("jwt"));
-
     // Hide footer and disable body scroll for app-like feel
     const footer = document.querySelector("footer");
     if (footer) footer.style.display = "none";
@@ -198,7 +196,7 @@ export const ChatbotView = () => {
     deleteMessage,
     loading,
     messagesEndRef,
-  } = useChat(token);
+  } = useChat(isAuthenticated);
 
   const [userMessage, setUserMessage] = useState("");
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
@@ -219,7 +217,7 @@ export const ChatbotView = () => {
     setUserMessage(e.target.value);
   };
 
-  if (!token) {
+  if (!isAuthenticated) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
         <div className="bg-zinc-100 dark:bg-zinc-900 p-6 rounded-full mb-4 relative group">

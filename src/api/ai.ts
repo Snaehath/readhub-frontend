@@ -16,13 +16,13 @@ export interface FutureNewsRequest {
   };
 }
 
-export const sendChatRequest = async (token: string, payload: ChatRequest) => {
+export const sendChatRequest = async (payload: ChatRequest) => {
   const res = await fetch(`${API_BASE_URL}/ai/chat`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
+    credentials: "include",
     body: JSON.stringify(payload),
   });
 
@@ -33,13 +33,13 @@ export const sendChatRequest = async (token: string, payload: ChatRequest) => {
   return res.json();
 };
 
-export const fetchFutureNews = async (token: string, payload: FutureNewsRequest) => {
+export const fetchFutureNews = async (payload: FutureNewsRequest) => {
   const res = await fetch(`${API_BASE_URL}/ai/futureNews`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
+    credentials: "include",
     body: JSON.stringify(payload),
   });
 

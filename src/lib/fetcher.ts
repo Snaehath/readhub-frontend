@@ -11,7 +11,7 @@ export class FetchError extends Error {
 }
 
 export const fetcher = async (url: string) => {
-  const res = await fetch(url);
+  const res = await fetch(url, { credentials: "include" });
 
   if (!res.ok) {
     const info = (await res.json().catch(() => ({}))) as Record<string, unknown>;

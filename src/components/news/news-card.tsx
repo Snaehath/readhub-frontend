@@ -24,6 +24,7 @@ import { differenceInHours } from "date-fns";
 import { useFutureAi } from "@/lib/hooks/useFutureAi";
 import { Badge } from "../ui/badge";
 import { useDebounce } from "@/lib/hooks/useDebounce";
+import { useUserStore } from "@/lib/store/userStore";
 
 export default function NewsCard() {
   // hooks
@@ -46,7 +47,7 @@ export default function NewsCard() {
   const [aiLoading, setAiLoading] = useState<boolean>(false);
   const [showDialog, setShowDialog] = useState<boolean>(false);
   const [showFutureDialog, setShowFutureDialog] = useState<boolean>(false);
-  const [token, setToken] = useState<string | null>(null);
+  const isAuthenticated = useUserStore((state) => state.isAuthenticated);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userLikes, setUserLikes] = useState<string[]>([]);
   const [userBookmarks, setUserBookmarks] = useState<string[]>([]);
@@ -59,18 +60,11 @@ export default function NewsCard() {
   const MAX_CATEGORIES = 4;
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("jwt");
-    setToken(storedToken);
-  }, []);
-
-  useEffect(() => {
-    if (!token) return;
+    if (!isAuthenticated) return;
 
     const fetchUserData = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/user/me`, { // Note: Should ideally be in a user api service too
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await fetch(`${API_BASE_URL}/user/me`, { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           setIsAdmin(data.role === "admin");
@@ -86,7 +80,7 @@ export default function NewsCard() {
     };
 
     fetchUserData();
-  }, [token]);
+  }, [isAuthenticated]);
 
   // Fetch paginated news based on country + category (or search)
   useEffect(() => {
@@ -144,7 +138,7 @@ export default function NewsCard() {
     new Promise((resolve) => setTimeout(resolve, ms));
 
   const handleRefreshNews = async () => {
-    if (!token || !isAdmin) {
+    if (!isAuthenticated || !isAdmin) {
       toast.error("Only administrators can refresh news.");
       return;
     }
@@ -170,8 +164,8 @@ export default function NewsCard() {
     try {
       setIsLoading(true);
 
-      await refreshNewsApi("us", token);
-      await refreshNewsApi("in", token);
+      await refreshNewsApi("us");
+      await refreshNewsApi("in");
 
       await delay(1000);
 
@@ -195,13 +189,13 @@ export default function NewsCard() {
     setShowDialog(true);
     const id = article.id;
 
-    if (!token) {
+      if (!isAuthenticated) {
       setAiLoading(false);
       return;
     }
 
     try {
-      const data = await sendChatRequest(token, {
+      const data = await sendChatRequest({
         userMessage: { id, selectedCountry },
       });
       setAiResponse(data?.reply?.trim() || "No response.");
@@ -228,7 +222,7 @@ Please try again in a few moments.`,
     error: aiError,
     fetchFutureAi,
     resetFutureAi,
-  } = useFutureAi(token, selectedCountry);
+  } = useFutureAi(isAuthenticated, selectedCountry);
 
   const handleFutureAi = (article: NewsArticle) => {
     setSelectedArticle(article);
@@ -271,7 +265,7 @@ Please try again in a few moments.`,
           onOpenChange={setShowDialog}
           aiResponse={aiResponse}
           aiLoading={aiLoading}
-          token={token}
+          isAuthenticated={isAuthenticated}
           article={selectedArticle}
         />
 
@@ -286,7 +280,7 @@ Please try again in a few moments.`,
           insightResponse={futureAiArticle || ""}
           insightLoading={futureLoading}
           insightError={aiError}
-          token={token}
+          isAuthenticated={isAuthenticated}
           article={selectedArticle}
           currentYear={currentYear}
           onProjectNext={() => {
@@ -428,7 +422,7 @@ Please try again in a few moments.`,
           onAskAi={handleAskAi}
           askFutureAi={handleFutureAi}
           isLatest={isLatest}
-          token={token}
+          isAuthenticated={isAuthenticated}
           country={selectedCountry}
           initialLikes={userLikes}
           initialBookmarks={userBookmarks}

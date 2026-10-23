@@ -3,7 +3,7 @@ import { ChatMessage } from "@/types";
 import { API_BASE_URL } from "@/constants";
 import axios from "axios";
 
-export function useChat(token: string | null) {
+export function useChat(isAuthenticated: boolean) {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -12,14 +12,14 @@ export function useChat(token: string | null) {
   // 🛰️ CLOUD SYNC: Fetch history on mount
   useEffect(() => {
     const fetchHistory = async () => {
-      if (!token) return;
+      if (!isAuthenticated) return;
       try {
         const url = sessionId 
           ? `${API_BASE_URL}/ai/history/${sessionId}` 
           : `${API_BASE_URL}/ai/history`;
         
         const response = await axios.get(url, {
-          headers: { Authorization: `Bearer ${token}` }
+          withCredentials: true,
         });
         
         if (sessionId && response.data.history) {
@@ -34,7 +34,7 @@ export function useChat(token: string | null) {
     };
 
     fetchHistory();
-  }, [token, sessionId]);
+  }, [isAuthenticated, sessionId]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -43,7 +43,7 @@ export function useChat(token: string | null) {
   }, [chatHistory]);
 
   const sendMessage = async (message: string) => {
-    if (!message.trim() || !token) return;
+    if (!message.trim() || !isAuthenticated) return;
 
     // 1. Optimistic Update: Add user message
     const userMsg: ChatMessage = { sender: "user", message };
@@ -65,9 +65,9 @@ export function useChat(token: string | null) {
       const response = await fetch(url, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ userMessage: message, sessionId: activeSessionId }),
       });
 

@@ -11,7 +11,7 @@ import {
 } from "../ui/card";
 import { Category, NewsArticle } from "@/types";
 import Link from "next/link";
-import { NEWS_CATEGORY_COLORS } from "@/constants";
+import { API_BASE_URL, NEWS_CATEGORY_COLORS } from "@/constants";
 import ToolTip from "../ui/custom/tooltip";
 import { formatDate, formatDistanceToNow } from "date-fns";
 import Typography from "../ui/custom/typography";
@@ -22,7 +22,7 @@ interface NewsCardItemsProps {
   onAskAi: (article: NewsArticle) => void;
   askFutureAi: (article: NewsArticle) => void;
   isLatest: (publishedAt: string) => boolean;
-  token: string | null;
+  isAuthenticated: boolean;
   country: string;
   initialLikes: string[];
   initialBookmarks: string[];
@@ -33,7 +33,7 @@ export default function NewsCardItems({
   onAskAi,
   askFutureAi,
   isLatest,
-  token,
+  isAuthenticated,
   country,
   initialLikes,
   initialBookmarks,
@@ -64,7 +64,7 @@ export default function NewsCardItems({
   };
 
   const toggleLike = async (id: string) => {
-    if (!token) {
+    if (!isAuthenticated) {
       toast.warning("🔒 Login to save your preferences!", {
         action: {
           label: "Login",
@@ -75,15 +75,12 @@ export default function NewsCardItems({
     }
 
     try {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL ||
-        "https://readhub-backend.onrender.com/api";
-      const res = await fetch(`${baseUrl}/user/like-news`, {
+      const res = await fetch(`${API_BASE_URL}/user/like-news`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify({ newsId: id, country }),
       });
 
@@ -103,7 +100,7 @@ export default function NewsCardItems({
   };
 
   const toggleBookmark = async (id: string) => {
-    if (!token) {
+    if (!isAuthenticated) {
       toast.warning("🔒 Login to bookmark articles!", {
         action: {
           label: "Login",
@@ -114,15 +111,12 @@ export default function NewsCardItems({
     }
 
     try {
-      const baseUrl =
-        process.env.NEXT_PUBLIC_API_BASE_URL ||
-        "https://readhub-backend.onrender.com/api";
-      const res = await fetch(`${baseUrl}/user/bookmark-news`, {
+      const res = await fetch(`${API_BASE_URL}/user/bookmark-news`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify({ newsId: id, country }),
       });
 

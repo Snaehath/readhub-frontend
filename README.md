@@ -75,8 +75,9 @@ An intelligent, full-stack digital reading platform that brings together real-ti
 3. **Configure Environment Variables:**
    Create a `.env.local` file in the root directory:
    ```env
-   NEXT_PUBLIC_API_BASE_URL=https://readhub-backend.onrender.com/api
+   BACKEND_API_URL=http://localhost:5000
    ```
+   The frontend proxies `/api` requests to this server. In production, set `BACKEND_API_URL=https://readhub-backend.onrender.com` in the frontend host's server-side environment. Configure the backend's `FRONTEND_ORIGINS` with the deployed frontend origin.
 
 4. **Run the development server:**
    ```bash

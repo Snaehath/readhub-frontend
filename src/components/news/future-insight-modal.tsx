@@ -29,7 +29,7 @@ interface FutureInsightModalProps {
   insightResponse: string;
   insightLoading: boolean;
   insightError: string | null;
-  token: string | null;
+  isAuthenticated: boolean;
   article: NewsArticle | null;
   currentYear?: number;
   onProjectNext?: () => void;
@@ -41,7 +41,7 @@ export default function FutureInsightModal({
   insightResponse,
   insightLoading,
   insightError,
-  token,
+  isAuthenticated,
   article,
   currentYear = 1,
   onProjectNext,
@@ -149,7 +149,7 @@ export default function FutureInsightModal({
 
             <div className="px-6 sm:px-14 md:px-16 py-12">
               <section className="max-w-3xl mx-auto space-y-12">
-                {!token ? (
+                {!isAuthenticated ? (
                   <div className="py-20 text-center space-y-8 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl bg-zinc-50/50 dark:bg-zinc-900/20">
                     <div className="inline-flex bg-cyan-50 dark:bg-cyan-950/30 p-8 rounded-full shadow-inner">
                       <Lock className="w-12 h-12 text-cyan-600 dark:text-cyan-400" />

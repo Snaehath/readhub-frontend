@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { fetchFutureNews } from "@/api/ai";
 
-export function useFutureAi(token: string | null, selectedCountry: string) {
+export function useFutureAi(isAuthenticated: boolean, selectedCountry: string) {
   const [loading, setLoading] = useState(false);
   const [futureAiArticle, setFutureAiArticle] = useState<string | null>(null);
   const [currentYear, setCurrentYear] = useState(1);
@@ -12,7 +12,7 @@ export function useFutureAi(token: string | null, selectedCountry: string) {
     setError(null);
     setCurrentYear(targetYear);
 
-    if (!token) {
+    if (!isAuthenticated) {
       setError(
         "Authentication Required: Please sign in to access Forecast AI insights.",
       );
@@ -21,7 +21,7 @@ export function useFutureAi(token: string | null, selectedCountry: string) {
     }
 
     try {
-      const data = await fetchFutureNews(token, {
+      const data = await fetchFutureNews({
         userMessage: {
           id,
           selectedCountry,

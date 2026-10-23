@@ -35,13 +35,12 @@ const AiNewsHub = () => {
     toast.loading("AI Agents are drafting today's news...", { id: "gen-news" });
 
     try {
-      const token = localStorage.getItem("jwt");
       const res = await fetch(`${API_BASE_URL}/ai-hub/news/trigger`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ topic: "Top trending global news" }),
       });
 

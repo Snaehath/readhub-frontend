@@ -15,7 +15,7 @@ import { Edit2, User as UserIcon } from "lucide-react";
 import Typography from "@/components/ui/custom/typography";
 
 const ProfileView = () => {
-  const { user, setUser } = useUserStore(); // Zustand store
+  const { user, setUser, isAuthenticated } = useUserStore(); // Zustand store
   const [joinedDate, setJoinedDate] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
   const [newUsername, setNewUsername] = useState("");
@@ -25,17 +25,9 @@ const ProfileView = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const token = localStorage.getItem("jwt");
-      if (!token) {
-        setFetching(false);
-        return;
-      }
-
       try {
         const response = await fetch(`${API_BASE_URL}/user/me`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          credentials: "include",
         });
 
         if (response.ok) {
@@ -95,8 +87,7 @@ const ProfileView = () => {
 
     setLoading(true);
     try {
-      const token = localStorage.getItem("jwt");
-      if (!token) {
+      if (!isAuthenticated) {
         throw new Error("Please log in again to update your profile.");
       }
 
@@ -104,8 +95,8 @@ const ProfileView = () => {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify({
           username: newUsername,
           avatar: newAvatar,

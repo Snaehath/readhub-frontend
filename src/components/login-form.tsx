@@ -20,7 +20,7 @@ export default function LoginForm() {
   const [showReset, setShowReset] = useState(false);
 
   const router = useRouter();
-  const { setToken, fetchUser } = useUserStore();
+  const { setAuthenticated, fetchUser } = useUserStore();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +32,7 @@ export default function LoginForm() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
@@ -40,7 +41,7 @@ export default function LoginForm() {
       if (!response.ok) {
         throw new Error(data.error || "Login failed");
       }
-      setToken(data.token);
+      setAuthenticated(true);
       await fetchUser();
       toast.success("Logged in successfully!");
       router.push("/");

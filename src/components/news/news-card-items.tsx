@@ -220,7 +220,7 @@ export default function NewsCardItems({
                       type="button"
                       aria-label={`Explore possible future outcomes for: ${article.title}`}
                       onClick={() => handleFutureClick(article)}
-                      className="is-shining relative overflow-hidden w-8 h-8 rounded-full bg-gradient-to-br from-sky-400 to-cyan-600 text-white flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all duration-200 ring-2 ring-cyan-400/60 shadow-md"
+                      className="is-shining relative overflow-hidden h-10 w-10 rounded-full bg-gradient-to-br from-sky-500 to-cyan-700 text-white flex items-center justify-center cursor-pointer transition-colors duration-200 ring-2 ring-cyan-400/60 shadow-md"
                     >
                       <Telescope className="w-4 h-4 relative z-10" />
                     </button>
@@ -233,7 +233,7 @@ export default function NewsCardItems({
                       type="button"
                       aria-label={`Ask AI about: ${article.title}`}
                       onClick={() => onAskAi(article)}
-                      className="is-shining relative overflow-hidden w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 text-white flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all duration-200 ring-2 ring-violet-400/60 shadow-md"
+                      className="is-shining relative overflow-hidden h-10 w-10 rounded-full bg-gradient-to-br from-violet-600 to-indigo-700 text-white flex items-center justify-center cursor-pointer transition-colors duration-200 ring-2 ring-violet-400/60 shadow-md"
                     >
                       <Sparkles className="w-4 h-4 relative z-10" />
                     </button>
@@ -270,7 +270,7 @@ export default function NewsCardItems({
                   onClick={() => toggleLike(article.id)}
                   aria-label={likes[article.id] ? `Unlike: ${article.title}` : `Like: ${article.title}`}
                   aria-pressed={Boolean(likes[article.id])}
-                  className={`h-8 w-8 rounded-full transition-all duration-200 cursor-pointer ${
+                  className={`h-10 w-10 rounded-full transition-colors duration-200 cursor-pointer ${
                     likes[article.id]
                       ? "text-rose-500 bg-rose-50 dark:bg-rose-950/30"
                       : "text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30"
@@ -287,7 +287,7 @@ export default function NewsCardItems({
                   onClick={() => toggleBookmark(article.id)}
                   aria-label={bookmarks[article.id] ? `Remove bookmark: ${article.title}` : `Bookmark: ${article.title}`}
                   aria-pressed={Boolean(bookmarks[article.id])}
-                  className={`h-8 w-8 rounded-full transition-all duration-200 cursor-pointer ${
+                  className={`h-10 w-10 rounded-full transition-colors duration-200 cursor-pointer ${
                     bookmarks[article.id]
                       ? "text-amber-500 bg-amber-50 dark:bg-amber-950/30"
                       : "text-zinc-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30"

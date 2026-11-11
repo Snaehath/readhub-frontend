@@ -74,7 +74,7 @@ export default function BookCard({ book }: BookCardProps) {
               target="_blank"
               rel="noopener noreferrer"
               href={archiveUrl}
-              className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 hover:underline transition-all"
+              className="flex min-h-10 items-center gap-1 text-xs font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-300 hover:underline transition-colors"
             >
               <BookOpen className="w-3.5 h-3.5" />
               Read Now
@@ -91,7 +91,7 @@ export default function BookCard({ book }: BookCardProps) {
             target="_blank"
             rel="noopener noreferrer"
             href={openLibraryUrl}
-            className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors group/link"
+            className="flex min-h-10 items-center gap-1 text-xs font-bold uppercase tracking-wide text-zinc-600 hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors group/link"
           >
             Details
             <ExternalLink className="w-3 h-3 transition-transform group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5" />

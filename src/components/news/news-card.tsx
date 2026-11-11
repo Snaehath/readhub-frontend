@@ -24,14 +24,17 @@ import { differenceInHours } from "date-fns";
 import { useFutureAi } from "@/lib/hooks/useFutureAi";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { useUserStore } from "@/lib/store/userStore";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function NewsCard() {
   // hooks
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedCountry, setSelectedCountry] = useState<string>("us");
+  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get("category") || "all");
+  const [selectedCountry, setSelectedCountry] = useState<string>(searchParams.get("country") === "in" ? "in" : "us");
+  const [sortOrder, setSortOrder] = useState<string>(searchParams.get("sort") === "oldest" ? "oldest" : "latest");
+  const [freshness, setFreshness] = useState<string>(["any", "24h", "7d", "30d"].includes(searchParams.get("freshness") || "") ? searchParams.get("freshness")! : "any");
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [totalArticles, setTotalArticles] = useState(0);
   const [page, setPage] = useState<number>(1);
@@ -58,6 +61,18 @@ export default function NewsCard() {
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
 
   const MAX_CATEGORIES = 4;
+
+  useEffect(() => {
+    const urlCategory = searchParams.get("category") || "all";
+    if (urlCategory === "all" || newsCategories.some((category) => category.id === urlCategory)) {
+      setSelectedCategory(urlCategory);
+    }
+    setSelectedCountry(searchParams.get("country") === "in" ? "in" : "us");
+    setSortOrder(searchParams.get("sort") === "oldest" ? "oldest" : "latest");
+    const urlFreshness = searchParams.get("freshness") || "any";
+    setFreshness(["any", "24h", "7d", "30d"].includes(urlFreshness) ? urlFreshness : "any");
+    setSearchQuery(searchParams.get("query") || "");
+  }, [searchParams]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -95,6 +110,8 @@ export default function NewsCard() {
             12,
             selectedCountry,
             selectedCategory,
+            sortOrder,
+            freshness,
           );
         } else {
           res = await fetchNews(
@@ -102,6 +119,8 @@ export default function NewsCard() {
             12,
             selectedCategory,
             selectedCountry,
+            sortOrder,
+            freshness,
           );
         }
 
@@ -128,12 +147,14 @@ export default function NewsCard() {
     selectedCategory,
     refreshTrigger,
     debouncedSearchQuery,
+    sortOrder,
+    freshness,
   ]);
 
   // Reset pagination when country, category, or search changes
   useEffect(() => {
     setPage(1);
-  }, [selectedCountry, selectedCategory, debouncedSearchQuery]);
+  }, [selectedCountry, selectedCategory, debouncedSearchQuery, sortOrder, freshness]);
 
   const delay = (ms: number) =>
     new Promise((resolve) => setTimeout(resolve, ms));
@@ -239,11 +260,16 @@ Please try again in a few moments.`,
     } else {
       params.delete("query");
     }
+    if (selectedCategory !== "all") params.set("category", selectedCategory);
+    else params.delete("category");
+    params.set("country", selectedCountry);
+    params.set("sort", sortOrder);
+    params.set("freshness", freshness);
 
     // Replace the URL without scrolling
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     router.replace(newUrl, { scroll: false });
-  }, [router, searchQuery]);
+  }, [router, searchQuery, selectedCategory, selectedCountry, sortOrder, freshness]);
   const categoriesToShow = showAll
     ? newsCategories
     : newsCategories.slice(0, MAX_CATEGORIES);
@@ -309,7 +335,7 @@ Please try again in a few moments.`,
                   setSelectedCategory(cat.id);
                   setPage(1);
                 }}
-                className={`rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 transition-all duration-150 flex items-center justify-center ${
+                className={`min-h-10 rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 transition-colors duration-150 flex items-center justify-center ${
                   selectedCategory === cat.id
                     ? "bg-blue-600 text-white scale-95"
                     : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-zinc-800 dark:text-zinc-200"
@@ -323,7 +349,7 @@ Please try again in a few moments.`,
               <button
                 type="button"
                 onClick={() => setShowAll(true)}
-                className="rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all duration-150 flex items-center justify-center gap-1"
+                className="min-h-10 rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors duration-150 flex items-center justify-center gap-1"
                 aria-label="Show all categories"
               >
                 More
@@ -334,7 +360,7 @@ Please try again in a few moments.`,
               <button
                 type="button"
                 onClick={() => setShowAll(false)}
-                className="rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all duration-150 flex items-center justify-center gap-1"
+                className="min-h-10 rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors duration-150 flex items-center justify-center gap-1"
                 aria-label="Show less categories"
               >
                 Less
@@ -388,7 +414,7 @@ Please try again in a few moments.`,
                   type="button"
                   key={country.id}
                   onClick={() => setSelectedCountry(country.id)}
-                  className={`relative z-10 flex-1 flex gap-2 items-center justify-center cursor-pointer px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 transform active:scale-95 ${
+                  className={`relative z-10 flex min-h-10 flex-1 gap-2 items-center justify-center cursor-pointer px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-colors duration-300 ${
                     selectedCountry === country.id
                       ? "text-white"
                       : "text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
@@ -419,12 +445,42 @@ Please try again in a few moments.`,
           </div>
         </div>
 
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-sm text-muted-foreground">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
+              <span>Sort by</span>
+              <Select value={sortOrder} onValueChange={setSortOrder}>
+                <SelectTrigger aria-label="Sort news" className="h-10 w-[170px] rounded-full bg-background px-4 text-sm text-foreground shadow-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="latest">Newest first</SelectItem>
+                  <SelectItem value="oldest">Oldest first</SelectItem>
+                </SelectContent>
+              </Select>
+            </label>
+            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
+              <span>Published</span>
+              <Select value={freshness} onValueChange={setFreshness}>
+                <SelectTrigger aria-label="Filter by freshness" className="h-10 w-[170px] rounded-full bg-background px-4 text-sm text-foreground shadow-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="any">Any time</SelectItem>
+                  <SelectItem value="24h">Past 24 hours</SelectItem>
+                  <SelectItem value="7d">Past week</SelectItem>
+                  <SelectItem value="30d">Past month</SelectItem>
+                </SelectContent>
+              </Select>
+            </label>
+          </div>
+          <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground sm:justify-end">
           <p aria-live="polite" aria-atomic="true">
             {isLoading
               ? "Updating articles…"
               : `Showing ${articles.length} of ${totalArticles} ${totalArticles === 1 ? "article" : "articles"}`}
           </p>
+          </div>
         </div>
 
         {/* Articles */}

@@ -16,6 +16,7 @@ export type ChatMessage = {
   sources?: ChatSourceReference[];
   events?: AgentEvent[];
   status?: "error" | "success" | "neutral";
+  feedback?: "helpful" | "not_helpful";
 };
 
 export type ChatSourceReference = {

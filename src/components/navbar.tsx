@@ -21,7 +21,7 @@ import { toast } from "sonner";
 const navigationItems = [
   { href: "/news", label: "News", description: "Browse headlines", icon: <Newspaper className="h-4 w-4" /> },
   { href: "/library", label: "Books", description: "Explore the library", icon: <BookOpen className="h-4 w-4" /> },
-  { href: "/ai-news", label: "AI Reports", description: "Read research reports", icon: <Sparkles className="h-4 w-4" /> },
+  { href: "/ai-news", label: "AI Reports", description: "Read AI-written articles", icon: <Sparkles className="h-4 w-4" /> },
   { href: "/chatbot", label: "AI Assistant", description: "Sign in required", icon: <Bot className="h-4 w-4" /> },
 ];
 
@@ -82,9 +82,10 @@ export default function Navbar() {
         <div className="flex items-center gap-3 sm:gap-4">
           {/* Desktop Avatar */}
           {isLoggedIn && (
-            <div
-              className="hidden md:block cursor-pointer"
-              onClick={() => router.push("/profile")}
+            <Link
+              href="/profile"
+              className="hidden rounded-full md:block"
+              aria-label="View profile"
               title="View Profile"
             >
               <Avatar className="ring-2 ring-primary ring-offset-2 ring-offset-background hover:scale-105 transition">
@@ -93,7 +94,7 @@ export default function Navbar() {
                   {user?.username?.slice(0, 2).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
-            </div>
+            </Link>
           )}
 
           {/* Theme Toggle */}
@@ -104,7 +105,7 @@ export default function Navbar() {
             <Button
               onClick={handleLogout}
               variant="outline"
-              className="text-red-500 border-red-500 hover:bg-red-500 hover:text-white transition"
+              className="text-red-700 border-red-700 hover:bg-red-700 hover:text-white dark:text-red-300 dark:border-red-300 dark:hover:bg-red-700 dark:hover:text-white transition-colors"
             >
               Logout
             </Button>
@@ -142,7 +143,7 @@ export default function Navbar() {
                     key={href}
                     href={href}
                     aria-current={isActive(href) ? "page" : undefined}
-                    className={`flex items-center gap-2 text-lg font-medium transition-colors hover:text-primary ${
+                    className={`flex min-h-11 items-center gap-2 text-lg font-medium transition-colors hover:text-primary ${
                       isActive(href) ? "text-primary" : "text-muted-foreground"
                     }`}
                   >
@@ -156,17 +157,14 @@ export default function Navbar() {
 
                 {/* Avatar in Mobile */}
                 {isLoggedIn && (
-                  <div
-                    className="pt-6 cursor-pointer"
-                    onClick={() => router.push("/profile")}
-                  >
+                  <Link href="/profile" className="flex min-h-11 items-center pt-4" aria-label="View profile">
                     <Avatar className="ring-2 ring-primary ring-offset-2 ring-offset-background hover:scale-105 transition">
                       <AvatarImage src={user?.avatar} alt={user?.username} />
                       <AvatarFallback>
                         {user?.username?.slice(0, 2).toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
-                  </div>
+                  </Link>
                 )}
               </nav>
             </DrawerContent>

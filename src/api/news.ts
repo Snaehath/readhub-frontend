@@ -5,11 +5,15 @@ export const fetchNews = async (
   page: number = 1,
   limit: number = 12,
   category: string = "all",
-  country: string = "us"
+  country: string = "us",
+  sort: string = "latest",
+  freshness: string = "any"
 ): Promise<PaginatedNewsResponse> => {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit),
+    sort,
+    freshness,
   });
 
   if (category !== "all") {
@@ -58,12 +62,16 @@ export const searchNewsApi = async (
   page: number = 1,
   limit: number = 12,
   country: string = "us",
-  category: string = "all"
+  category: string = "all",
+  sort: string = "latest",
+  freshness: string = "any"
 ): Promise<PaginatedNewsResponse> => {
   const params = new URLSearchParams({
     q,
     page: String(page),
     limit: String(limit),
+    sort,
+    freshness,
   });
 
   if (category && category !== "all") {

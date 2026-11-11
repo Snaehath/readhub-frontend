@@ -21,7 +21,7 @@ export default function HomeContent() {
       <section className="relative mb-24 mt-12 w-full animate-in fade-in slide-in-from-bottom-8 duration-1000">
         <div className="text-center max-w-4xl mx-auto px-4 mb-14 space-y-6">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
-            News · Books · AI research
+            News · Books · AI reports
           </p>
           <h1 className="text-4xl sm:text-6xl font-black tracking-tight leading-[1.1] text-foreground">
             Catch up, read, and explore
@@ -29,7 +29,7 @@ export default function HomeContent() {
 
           <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
             Follow headlines from the US and India, discover books, and explore
-            research reports and AI tools in one place.
+            AI-written reports and helpful research tools in one place.
           </p>
 
           <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row">
@@ -127,13 +127,13 @@ export default function HomeContent() {
                 AI Reports
               </CardTitle>
               <CardDescription className="min-h-12 text-base font-medium">
-                AI-generated research reports
+                Original AI-written news reports
               </CardDescription>
             </CardHeader>
             <CardContent className="relative z-10 flex-1">
               <p className="text-muted-foreground leading-relaxed min-h-[5rem]">
-                Read published AI research reports with source links. Sign in
-                to start a new investigation.
+                Read original AI-written articles based on current coverage,
+                with links to the source reporting.
               </p>
             </CardContent>
             <CardFooter className="relative z-10 mt-auto pt-4">

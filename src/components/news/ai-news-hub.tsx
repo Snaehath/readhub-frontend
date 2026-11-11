@@ -33,7 +33,7 @@ const AiNewsHub = () => {
   const handleGenerateNews = async () => {
     if (!user) return;
     setLoading(true);
-    toast.loading("Generating an AI research report...", { id: "gen-news" });
+    toast.loading("Writing an AI report from current coverage...", { id: "gen-news" });
 
     try {
       const res = await fetch(`${API_BASE_URL}/ai-hub/news/trigger`, {
@@ -46,7 +46,7 @@ const AiNewsHub = () => {
       });
 
       if (res.ok) {
-        toast.success("AI research report generated.", { id: "gen-news" });
+        toast.success("AI report published.", { id: "gen-news" });
         mutate(`${API_BASE_URL}/ai-hub/news/all`);
       } else {
         const errorData = await res.json();
@@ -91,11 +91,12 @@ const AiNewsHub = () => {
               <Microscope className="w-6 h-6" />
             </div>
             <Typography variant="h2" className="text-3xl font-black">
-              AI research reports
+              Create an AI report
             </Typography>
             <Typography variant="p" className="text-muted-foreground">
-              Generate a report from saved news articles. Each report is
-              AI-generated and should be checked against its linked sources.
+              Write an original article from saved news coverage. ReadHub AI
+              synthesizes the source reporting and links to it so readers can
+              verify the claims.
             </Typography>
 
             <div className="pt-4">
@@ -109,7 +110,7 @@ const AiNewsHub = () => {
                 ) : (
                   <Sparkles className="w-4.5 h-4.5 text-indigo-200 group-hover:rotate-12 transition-transform" />
                 )}
-                {loading ? "Generating report..." : "Generate a report"}
+                {loading ? "Writing AI report..." : "Generate AI report"}
               </Button>
             </div>
           </div>
@@ -139,7 +140,7 @@ const AiNewsHub = () => {
               <Newspaper className="w-8 h-8 text-zinc-300" />
             </div>
             <Typography variant="muted">
-              No briefings have been generated yet.
+              No AI reports have been published yet.
             </Typography>
           </div>
         ) : (

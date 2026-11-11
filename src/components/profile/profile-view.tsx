@@ -11,17 +11,23 @@ import { Label } from "@/components/ui/label";
 import { useUserStore } from "@/lib/store/userStore";
 import { API_BASE_URL, avatarOptions } from "@/constants";
 import { toast } from "sonner";
-import { Edit2, User as UserIcon } from "lucide-react";
+import { AlertTriangle, Edit2, User as UserIcon } from "lucide-react";
 import Typography from "@/components/ui/custom/typography";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useRouter } from "next/navigation";
 
 const ProfileView = () => {
-  const { user, setUser, isAuthenticated } = useUserStore(); // Zustand store
+  const { user, setUser, isAuthenticated, logout } = useUserStore(); // Zustand store
+  const router = useRouter();
   const [joinedDate, setJoinedDate] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [newAvatar, setNewAvatar] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -135,6 +141,27 @@ const ProfileView = () => {
     setNewUsername(user.username);
     setNewAvatar(user.avatar);
     setIsEditing(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/user/account`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ password: deletePassword }),
+      });
+      const data = response.status === 204 ? null : await response.json();
+      if (!response.ok) throw new Error(data?.error || "Unable to delete the account.");
+      await logout();
+      toast.success("Your account and saved data were deleted.");
+      router.replace("/");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to delete the account.");
+    } finally {
+      setDeletingAccount(false);
+    }
   };
 
   return (
@@ -268,7 +295,7 @@ const ProfileView = () => {
             )}
           </CardContent>
 
-          <CardFooter className="bg-zinc-50/50 dark:bg-zinc-900/10 border-t p-4 flex justify-center">
+          <CardFooter className="bg-zinc-50/50 dark:bg-zinc-900/10 border-t p-4 flex flex-col gap-3">
             {isEditing ? (
               <div className="flex gap-2 w-full">
                 <Button
@@ -288,16 +315,37 @@ const ProfileView = () => {
                 </Button>
               </div>
             ) : (
-              <Button
-                onClick={() => setIsEditing(true)}
-                className="w-full sm:w-auto px-12 rounded-full h-10 shadow-lg hover:shadow-indigo-500/20 transition-all font-bold"
-              >
-                <Edit2 className="w-4 h-4 mr-2" />
-                Edit Profile
-              </Button>
+              <>
+                <Button
+                  onClick={() => setIsEditing(true)}
+                  className="w-full sm:w-auto px-12 rounded-full h-10 shadow-lg hover:shadow-indigo-500/20 transition-all font-bold"
+                >
+                  <Edit2 className="w-4 h-4 mr-2" />
+                  Edit Profile
+                </Button>
+                <button type="button" onClick={() => setDeleteDialogOpen(true)} className="min-h-10 text-sm font-medium text-destructive underline-offset-4 hover:underline">Delete account</button>
+              </>
             )}
           </CardFooter>
         </Card>
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete your ReadHub account?</DialogTitle>
+              <DialogDescription>This permanently deletes your account, chat history, likes, and bookmarks. Enter your password to confirm.</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-2">
+              <Label htmlFor="delete-account-password">Password</Label>
+              <Input id="delete-account-password" type="password" autoComplete="current-password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={deletingAccount}>Cancel</Button>
+              <Button variant="destructive" onClick={() => void handleDeleteAccount()} disabled={deletingAccount || !deletePassword}>
+                <AlertTriangle className="mr-2 h-4 w-4" />{deletingAccount ? "Deleting…" : "Delete account"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

@@ -83,7 +83,7 @@ const LibraryView = () => {
               type="button"
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 transition-all duration-150 flex items-center justify-center ${
+              className={`min-h-10 rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 transition-colors duration-150 flex items-center justify-center ${
                 selectedCategory === cat.id
                   ? "bg-stone-600 text-white scale-95"
                   : "bg-stone-100 text-stone-700 hover:bg-stone-200 dark:bg-zinc-800 dark:text-zinc-200"
@@ -97,7 +97,7 @@ const LibraryView = () => {
             <button
               type="button"
               onClick={() => setShowAll(true)}
-              className="rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-stone-100 text-stone-700 hover:bg-stone-200 transition-all duration-150 flex items-center justify-center gap-1"
+              className="min-h-10 rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-stone-100 text-stone-800 hover:bg-stone-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors duration-150 flex items-center justify-center gap-1"
             >
               More
               <ChevronDown className="w-3 h-3" />
@@ -107,7 +107,7 @@ const LibraryView = () => {
             <button
               type="button"
               onClick={() => setShowAll(false)}
-              className="rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-stone-100 text-stone-700 hover:bg-stone-200 transition-all duration-150 flex items-center justify-center gap-1"
+              className="min-h-10 rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-stone-100 text-stone-800 hover:bg-stone-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors duration-150 flex items-center justify-center gap-1"
             >
               Less
               <ChevronUp className="w-3 h-3" />
@@ -145,10 +145,10 @@ const LibraryView = () => {
 
       {!isLoading && !error && books.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="bg-stone-100 p-6 rounded-full mb-4">
-            <Search className="w-8 h-8 text-stone-400" />
+          <div className="mb-4 rounded-full bg-stone-100 p-6 dark:bg-zinc-900">
+            <Search className="h-8 w-8 text-stone-600 dark:text-zinc-400" />
           </div>
-          <h3 className="text-lg font-bold text-stone-800">No books match those filters</h3>
+          <h3 className="text-lg font-bold text-foreground">No books match those filters</h3>
           <p className="text-muted-foreground max-w-xs mx-auto">
             Try adjusting your search or category filters to find what
             you&apos;re looking for.

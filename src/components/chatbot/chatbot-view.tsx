@@ -20,11 +20,16 @@ import {
   Terminal,
   Bot,
   Sparkles,
+  RotateCcw,
+  Square,
+  ThumbsDown,
+  ThumbsUp,
 } from "lucide-react";
 
 import { AgentEvent, ChatSourceReference } from "@/types";
+import { API_BASE_URL } from "@/constants";
 
-const SourceReferences = ({ sources = [] }: { sources?: ChatSourceReference[] }) => {
+const SourceReferences = ({ sources = [], idPrefix }: { sources?: ChatSourceReference[]; idPrefix: string }) => {
   const safeSources = sources.flatMap((source) => {
     try {
       const url = new URL(source.url);
@@ -49,6 +54,7 @@ const SourceReferences = ({ sources = [] }: { sources?: ChatSourceReference[] })
         {safeSources.map((source) => (
           <a
             key={`${source.citationNumber}-${source.url}`}
+            id={`${idPrefix}-source-${source.citationNumber}`}
             href={source.url}
             target="_blank"
             rel="noopener noreferrer"
@@ -242,13 +248,37 @@ export const ChatbotView = () => {
     deleteMessage,
     loading,
     messagesEndRef,
+    stopMessage,
+    regenerate,
+    sessionId,
   } = useChat(isAuthenticated);
 
   const [userMessage, setUserMessage] = useState("");
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  const [feedbackByIdx, setFeedbackByIdx] = useState<Record<number, "helpful" | "not_helpful">>({});
+
+  const submitFeedback = async (idx: number, rating: "helpful" | "not_helpful", message: string) => {
+    if (!sessionId) return;
+    setFeedbackByIdx((current) => ({ ...current, [idx]: rating }));
+    try {
+      const response = await fetch(`${API_BASE_URL}/ai/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ sessionId, message, rating }),
+      });
+      if (!response.ok) throw new Error("Feedback could not be saved.");
+    } catch {
+      setFeedbackByIdx((current) => {
+        const next = { ...current };
+        delete next[idx];
+        return next;
+      });
+    }
+  };
 
   const handleCopy = (text: string, idx: number) => {
-    navigator.clipboard.writeText(text);
+    void navigator.clipboard.writeText(text).catch(() => undefined);
     setCopiedIdx(idx);
     setTimeout(() => setCopiedIdx(null), 2000);
   };
@@ -407,6 +437,13 @@ export const ChatbotView = () => {
 
                       {chat.message && (
                         <>
+                          {chat.sender === "bot" && chat.sources?.length ? (
+                            <div className="mb-2 flex flex-wrap items-center gap-2 px-2 text-xs" aria-label="Response evidence guide">
+                              <span className="rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">Sourced facts: citations</span>
+                              <span className="rounded-full bg-indigo-50 px-2.5 py-1 font-medium text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300">Analysis: ReadHub AI</span>
+                              <span className="text-muted-foreground">Conclusions may be uncertain when sources disagree or are limited.</span>
+                            </div>
+                          ) : null}
                           <div
                             className={`relative p-[1px] rounded-[1.8rem] overflow-hidden ${
                               chat.sender === "user"
@@ -421,6 +458,16 @@ export const ChatbotView = () => {
                                 className={`prose dark:prose-invert max-w-none prose-sm sm:prose-base leading-relaxed prose-p:m-0 prose-headings:font-black`}
                               >
                                 <ReactMarkdown
+                                  components={{
+                                    a: ({ href, children, ...props }) => {
+                                      const citationMatch = href?.match(/^#source-(\d+)$/);
+                                      const citation = citationMatch?.[1];
+                                      if (citation && chat.sources?.some((source) => source.citationNumber === Number(citation))) {
+                                        return <a href={`#message-${idx}-source-${citation}`} aria-label={`Jump to source ${citation}`} className="font-semibold text-indigo-700 underline decoration-indigo-400 underline-offset-2 dark:text-indigo-300" {...props}>{children}</a>;
+                                      }
+                                      return <a href={href} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
+                                    },
+                                  }}
                                   remarkPlugins={[remarkGfm]}
                                   rehypePlugins={[
                                     [
@@ -432,24 +479,45 @@ export const ChatbotView = () => {
                                     ],
                                   ]}
                                 >
-                                  {chat.message}
+                                  {chat.sources?.length
+                                    ? chat.message.replace(/\[(\d+)\](?!\()/g, (match, number: string) =>
+                                        chat.sources?.some((source) => source.citationNumber === Number(number))
+                                            ? `[${number}](#source-${number})`
+                                          : match,
+                                      )
+                                    : chat.message}
                                 </ReactMarkdown>
                               </div>
                             </div>
                           </div>
 
                           {chat.sender === "bot" && (
-                            <SourceReferences sources={chat.sources} />
+                            <SourceReferences sources={chat.sources} idPrefix={`message-${idx}`} />
                           )}
 
                           {/* Bot Message Action Bar */}
                           {chat.sender === "bot" && (
                             <div className="flex items-center gap-1 mt-1.5 ml-2">
+                              {idx === chatHistory.length - 1 && !loading && chat.status !== "error" && (
+                                <ToolTip content="Regenerate response">
+                                  <button type="button" onClick={regenerate} aria-label="Regenerate response" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">
+                                    <RotateCcw className="h-3.5 w-3.5" />
+                                  </button>
+                                </ToolTip>
+                              )}
+                              {idx === chatHistory.length - 1 && !loading && (
+                                <>
+                                  <button type="button" onClick={() => void submitFeedback(idx, "helpful", chat.message)} aria-pressed={feedbackByIdx[idx] ? feedbackByIdx[idx] === "helpful" : chat.feedback === "helpful"} aria-label="Mark response helpful" title="Helpful" className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-300 ${feedbackByIdx[idx] === "helpful" || (!feedbackByIdx[idx] && chat.feedback === "helpful") ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300" : ""}`}><ThumbsUp className="h-3.5 w-3.5" /></button>
+                                  <button type="button" onClick={() => void submitFeedback(idx, "not_helpful", chat.message)} aria-pressed={feedbackByIdx[idx] ? feedbackByIdx[idx] === "not_helpful" : chat.feedback === "not_helpful"} aria-label="Mark response not helpful" title="Not helpful" className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/30 dark:hover:text-rose-300 ${feedbackByIdx[idx] === "not_helpful" || (!feedbackByIdx[idx] && chat.feedback === "not_helpful") ? "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300" : ""}`}><ThumbsDown className="h-3.5 w-3.5" /></button>
+                                </>
+                              )}
                               {/* 🗑️ DELETE INTERACTION BUTTON */}
                               <ToolTip content="Delete interaction">
                                 <button
+                                  type="button"
                                   onClick={() => deleteMessage(idx)}
-                                  className="p-1.5 rounded-full transition-all duration-200 cursor-pointer text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
+                                  aria-label="Delete this response"
+                                  className="inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors cursor-pointer text-zinc-500 hover:text-red-700 hover:bg-red-50 dark:text-zinc-400 dark:hover:text-red-300 dark:hover:bg-red-950/20"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
@@ -462,11 +530,13 @@ export const ChatbotView = () => {
                                 }
                               >
                                 <button
+                                  type="button"
                                   onClick={() => handleCopy(chat.message, idx)}
-                                  className={`p-1.5 rounded-full transition-all duration-200 cursor-pointer ${
+                                  aria-label={copiedIdx === idx ? "Response copied" : "Copy response"}
+                                  className={`inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors cursor-pointer ${
                                     copiedIdx === idx
-                                      ? "text-green-500 bg-green-50 dark:bg-green-950/30"
-                                      : "text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                                      ? "text-green-800 bg-green-50 dark:text-green-300 dark:bg-green-950/30"
+                                      : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                                   }`}
                                 >
                                   {copiedIdx === idx ? (
@@ -495,6 +565,7 @@ export const ChatbotView = () => {
       <div className="mt-auto px-4 pt-6 pb-2 relative z-20">
         <div className="max-w-4xl mx-auto">
           <div className="relative group transition-all duration-300">
+            <p className="sr-only" role="status" aria-live="polite">{loading ? "ReadHub is researching your question and preparing a response." : ""}</p>
             <div className="relative bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 rounded-[2rem] p-2 pr-3 flex items-center gap-3 transition-all duration-300 focus-within:border-black dark:focus-within:border-white">
               <div className="pl-4 text-zinc-400 opacity-40 group-focus-within:opacity-100 transition-opacity">
                 <Sparkles className="w-5 h-5" />
@@ -507,14 +578,18 @@ export const ChatbotView = () => {
                 onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                 className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-0 h-12 text-base placeholder:text-zinc-400 dark:placeholder:text-zinc-600 shadow-none font-medium"
               />
-              <Button
+              {loading ? (
+                <Button size="icon" variant="outline" onClick={stopMessage} aria-label="Stop generating response" className="h-12 w-12 shrink-0 rounded-2xl">
+                  <Square className="h-4 w-4 fill-current" />
+                </Button>
+              ) : <Button
                 size="icon"
                 onClick={handleSendMessage}
                 disabled={loading || !userMessage.trim()}
                 className="rounded-2xl w-12 h-12 shrink-0 cursor-pointer bg-black dark:bg-white text-white dark:text-black hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg disabled:opacity-30 disabled:scale-100"
               >
                 <Send className="w-5 h-5" />
-              </Button>
+              </Button>}
             </div>
           </div>
 

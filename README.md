@@ -1,6 +1,6 @@
-# 📚 ReadHub: Intelligent News & Digital Reading Ecosystem
+# ReadHub Frontend
 
-An intelligent, full-stack digital reading platform that brings together real-time global news, an expansive e-book archive, autonomous AI-synthesized investigative news briefings, and an agentic research chatbot.
+The Next.js frontend for ReadHub, a news discovery and digital reading app with an e-book catalog, AI reports, and an AI assistant.
 
 [**Explore Live Demo →**](https://readhub-frontend.vercel.app/)
 
@@ -8,34 +8,30 @@ An intelligent, full-stack digital reading platform that brings together real-ti
 
 ## ✨ Key Features
 
-### 🌍 1. Global News Grid
-- **Real-Time Coverage**: Aggregated breaking news from trusted global publishers across technology, business, politics, health, science, sports, and entertainment.
-- **Regional & Categorical Filtering**: Instant filtering by country (US, India, etc.) and category tags.
-- **Live News Ticker**: Marquee ticker highlighting breaking headlines at a glance.
-- **Deep Reader View**: Distraction-free article preview and reading mode.
+### News
+- Browse saved coverage from US and India news sources, with category, region, and search controls.
+- Open the original publisher article or use the in-app article preview where available.
+- View a headline ticker for recently collected stories.
 
-### 📜 2. Timeless E-Book Archive
-- **Curated Digital Library**: Browse books across diverse genres including History, Science, Business, Health, Horror, and Children's literature.
-- **Category Filter & Search**: Quick discovery with instant search and category tags.
-- **Interactive Reader**: Clean in-browser e-book reader experience.
+### E-books
+- Browse and search the book catalog by category.
+- Open available reading links and use the in-browser reader where supported.
 
-### ⚡ 3. AI News (Autonomous Investigative Briefings)
-- **Synthetic Journalism**: Continuous, in-depth briefings researched and synthesized by autonomous AI news agents.
-- **Deep Context & Analysis**: Detailed breakdown of complex trends across technology, global markets, and emerging science.
+### AI reports
+- Read AI-written reports synthesized from saved news coverage, with links and inline citations to the source articles.
+- Admins can generate reports on demand from saved coverage. Scheduled report publishing is currently disabled.
 
-### 🤖 4. Agentic AI ChatBot (Streaming Investigative Assistant)
-- **Real-Time Activity Console**: Live transparency into the agent's thoughts, strategy formation, tool calls, and execution steps.
-- **Source Auditor & Vault**: Complete citation tracking with direct links to verified sources used during fact-checking and synthesis.
-- **Quick-Start Prompts**: Contextual suggestion chips for top global headlines, 60-second briefings, market insights, and book recommendations.
+### AI assistant
+- Ask questions about current saved news or books.
+- View source references for news answers and use suggested prompts to get started.
 
-### 🧠 5. News Intelligence Suite
-- **Ask AI**: Select any news article to extract core entities, retrieve related contextual reports, and generate multi-perspective explanations.
-- **Future AI (Future Insight)**: Predictive logic engine that models potential downstream developments and simulates future headlines based on current events.
+### Article insights
+- Ask AI to explain a selected news article.
+- Request a forecast that separates evidence, assumptions, and possible future developments.
 
-### 👤 6. Personalization & Profile
-- **User Authentication**: Secure login, registration, and session management.
-- **Profile Customization**: Customizable user profile with avatar selection.
-- **Dark / Light Theme**: Seamless theme toggling with persistent preferences.
+### Account and preferences
+- Sign in, manage a profile, and choose an avatar.
+- Switch between light and dark themes.
 
 ---
 
@@ -67,9 +63,9 @@ An intelligent, full-stack digital reading platform that brings together real-ti
    cd readhub-frontend
    ```
 
-2. **Install dependencies:**
+2. **Install the exact locked dependencies:**
    ```bash
-   npm install
+   npm ci
    ```
 
 3. **Configure Environment Variables:**
@@ -77,7 +73,7 @@ An intelligent, full-stack digital reading platform that brings together real-ti
    ```env
    BACKEND_API_URL=http://localhost:5000
    ```
-   The frontend proxies `/api` requests to this server. In production, set `BACKEND_API_URL=https://readhub-backend.onrender.com` in the frontend host's server-side environment. Configure the backend's `FRONTEND_ORIGINS` with the deployed frontend origin.
+   The frontend proxies `/api` requests to this server. In production, set `BACKEND_API_URL` to the deployed backend URL in the frontend host's server-side environment. Configure the backend's `FRONTEND_ORIGINS` with the deployed frontend origin.
 
 4. **Run the development server:**
    ```bash
@@ -86,6 +82,12 @@ An intelligent, full-stack digital reading platform that brings together real-ti
 
 5. **Open the app:**
    Navigate to [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## News refresh and AI reports
+
+News refresh and AI report generation are manual for now. An admin can refresh saved US or India coverage and generate an AI report from the app. The app remains usable without a scheduled workflow; it will not automatically refresh headlines or publish daily editions. See the [backend operations guide](https://github.com/Snaehath/readhub-backend#operations-and-deployment-checklist) for details.
 
 ---
 

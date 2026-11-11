@@ -31,11 +31,11 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
   );
 
   const news = data?.news;
-  const linkedSources = (news?.sources ?? []).flatMap((source) => {
+  const linkedSources = (news?.sources ?? []).flatMap((source, sourceIndex) => {
     try {
       const parsed = new URL(source.url || "");
       if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return [];
-      return [{ ...source, safeUrl: parsed.toString(), host: parsed.hostname }];
+      return [{ ...source, citationNumber: source.citationNumber || sourceIndex + 1, safeUrl: parsed.toString(), host: parsed.hostname }];
     } catch {
       return [];
     }
@@ -62,8 +62,13 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
   // Filter content to remove duplicate headings/bylines
   const filteredContent = news
     ? news.content
-        .replace(/^# .*\n?/, "") // Remove H1 title
-        .replace(/\*\*Investigative Report by.*\*\*\n?/, "") // Remove byline
+        .replace(/^# .*\n?/, "")
+        .replace(/\*\*Investigative Report by.*\*\*\n?/, "")
+        .replace(/\[(\d+)\](?!\()/g, (match, number: string) =>
+          linkedSources.some((source) => source.citationNumber === Number(number))
+            ? `[${number}](#report-source-${number})`
+            : match,
+        )
         .trim()
     : "";
 
@@ -167,13 +172,13 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
                   variant="small"
                   className="font-black text-sm uppercase tracking-wider block leading-none"
                 >
-                  ReadHub AI
+                  {news.authorName || "ReadHub AI"}
                 </Typography>
                 <Typography
                   variant="muted"
                   className="text-[10px] uppercase font-bold tracking-widest block opacity-70 leading-none"
                 >
-                  AI-generated report
+                  {news.reportType === "daily" ? "Daily AI-written edition" : "AI-generated report"}
                 </Typography>
               </div>
             </div>
@@ -200,7 +205,7 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
             {linkedSources.length ? (
               <ul className="mt-4 space-y-2">
                 {linkedSources.map((source, index) => (
-                    <li key={`${source.safeUrl}-${index}`}>
+                    <li key={`${source.safeUrl}-${index}`} id={`report-source-${source.citationNumber}`}>
                       <a href={source.safeUrl} target="_blank" rel="noopener noreferrer" className="flex items-start justify-between gap-3 rounded-xl border border-border/70 bg-background px-4 py-3 text-sm hover:border-indigo-500/50 hover:text-indigo-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">
                         <span>
                           <span className="block font-medium">{source.title || "Open source article"}</span>
@@ -221,6 +226,12 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
             <div className="text-zinc-800 dark:text-zinc-200 text-lg sm:text-xl lg:text-2xl font-serif space-y-6">
               <ReactMarkdown
                 components={{
+                  a: ({ href, children, ...props }) => {
+                    if (href?.match(/^#report-source-\d+$/)) {
+                      return <a href={href} className="font-semibold text-indigo-700 underline decoration-indigo-400 underline-offset-2 dark:text-indigo-300" {...props}>{children}</a>;
+                    }
+                    return <a href={href} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
+                  },
                   p: ({ children }) => (
                     <p className="mb-8 leading-relaxed text-left">{children}</p>
                   ),

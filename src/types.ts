@@ -120,6 +120,8 @@ export type Category =
 
 export type AiNews = {
   _id: string;
+  reportType?: "manual" | "daily";
+  editionDate?: string;
   title: string;
   topic: string;
   summary: string;
@@ -130,9 +132,12 @@ export type AiNews = {
   isCompleted: boolean;
   createdAt: string;
   sources?: Array<{
+    citationNumber?: number;
     title?: string;
     url?: string;
     sourceName?: string;
+    category?: string;
+    publishedAt?: string;
   }>;
 };
 

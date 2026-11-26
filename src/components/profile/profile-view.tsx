@@ -16,6 +16,7 @@ import { AlertTriangle, Edit2, Loader2, User as UserIcon } from "lucide-react";
 import Typography from "@/components/ui/custom/typography";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
+import { NewsPreferencesCard } from "./news-preferences-card";
 
 const ProfileView = () => {
   const { user, setUser, status, fetchUser, logout } = useUserStore();
@@ -129,9 +130,10 @@ const ProfileView = () => {
   };
 
   return (
-    <div className="flex items-center justify-center p-4 sm:p-6 overflow-hidden bg-zinc-50/30 dark:bg-transparent">
-      <div className="w-full max-w-lg animate-in fade-in duration-500">
-        <Card className="overflow-hidden border-2 rounded-3xl">
+    <div className="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <h1 className="mb-6 text-2xl font-bold tracking-tight">Your profile</h1>
+      <div className="grid animate-in fade-in items-start gap-6 duration-500 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
+        <Card className="overflow-hidden border-2 rounded-3xl lg:sticky lg:top-24">
           <div className="h-28 bg-gradient-to-r from-indigo-600 via-indigo-500 to-primary" />
           <CardContent className="relative flex flex-col items-center pt-0 px-6 pb-6">
             <div className="relative -mt-14 mb-4">
@@ -297,6 +299,7 @@ const ProfileView = () => {
             )}
           </CardFooter>
         </Card>
+        <NewsPreferencesCard />
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>

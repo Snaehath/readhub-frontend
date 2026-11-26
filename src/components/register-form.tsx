@@ -124,7 +124,6 @@ export default function RegisterForm() {
                   }`}
                   aria-label={opt.label}
                   aria-pressed={avatar === opt.value}
-                  title={opt.label}
                 >
                   <img
                     src={opt.value}

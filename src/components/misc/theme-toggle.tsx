@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
+import ToolTip from "@/components/ui/custom/tooltip";
 
 const CYCLE = ["light", "dark", "system"] as const;
 type ThemeChoice = (typeof CYCLE)[number];
@@ -28,8 +29,10 @@ export function ThemeToggle() {
   const label = `Theme: ${META[current].label}. Switch to ${META[next].label.toLowerCase()}`;
 
   return (
-    <Button variant="outline" size="icon" onClick={() => setTheme(next)} aria-label={label} title={label} disabled={!mounted}>
-      <Icon className="h-[1.15rem] w-[1.15rem]" aria-hidden="true" />
-    </Button>
+    <ToolTip content={`${META[current].label} theme · click for ${META[next].label.toLowerCase()}`}>
+      <Button variant="outline" size="icon" onClick={() => setTheme(next)} aria-label={label} disabled={!mounted}>
+        <Icon className="h-[1.15rem] w-[1.15rem]" aria-hidden="true" />
+      </Button>
+    </ToolTip>
   );
 }

@@ -12,6 +12,7 @@ export type User = {
   likes_in?: string[];
   bookmarks_us?: string[];
   bookmarks_in?: string[];
+  preferences?: { language?: string; regions?: string[]; onboarded?: boolean };
 };
 
 type AuthStatus = "loading" | "authenticated" | "anonymous";
@@ -24,6 +25,7 @@ interface UserStore {
   isAuthenticated: boolean;
   setUser: (user: User | null) => void;
   setSavedList: (key: SavedListKey, ids: string[]) => void;
+  savePreferences: (preferences: { language: string; regions: string[]; onboarded?: boolean }) => Promise<void>;
   fetchUser: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -35,6 +37,17 @@ export const useUserStore = create<UserStore>()((set) => ({
   isAuthenticated: false,
   setUser: (user) => set({ user, isAuthenticated: Boolean(user), status: user ? "authenticated" : "anonymous" }),
   setSavedList: (key, ids) => set((state) => (state.user ? { user: { ...state.user, [key]: ids } } : state)),
+  savePreferences: async (preferences) => {
+    const res = await fetch(`${API_BASE_URL}/user/preferences`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(preferences),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.error || "Couldn't save your preferences.");
+    set((state) => (state.user ? { user: { ...state.user, preferences: data.preferences } } : state));
+  },
   fetchUser: async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/user/me`, { credentials: "include", cache: "no-store" });

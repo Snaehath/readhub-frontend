@@ -111,7 +111,7 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
           <h1 className="text-3xl font-black leading-tight tracking-tight sm:text-4xl">{news.title}</h1>
           {news.summary && <p className="text-lg leading-relaxed text-muted-foreground">{news.summary}</p>}
           <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-            <AiByline report={news} size="lg" />
+            <AiByline report={news} size="lg" showBio />
             <p className="text-xs text-muted-foreground sm:max-w-[16rem] sm:text-right">
               Written by AI from {linkedSources.length || "the"} linked {linkedSources.length === 1 ? "source" : "sources"}. Verify important details there.
             </p>

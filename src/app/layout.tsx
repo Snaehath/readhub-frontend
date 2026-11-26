@@ -8,6 +8,7 @@ import Navbar from "@/components/navbar";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthMonitor } from "@/components/auth/auth-monitor";
+import { PreferencesOnboarding } from "@/components/profile/preferences-onboarding";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
@@ -36,6 +37,7 @@ export default function RootLayout({
         >
           <div className="min-h-screen flex flex-col">
             <AuthMonitor />
+            <PreferencesOnboarding />
             <Navbar />
             <div className="flex-1">{children}</div>
             <Analytics />

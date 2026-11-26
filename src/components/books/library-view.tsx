@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Library, Search } from "lucide-react";
 import { PoweredBy } from "../misc/powered-by";
+import { FilterChip } from "../misc/filter-chip";
 import { Input } from "@/components/ui/input";
 import { BookCardSkeleton } from "@/components/misc/skeletons";
 import BookCard from "./book-card";
@@ -55,19 +56,9 @@ export default function LibraryView() {
         </div>
       </div>
 
-      <div role="group" aria-label="Filter by subject" className="-mx-1 mb-6 flex gap-2 overflow-x-auto px-1 pb-1">
+      <div role="group" aria-label="Filter by subject" className="-mx-1.5 mb-5 flex gap-2 overflow-x-auto p-1.5">
         {booksCategories.map((item) => (
-          <button
-            type="button"
-            key={item.id}
-            onClick={() => setCategory(item.id)}
-            aria-pressed={category === item.id}
-            className={`min-h-9 shrink-0 rounded-full px-4 text-sm transition-colors ${
-              category === item.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
-            }`}
-          >
-            {item.name}
-          </button>
+          <FilterChip key={item.id} id={item.id} label={item.name} selected={category === item.id} onSelect={() => setCategory(item.id)} />
         ))}
       </div>
 

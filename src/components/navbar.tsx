@@ -9,6 +9,7 @@ import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerTitle, Dra
 import { ThemeToggle } from "@/components/misc/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useUserStore } from "@/lib/store/userStore";
+import ToolTip from "@/components/ui/custom/tooltip";
 
 const NAV_ITEMS = [
   { href: "/news", label: "News", icon: Newspaper },
@@ -61,15 +62,25 @@ export default function Navbar() {
           <div className="hidden min-w-[88px] items-center justify-end gap-2 md:flex">
             {user ? (
               <>
-                <Link href="/profile" aria-label="Your profile" title="Your profile" className="rounded-full">
-                  <Avatar className="ring-2 ring-primary/60 ring-offset-2 ring-offset-background">
-                    <AvatarImage src={user.avatar} alt="" />
-                    <AvatarFallback>{initials}</AvatarFallback>
-                  </Avatar>
-                </Link>
-                <Button variant="ghost" size="icon" onClick={() => void handleLogout()} aria-label="Sign out" title="Sign out">
-                  <LogOut className="h-4 w-4" />
-                </Button>
+                <ToolTip content="Your profile">
+                  <Link href="/profile" aria-label="Your profile" className="rounded-full">
+                    <Avatar className="ring-2 ring-primary/60 ring-offset-2 ring-offset-background">
+                      <AvatarImage src={user.avatar} alt="" />
+                      <AvatarFallback>{initials}</AvatarFallback>
+                    </Avatar>
+                  </Link>
+                </ToolTip>
+                <ToolTip content="Sign out">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => void handleLogout()}
+                    aria-label="Sign out"
+                    className="text-destructive hover:bg-destructive/10 hover:text-destructive focus-visible:ring-destructive/40"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </Button>
+                </ToolTip>
               </>
             ) : status !== "loading" ? (
               <Button asChild><Link href={signInHref}>Sign in</Link></Button>
@@ -112,7 +123,7 @@ export default function Navbar() {
                       </Link>
                     </DrawerClose>
                     <DrawerClose asChild>
-                      <Button variant="outline" onClick={() => void handleLogout()}>
+                      <Button variant="outline" onClick={() => void handleLogout()} className="border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive">
                         <LogOut className="mr-2 h-4 w-4" /> Sign out
                       </Button>
                     </DrawerClose>

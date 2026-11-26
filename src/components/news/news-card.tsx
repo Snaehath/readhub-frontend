@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Globe2, Languages, Loader2, Newspaper, RefreshCcw, SlidersHorizontal } from "lucide-react";
+import Link from "next/link";
+import { Globe2, Loader2, Newspaper, RefreshCcw, Settings2, SlidersHorizontal } from "lucide-react";
 import { PoweredBy } from "../misc/powered-by";
+import { FilterChip } from "../misc/filter-chip";
+import ToolTip from "../ui/custom/tooltip";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -14,11 +17,12 @@ import NewsCardItems from "./news-card-items";
 import NewsTicker from "./news-ticker";
 import ArticleAiModal from "./article-ai-modal";
 import { NewsArticle, PaginatedNewsResponse } from "@/types";
-import { newsCategories, newsCountries, newsLanguages } from "@/constants";
+import { newsCategories, newsCountries } from "@/constants";
 import { fetchNews } from "@/api/news";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { useArticleAi } from "@/lib/hooks/useArticleAi";
 import { useUserStore } from "@/lib/store/userStore";
+import { effectivePreferences } from "@/lib/preferences";
 
 const PAGE_SIZE = 12;
 const FRESHNESS_OPTIONS = [
@@ -33,30 +37,33 @@ const PROVIDERS = {
   NewsAPI: { name: "NewsAPI", href: "https://newsapi.org/", icon: Newspaper },
 } as const;
 
-type Filters = { q: string; category: string; country: string; language: string; sort: string; freshness: string };
+// Filters that live in the URL. Language is not one of them: it comes from the
+// user's profile preferences (English for guests).
+type Filters = { q: string; category: string; country: string; sort: string; freshness: string };
 
 const pick = (value: string | null, allowed: { id: string }[], fallback: string) =>
   value && allowed.some(({ id }) => id === value) ? value : fallback;
 
-function readFilters(params: URLSearchParams): Filters {
+/** Read filters from the URL; the country must be one of the regions this user can switch between. */
+function readFilters(params: URLSearchParams, regions: string[]): Filters {
+  const country = params.get("country");
   return {
     q: (params.get("query") || "").slice(0, 100),
     category: pick(params.get("category"), newsCategories, "all"),
-    country: pick(params.get("country"), newsCountries, "world"),
-    language: pick(params.get("language"), newsLanguages, "en"),
+    country: country && regions.includes(country) ? country : regions[0],
     sort: params.get("sort") === "oldest" ? "oldest" : "latest",
     freshness: pick(params.get("freshness"), FRESHNESS_OPTIONS, "any"),
   };
 }
 
-const URL_KEYS: Record<keyof Filters, { key: string; fallback: string }> = {
+const URL_KEYS: Record<Exclude<keyof Filters, "country">, { key: string; fallback: string }> = {
   q: { key: "query", fallback: "" },
   category: { key: "category", fallback: "all" },
-  country: { key: "country", fallback: "world" },
-  language: { key: "language", fallback: "en" },
   sort: { key: "sort", fallback: "latest" },
   freshness: { key: "freshness", fallback: "any" },
 };
+
+const ALL_REGION_IDS = newsCountries.map(({ id }) => id);
 
 type FeedState = { articles: NewsArticle[]; page: number; hasMore: boolean; total: number; totalIsEstimate: boolean; provider: NonNullable<PaginatedNewsResponse["provider"]> };
 const EMPTY_FEED: FeedState = { articles: [], page: 0, hasMore: false, total: 0, totalIsEstimate: false, provider: "GDELT" };
@@ -66,20 +73,38 @@ export default function NewsCard() {
   const router = useRouter();
   const pathname = usePathname();
   const isAuthenticated = useUserStore((state) => state.isAuthenticated);
+  const authStatus = useUserStore((state) => state.status);
+  const user = useUserStore((state) => state.user);
   const ai = useArticleAi(isAuthenticated);
 
+  // Signed-in users see only the regions and language from their profile;
+  // guests get every region in English.
+  const preferences = effectivePreferences(user);
+  const language = isAuthenticated ? preferences.language : "en";
+  const regions = isAuthenticated ? preferences.regions : ALL_REGION_IDS;
+  const regionsKey = regions.join(",");
+
   // The URL is the single source of truth for filters so links and back/forward work.
-  const filters = useMemo(() => readFilters(new URLSearchParams(searchParams.toString())), [searchParams]);
+  const filters = useMemo(
+    () => readFilters(new URLSearchParams(searchParams.toString()), regionsKey.split(",")),
+    [searchParams, regionsKey],
+  );
   const updateFilters = useCallback((patch: Partial<Filters>) => {
     const params = new URLSearchParams(window.location.search);
     for (const [field, value] of Object.entries(patch) as [keyof Filters, string][]) {
+      if (field === "country") {
+        // The first region is the user's default, so it needs no URL parameter.
+        if (value && value !== regionsKey.split(",")[0]) params.set("country", value);
+        else params.delete("country");
+        continue;
+      }
       const { key, fallback } = URL_KEYS[field];
       if (value && value !== fallback) params.set(key, value);
       else params.delete(key);
     }
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
-  }, [pathname, router]);
+  }, [pathname, router, regionsKey]);
 
   // Search input is local while typing and written to the URL once debounced.
   const [searchInput, setSearchInput] = useState(filters.q);
@@ -108,7 +133,7 @@ export default function NewsCard() {
     const currentGeneration = generation.current;
     setStatus(page === 1 ? "loading" : "loadingMore");
     try {
-      const res = await fetchNews({ ...filters, page, limit: PAGE_SIZE }, signal);
+      const res = await fetchNews({ ...filters, language, page, limit: PAGE_SIZE }, signal);
       if (currentGeneration !== generation.current) return;
       setFeed((previous) => ({
         articles: page === 1 ? res.news : [...previous.articles, ...res.news.filter((item) => !previous.articles.some((existing) => existing.id === item.id))],
@@ -124,20 +149,22 @@ export default function NewsCard() {
       setErrorMessage(error instanceof Error ? error.message : "News is temporarily unavailable.");
       setStatus("error");
     }
-  }, [filters]);
+  }, [filters, language]);
 
   useEffect(() => {
+    // Wait for the session check so a signed-in user's feed isn't fetched twice.
+    if (authStatus === "loading") return;
     generation.current += 1;
     const controller = new AbortController();
     void loadPage(1, controller.signal);
     return () => controller.abort();
-  }, [loadPage, refreshKey]);
+  }, [loadPage, refreshKey, authStatus]);
 
   const hasMore = feed.hasMore;
 
   return (
     <>
-      <NewsTicker country={filters.country} language={filters.language} />
+      {authStatus !== "loading" && <NewsTicker country={filters.country} language={language} />}
       <div className="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
         <ArticleAiModal
           article={ai.article}
@@ -168,54 +195,39 @@ export default function NewsCard() {
               onChange={(event) => setSearchInput(event.target.value)}
               onClear={() => setSearchInput("")}
             />
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-11 w-11 shrink-0 rounded-full"
-              onClick={() => setRefreshKey((key) => key + 1)}
-              disabled={status === "loading"}
-              aria-label="Refresh news"
-              title="Refresh"
-            >
-              <RefreshCcw className={`h-4 w-4 ${status === "loading" ? "animate-spin" : ""}`} />
-            </Button>
+            <ToolTip content="Refresh">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-11 w-11 shrink-0 rounded-full"
+                onClick={() => setRefreshKey((key) => key + 1)}
+                disabled={status === "loading"}
+                aria-label="Refresh news"
+              >
+                <RefreshCcw className={`h-4 w-4 ${status === "loading" ? "animate-spin" : ""}`} />
+              </Button>
+            </ToolTip>
           </div>
         </div>
 
         <div className="mb-6 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div role="group" aria-label="Filter by topic" className="-mx-1 flex min-w-0 gap-2 overflow-x-auto px-1 py-0.5">
+          <div role="group" aria-label="Filter by topic" className="-mx-1.5 flex min-w-0 gap-2 overflow-x-auto p-1.5">
             {newsCategories.map((category) => (
-              <button
-                type="button"
+              <FilterChip
                 key={category.id}
-                onClick={() => updateFilters({ category: category.id })}
-                aria-pressed={filters.category === category.id}
-                className={`min-h-9 shrink-0 rounded-full px-4 text-sm transition-colors ${
-                  filters.category === category.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
-                }`}
-              >
-                {category.name}
-              </button>
+                id={category.id}
+                label={category.name}
+                selected={filters.category === category.id}
+                onSelect={() => updateFilters({ category: category.id })}
+              />
             ))}
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <SearchableSelect
-              label="Country / region"
+            <RegionSwitcher
               value={filters.country}
-              options={COUNTRY_OPTIONS}
-              searchPlaceholder="Search countries…"
-              onChange={(country) => updateFilters({ country, ...(country === "us" || country === "in" ? { language: "en" } : {}) })}
-              className="w-[170px]"
-            />
-            <SearchableSelect
-              label="Language"
-              value={filters.language}
-              options={LANGUAGE_OPTIONS}
-              searchPlaceholder="Search languages…"
-              onChange={(language) => updateFilters({ language })}
-              className="w-[150px]"
+              regions={regions}
+              isAuthenticated={isAuthenticated}
+              onChange={(country) => updateFilters({ country })}
             />
             <FeedFilters sort={filters.sort} freshness={filters.freshness} onChange={updateFilters} />
           </div>
@@ -255,8 +267,52 @@ export default function NewsCard() {
   );
 }
 
-const COUNTRY_OPTIONS: SelectOption[] = newsCountries.map(({ id, name }) => ({ id, name, icon: <CountryFlag code={id} /> }));
-const LANGUAGE_OPTIONS: SelectOption[] = newsLanguages.map(({ id, name }) => ({ id, name, icon: <Languages className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" /> }));
+const regionOption = (id: string): SelectOption => ({
+  id,
+  name: newsCountries.find((country) => country.id === id)?.name ?? id,
+  icon: <CountryFlag code={id} />,
+});
+
+/**
+ * Region switcher. Signed-in users choose among their profile regions (a plain
+ * badge when there is only one); guests can pick any region.
+ */
+function RegionSwitcher({ value, regions, isAuthenticated, onChange }: { value: string; regions: string[]; isAuthenticated: boolean; onChange: (id: string) => void }) {
+  const footer = isAuthenticated ? (
+    <Link href="/profile#preferences" className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-primary hover:underline">
+      <Settings2 className="h-3.5 w-3.5" aria-hidden="true" /> Manage regions &amp; language
+    </Link>
+  ) : (
+    <Link href="/login?next=/news" className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-primary hover:underline">
+      <Settings2 className="h-3.5 w-3.5" aria-hidden="true" /> Sign in to personalise
+    </Link>
+  );
+
+  if (regions.length === 1) {
+    const only = regionOption(regions[0]);
+    return (
+      <ToolTip content="Add more regions in your profile">
+        <Link href="/profile#preferences" className="inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm hover:bg-accent">
+          {only.icon}
+          {only.name}
+          <Settings2 className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
+        </Link>
+      </ToolTip>
+    );
+  }
+
+  return (
+    <SearchableSelect
+      label="Region"
+      value={value}
+      options={regions.map(regionOption)}
+      searchPlaceholder="Search regions…"
+      onChange={onChange}
+      footer={footer}
+      className="w-[180px]"
+    />
+  );
+}
 const SORT_OPTIONS = [{ id: "latest", name: "Newest first" }, { id: "oldest", name: "Oldest first" }];
 
 function Segment({ options, value, onSelect, label }: { options: { id: string; name: string }[]; value: string; onSelect: (id: string) => void; label: string }) {

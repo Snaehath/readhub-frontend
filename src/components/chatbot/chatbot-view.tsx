@@ -187,26 +187,28 @@ function BotMessage({
           )}
           {chat._id && chat.status !== "error" && (
             <>
-              <button
-                type="button"
-                onClick={() => onFeedback(chat._id!, "helpful")}
-                aria-pressed={chat.feedback === "helpful"}
-                aria-label="Helpful"
-                title="Helpful"
-                className={`flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent ${chat.feedback === "helpful" ? "text-emerald-600" : "text-muted-foreground"}`}
-              >
-                <ThumbsUp className={`h-3.5 w-3.5 ${chat.feedback === "helpful" ? "fill-current" : ""}`} />
-              </button>
-              <button
-                type="button"
-                onClick={() => onFeedback(chat._id!, "not_helpful")}
-                aria-pressed={chat.feedback === "not_helpful"}
-                aria-label="Not helpful"
-                title="Not helpful"
-                className={`flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent ${chat.feedback === "not_helpful" ? "text-rose-600" : "text-muted-foreground"}`}
-              >
-                <ThumbsDown className={`h-3.5 w-3.5 ${chat.feedback === "not_helpful" ? "fill-current" : ""}`} />
-              </button>
+              <ToolTip content="Helpful">
+                <button
+                  type="button"
+                  onClick={() => onFeedback(chat._id!, "helpful")}
+                  aria-pressed={chat.feedback === "helpful"}
+                  aria-label="Helpful"
+                  className={`flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent ${chat.feedback === "helpful" ? "text-emerald-600" : "text-muted-foreground"}`}
+                >
+                  <ThumbsUp className={`h-3.5 w-3.5 ${chat.feedback === "helpful" ? "fill-current" : ""}`} />
+                </button>
+              </ToolTip>
+              <ToolTip content="Not helpful">
+                <button
+                  type="button"
+                  onClick={() => onFeedback(chat._id!, "not_helpful")}
+                  aria-pressed={chat.feedback === "not_helpful"}
+                  aria-label="Not helpful"
+                  className={`flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent ${chat.feedback === "not_helpful" ? "text-rose-600" : "text-muted-foreground"}`}
+                >
+                  <ThumbsDown className={`h-3.5 w-3.5 ${chat.feedback === "not_helpful" ? "fill-current" : ""}`} />
+                </button>
+              </ToolTip>
             </>
           )}
         </div>

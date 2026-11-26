@@ -33,7 +33,7 @@ export default function AiByline({ report, size = "sm", showBio = false }: { rep
   const avatar = size === "lg" ? "h-12 w-12 text-base" : "h-8 w-8 text-xs";
 
   return (
-    <div className="flex min-w-0 items-center gap-3 text-left" title={persona.bio}>
+    <div className="flex min-w-0 items-center gap-3 text-left">
       <span
         aria-hidden="true"
         className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br font-bold text-white ${PERSONA_COLORS[persona.id] || "from-indigo-500 to-violet-600"} ${avatar}`}

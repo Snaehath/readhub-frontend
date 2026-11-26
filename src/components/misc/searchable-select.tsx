@@ -16,10 +16,12 @@ interface SearchableSelectProps {
   onChange: (value: string) => void;
   searchPlaceholder?: string;
   className?: string;
+  /** Optional content under the list, e.g. a settings link. */
+  footer?: ReactNode;
 }
 
 /** shadcn-style combobox: a select whose list can be filtered by typing. */
-export function SearchableSelect({ label, value, options, onChange, searchPlaceholder = "Search…", className }: SearchableSelectProps) {
+export function SearchableSelect({ label, value, options, onChange, searchPlaceholder = "Search…", className, footer }: SearchableSelectProps) {
   const [open, setOpen] = useState(false);
   const selected = options.find((option) => option.id === value);
 
@@ -31,7 +33,6 @@ export function SearchableSelect({ label, value, options, onChange, searchPlaceh
           role="combobox"
           aria-expanded={open}
           aria-label={`${label}: ${selected?.name ?? "none"}`}
-          title={label}
           className={cn("h-10 justify-between gap-2 rounded-full px-4 font-normal", className)}
         >
           <span className="flex min-w-0 items-center gap-2">
@@ -64,6 +65,7 @@ export function SearchableSelect({ label, value, options, onChange, searchPlaceh
             </CommandGroup>
           </CommandList>
         </Command>
+        {footer && <div className="border-t" onClick={() => setOpen(false)}>{footer}</div>}
       </PopoverContent>
     </Popover>
   );

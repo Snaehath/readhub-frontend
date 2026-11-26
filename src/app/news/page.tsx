@@ -1,22 +1,17 @@
 import { Suspense } from "react";
-import { CardSkeleton } from "@/components/misc/skeletons";
-import { NewsCardLoader } from "@/components/misc/card-loader";
 import { Metadata } from "next";
+import { CardsSkeleton } from "@/components/misc/skeletons";
+import { NewsCardLoader } from "@/components/misc/card-loader";
 
 export const metadata: Metadata = {
-  title: "Global News",
-  description:
-    "Browse recent news headlines from the US and India by topic.",
+  title: "News",
+  description: "Browse global and regional headlines by topic, country, language, and freshness, with AI explanations and forecasts.",
 };
 
-export const dynamic = "force-dynamic";
-
-export default async function NewsPage() {
+export default function NewsPage() {
   return (
-    <div className="w-full">
-      <Suspense fallback={<CardSkeleton />}>
-        <NewsCardLoader />
-      </Suspense>
-    </div>
+    <Suspense fallback={<div className="container mx-auto px-4 py-6 sm:px-6 lg:px-8"><CardsSkeleton /></div>}>
+      <NewsCardLoader />
+    </Suspense>
   );
 }

@@ -41,7 +41,7 @@ export function BookCardSkeleton() {
   return (
     <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 shadow-sm flex flex-col h-full animate-pulse">
       {/* Cover Image Placeholder with shimmer effect */}
-      <div className="relative h-72 w-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
+      <div className="relative h-52 w-full bg-zinc-100 dark:bg-zinc-800 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
       </div>
 
@@ -71,39 +71,8 @@ export function BookCardSkeleton() {
 
 export function CardsSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 animate-pulse">
-      <CardSkeleton />
-      <CardSkeleton />
-      <CardSkeleton />
-      <CardSkeleton />
-    </div>
-  );
-}
-
-export function BooksSkeleton() {
-  return (
-    <div className="animate-pulse">
-      <BookCardSkeleton />
-    </div>
-  );
-}
-
-
-export function AiInsightSkeleton() {
-  return (
-    <div className="space-y-4 py-2">
-      <div className="space-y-3 pt-2">
-        <div className="h-4 bg-indigo-100/50 dark:bg-indigo-900/20 rounded-md w-full animate-pulse"></div>
-        <div className="h-4 bg-indigo-100/50 dark:bg-indigo-900/20 rounded-md w-[90%] animate-pulse delay-75"></div>
-        <div className="h-4 bg-indigo-100/50 dark:bg-indigo-900/20 rounded-md w-[95%] animate-pulse delay-150"></div>
-        <div className="h-4 bg-indigo-100/50 dark:bg-indigo-900/20 rounded-md w-[85%] animate-pulse delay-300"></div>
-      </div>
-
-      <div className="flex items-center gap-1.5 pt-2">
-        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-        <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-bounce"></span>
-      </div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {Array.from({ length: 8 }, (_, index) => <CardSkeleton key={index} />)}
     </div>
   );
 }

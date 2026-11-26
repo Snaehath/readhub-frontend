@@ -1,5 +1,4 @@
 /* eslint-disable @next/next/no-img-element */
-import Link from "next/link";
 import { BookOpen, ExternalLink } from "lucide-react";
 
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,9 +16,11 @@ export default function BookCard({ book }: BookCardProps) {
     BOOK_CATEGORY_COLORS[book.tag as Category] ||
     "bg-gray-200 text-gray-700 border-gray-300";
 
-  const coverUrl = book.cover_edition_key
-    ? `https://covers.openlibrary.org/b/olid/${book.cover_edition_key}-M.jpg`
-    : `/ReadHub_PlaceHolder.png`;
+  const coverUrl = book.cover_id
+    ? `https://covers.openlibrary.org/b/id/${book.cover_id}-M.jpg`
+    : book.cover_edition_key
+      ? `https://covers.openlibrary.org/b/olid/${book.cover_edition_key}-M.jpg`
+      : "/ReadHub_PlaceHolder.png";
 
   const lendingId = book.lending_identifier_s?.trim();
   const archiveUrl = lendingId
@@ -36,11 +37,12 @@ export default function BookCard({ book }: BookCardProps) {
       <div className="relative h-52 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
         <img
           src={coverUrl}
+          loading="lazy"
           onError={(e) => {
             e.currentTarget.src = "/ReadHub_PlaceHolder.png";
           }}
           className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-          alt={book.title}
+          alt=""
         />
         {/* Gradient overlay */}
         <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
@@ -70,7 +72,7 @@ export default function BookCard({ book }: BookCardProps) {
       <CardFooter className="px-3 py-2.5 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/60 mt-auto">
         {archiveUrl ? (
           <ToolTip content="Read on Internet Archive">
-            <Link
+            <a
               target="_blank"
               rel="noopener noreferrer"
               href={archiveUrl}
@@ -78,7 +80,7 @@ export default function BookCard({ book }: BookCardProps) {
             >
               <BookOpen className="w-3.5 h-3.5" />
               Read Now
-            </Link>
+            </a>
           </ToolTip>
         ) : (
           <span className="text-[10px] font-semibold text-muted-foreground">
@@ -87,7 +89,7 @@ export default function BookCard({ book }: BookCardProps) {
         )}
 
         <ToolTip content="View on OpenLibrary">
-          <Link
+          <a
             target="_blank"
             rel="noopener noreferrer"
             href={openLibraryUrl}
@@ -95,7 +97,7 @@ export default function BookCard({ book }: BookCardProps) {
           >
             Details
             <ExternalLink className="w-3 h-3 transition-transform group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5" />
-          </Link>
+          </a>
         </ToolTip>
       </CardFooter>
     </Card>

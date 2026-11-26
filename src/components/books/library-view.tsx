@@ -1,172 +1,101 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { Library, Search } from "lucide-react";
+import { PoweredBy } from "../misc/powered-by";
 import { Input } from "@/components/ui/input";
-import { useEffect, useState, Suspense } from "react";
 import { BookCardSkeleton } from "@/components/misc/skeletons";
-import { BooksCardLoader } from "@/components/misc/card-loader";
+import BookCard from "./book-card";
 import { Book } from "@/types";
 import { booksCategories } from "@/constants";
 import { searchOpenLibrary } from "@/api/books";
+import { useDebounce } from "@/lib/hooks/useDebounce";
 
-import { Search, ChevronDown, ChevronUp } from "lucide-react";
+const PAGE_SIZE = 20;
 
-const LibraryView = () => {
+export default function LibraryView() {
   const [books, setBooks] = useState<Book[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [showAll, setShowAll] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const MAX_CATEGORIES = 4;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [category, setCategory] = useState("all");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const debouncedQuery = useDebounce(searchQuery.trim(), 400);
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery.trim());
-    }, 400);
-
-    return () => clearTimeout(handler);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    const fetchBooks = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const cleaned = await searchOpenLibrary(
-          debouncedSearchQuery,
-          debouncedSearchQuery ? 4 : 15,
-          selectedCategory
-        );
-
-        setBooks(cleaned);
-      } catch (err: unknown) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError("Unknown error occurred.");
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchBooks();
-  }, [debouncedSearchQuery, selectedCategory]);
-
-  const handleBookSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
-  const categoriesToShow = showAll
-    ? booksCategories
-    : booksCategories.slice(0, MAX_CATEGORIES);
+    const controller = new AbortController();
+    setIsLoading(true);
+    setError(false);
+    searchOpenLibrary(debouncedQuery, PAGE_SIZE, category, controller.signal)
+      .then(setBooks)
+      .catch(() => {
+        if (!controller.signal.aborted) setError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsLoading(false);
+      });
+    return () => controller.abort();
+  }, [debouncedQuery, category]);
 
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-2xl font-bold">Books</h2>
-          </div>
-        {!isLoading && books.length > 0 && (
-          <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-            {books.length} books found
-          </span>
-        )}
-      </div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="flex flex-wrap items-center gap-2">
-          {categoriesToShow.map((cat) => (
-            <button
-              type="button"
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`min-h-10 rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 transition-colors duration-150 flex items-center justify-center ${
-                selectedCategory === cat.id
-                  ? "bg-stone-600 text-white scale-95"
-                  : "bg-stone-100 text-stone-700 hover:bg-stone-200 dark:bg-zinc-800 dark:text-zinc-200"
-              }`}
-              aria-pressed={selectedCategory === cat.id}
-            >
-              {cat.name}
-            </button>
-          ))}
-          {!showAll && booksCategories.length > MAX_CATEGORIES && (
-            <button
-              type="button"
-              onClick={() => setShowAll(true)}
-              className="min-h-10 rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-stone-100 text-stone-800 hover:bg-stone-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors duration-150 flex items-center justify-center gap-1"
-            >
-              More
-              <ChevronDown className="w-3 h-3" />
-            </button>
-          )}
-          {showAll && booksCategories.length > MAX_CATEGORIES && (
-            <button
-              type="button"
-              onClick={() => setShowAll(false)}
-              className="min-h-10 rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-stone-100 text-stone-800 hover:bg-stone-200 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors duration-150 flex items-center justify-center gap-1"
-            >
-              Less
-              <ChevronUp className="w-3 h-3" />
-            </button>
-          )}
+    <div className="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold tracking-tight">Books</h1>
+          <PoweredBy name="Open Library" href="https://openlibrary.org" icon={Library} iconClassName="bg-[#e2dcc5] text-[#3d3424] dark:bg-[#3d3424] dark:text-[#e2dcc5]" />
         </div>
-
-        <div className="w-full sm:w-1/3 md:w-1/4">
+        <div className="w-full lg:max-w-md">
           <Input
-            type="text"
-            startIcon={<Search className="w-4 h-4" />}
-            placeholder="Search for books..."
+            type="search"
+            placeholder="Search by title, author, or subject…"
             value={searchQuery}
-            onChange={handleBookSearch}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            onClear={() => setSearchQuery("")}
             aria-label="Search books"
-            className="rounded-full w-full"
           />
         </div>
       </div>
 
-      {/* Loading Skeletons */}
-      {isLoading && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {[...Array(10)].map((_, i) => (
-            <BookCardSkeleton key={i} />
-          ))}
-        </div>
-      )}
+      <div role="group" aria-label="Filter by subject" className="-mx-1 mb-6 flex gap-2 overflow-x-auto px-1 pb-1">
+        {booksCategories.map((item) => (
+          <button
+            type="button"
+            key={item.id}
+            onClick={() => setCategory(item.id)}
+            aria-pressed={category === item.id}
+            className={`min-h-9 shrink-0 rounded-full px-4 text-sm transition-colors ${
+              category === item.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
+            }`}
+          >
+            {item.name}
+          </button>
+        ))}
+      </div>
 
-      {error && (
-        <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/20 dark:text-red-300">
-          We couldn&apos;t load the book catalog. Check your connection and try again.
+      {error ? (
+        <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-6 text-center text-sm text-destructive">
+          We couldn&apos;t reach Open Library. Check your connection and try again.
         </div>
-      )}
-
-      {!isLoading && !error && books.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="mb-4 rounded-full bg-stone-100 p-6 dark:bg-zinc-900">
-            <Search className="h-8 w-8 text-stone-600 dark:text-zinc-400" />
+      ) : isLoading ? (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {Array.from({ length: 10 }, (_, index) => <BookCardSkeleton key={index} />)}
+        </div>
+      ) : books.length === 0 ? (
+        <div className="flex flex-col items-center py-20 text-center">
+          <span className="mb-4 rounded-full bg-muted p-5"><Search className="h-7 w-7 text-muted-foreground" aria-hidden="true" /></span>
+          <h2 className="text-lg font-semibold">No books match</h2>
+          <p className="max-w-xs text-sm text-muted-foreground">Try a different search or subject.</p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {books.map((book) => <BookCard key={book.work_key} book={book} />)}
           </div>
-          <h3 className="text-lg font-bold text-foreground">No books match those filters</h3>
-          <p className="text-muted-foreground max-w-xs mx-auto">
-            Try adjusting your search or category filters to find what
-            you&apos;re looking for.
+          <p className="mt-10 text-center text-xs text-muted-foreground">
+            Book data and covers from{" "}
+            <a href="https://openlibrary.org" target="_blank" rel="noopener noreferrer" className="font-medium underline-offset-2 hover:underline">Open Library</a>, an open project of the Internet Archive.
           </p>
-        </div>
-      )}
-
-      {!isLoading && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {books.map((book) => (
-            <Suspense key={book.work_key} fallback={<BookCardSkeleton />}>
-              <BooksCardLoader book={book} />
-            </Suspense>
-          ))}
-        </div>
+        </>
       )}
     </div>
   );
-};
-
-export default LibraryView;
+}

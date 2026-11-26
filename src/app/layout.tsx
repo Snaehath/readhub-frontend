@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     default: "ReadHub | Your Digital Reading Companion",
   },
   description:
-    "Browse recent US and India news, explore books, and get AI-assisted context on current stories.",
+    "Browse global news coverage, explore books, and get AI-assisted context on current stories.",
 };
 
 export default function RootLayout({

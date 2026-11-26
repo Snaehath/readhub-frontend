@@ -21,18 +21,15 @@ import { API_BASE_URL } from "@/constants";
 import { AiNews, AiNewsResponse } from "@/types";
 import { useUserStore } from "@/lib/store/userStore";
 import { format, isValid } from "date-fns";
+import { Input } from "@/components/ui/input";
+import { safeHttpUrl } from "@/lib/utils";
+import AiByline from "./ai-byline";
 
 function DailyEditionFeature({ article }: { article: AiNews }) {
-  const wordCount = article.content.trim().split(/\s+/).filter(Boolean).length;
-  const readMinutes = Math.max(1, Math.ceil(wordCount / 220));
+  const readMinutes = Math.max(1, Math.ceil((article.wordCount || 0) / 220));
   const editionSources = (article.sources || []).flatMap((source, sourceIndex) => {
-    try {
-      const parsed = new URL(source.url || "");
-      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return [];
-      return [{ ...source, url: parsed.toString(), citationNumber: source.citationNumber || sourceIndex + 1 }];
-    } catch {
-      return [];
-    }
+    const url = safeHttpUrl(source.url);
+    return url ? [{ ...source, url: url.toString(), citationNumber: source.citationNumber || sourceIndex + 1 }] : [];
   });
   const editionDate = new Date(`${article.editionDate}T12:00:00`);
   const isCurrentEdition = article.editionDate === new Date().toISOString().slice(0, 10);
@@ -55,7 +52,7 @@ function DailyEditionFeature({ article }: { article: AiNews }) {
 
       <div className="grid gap-8 p-5 sm:p-7 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.72fr)] lg:gap-10">
         <div className="flex flex-col items-start">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-primary">ReadHub AI · Daily Report Writer</p>
+          <div className="mb-4"><AiByline report={article} /></div>
           <h2 id="daily-edition-title" className="text-2xl font-bold leading-tight tracking-tight text-foreground sm:text-3xl">{article.title}</h2>
           <p className="mt-4 text-base leading-7 text-muted-foreground">{article.summary}</p>
           <p className="mt-4 text-xs leading-5 text-muted-foreground">An AI-written synthesis of published reporting. Follow the source links to check the underlying coverage.</p>
@@ -97,8 +94,9 @@ function DailyEditionFeature({ article }: { article: AiNews }) {
 }
 
 const AiNewsHub = () => {
-  const { user, _hasHydrated } = useUserStore();
+  const isAdmin = useUserStore((state) => state.user?.role === "admin");
   const [loading, setLoading] = useState(false);
+  const [topic, setTopic] = useState("");
 
   const aiNewsKey = `${API_BASE_URL}/ai-hub/news/all`;
   const { data, isLoading, error } = useSWR<AiNewsResponse>(
@@ -106,33 +104,26 @@ const AiNewsHub = () => {
     fetcher,
   );
 
-  const handleGenerateNews = async () => {
-    if (!user) return;
+  const handleGenerateNews = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const trimmedTopic = topic.trim();
+    if (!isAdmin || !trimmedTopic) return;
     setLoading(true);
-    toast.loading("Writing an AI report from current coverage...", { id: "gen-news" });
-
+    toast.loading("Writing an AI report from saved coverage…", { id: "gen-news" });
     try {
       const res = await fetch(`${API_BASE_URL}/ai-hub/news/trigger`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ topic: "Top trending global news" }),
+        body: JSON.stringify({ topic: trimmedTopic }),
       });
-
-      if (res.ok) {
-        toast.success("AI report published.", { id: "gen-news" });
-        mutate(`${API_BASE_URL}/ai-hub/news/all`);
-      } else {
-        const errorData = await res.json();
-        toast.error(errorData.error || "AI nodes are currently saturated.", {
-          id: "gen-news",
-        });
-      }
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || "The report could not be written. Please try again.");
+      toast.success("AI report published.", { id: "gen-news" });
+      setTopic("");
+      void mutate(aiNewsKey);
     } catch (err) {
-      console.error("AI news generation error:", err);
-      toast.error("Global data synchronization failed.", { id: "gen-news" });
+      toast.error(err instanceof Error ? err.message : "The report could not be written.", { id: "gen-news" });
     } finally {
       setLoading(false);
     }
@@ -140,14 +131,8 @@ const AiNewsHub = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-        <Typography
-          variant="muted"
-          className="text-sm font-black uppercase tracking-widest animate-pulse"
-        >
-          Loading AI reports...
-        </Typography>
+      <div className="flex items-center justify-center gap-3 py-20 text-sm text-muted-foreground" role="status">
+        <Loader2 className="h-5 w-5 animate-spin" /> Loading AI reports…
       </div>
     );
   }
@@ -160,21 +145,23 @@ const AiNewsHub = () => {
       <div className="space-y-12">
       {dailyEdition && <DailyEditionFeature article={dailyEdition} />}
 
-      {/* Generate Interface (Admin Only) */}
-      {_hasHydrated && user?.role === "admin" && (
-        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
+      {isAdmin && (
+        <form onSubmit={handleGenerateNews} className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-start gap-3">
             <div className="rounded-xl bg-primary/10 p-2.5 text-primary"><Microscope className="h-5 w-5" /></div>
             <div>
-              <h2 className="font-semibold text-foreground">Create a one-off report</h2>
-              <p className="mt-1 max-w-xl text-sm text-muted-foreground">Write an AI article from current saved coverage. Daily editions publish automatically when the scheduled workflow is configured.</p>
+              <h2 className="font-semibold text-foreground">Write a report</h2>
+              <p className="mt-1 max-w-xl text-sm text-muted-foreground">Admin only. Enter a topic; the AI researches saved US and India coverage and publishes a cited article.</p>
             </div>
           </div>
-          <Button onClick={handleGenerateNews} disabled={loading} className="h-11 shrink-0 cursor-pointer rounded-full px-5">
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-            {loading ? "Writing report…" : "Generate report"}
-          </Button>
-        </div>
+          <div className="flex w-full gap-2 lg:max-w-md">
+            <Input value={topic} onChange={(event) => setTopic(event.target.value)} maxLength={200} placeholder="e.g. India stock market, AI regulation" aria-label="Report topic" disabled={loading} />
+            <Button type="submit" disabled={loading || !topic.trim()} className="h-11 shrink-0 rounded-full px-5">
+              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+              {loading ? "Writing…" : "Generate"}
+            </Button>
+          </div>
+        </form>
       )}
 
       {/* Articles Grid */}
@@ -209,21 +196,25 @@ const AiNewsHub = () => {
               <Link
                 key={article._id}
                 href={`/ai-news/${article._id}`}
-                className="group flex flex-col h-full bg-card hover:bg-zinc-50/50 dark:hover:bg-zinc-900/50 rounded-[2.5rem] border border-zinc-200/60 dark:border-zinc-800/60 p-6 transition-all duration-500 hover:shadow-2xl hover:shadow-indigo-500/5 hover:-translate-y-2 relative overflow-hidden"
+                className="group flex h-full flex-col rounded-2xl border bg-card p-6 transition-shadow hover:shadow-lg"
               >
-                <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-10 transition-opacity">
-                  <Newspaper className="w-24 h-24 -mr-12 -mt-12 rotate-[-15deg]" />
-                </div>
-
                 <div className="flex items-center gap-2 mb-6">
                   <span className="text-[10px] font-black uppercase tracking-widest bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 px-3 py-1 rounded-full">
                     {article.reportType === "daily" ? "Daily edition" : "AI report"}
                   </span>
                   <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-bold tracking-widest ml-auto">
-                    <Calendar className="w-3 h-3" />
-                    {isValid(new Date(article.createdAt))
-                      ? format(new Date(article.createdAt), "MMM d, yyyy")
-                      : "Date unavailable"}
+                    {isValid(new Date(article.createdAt)) && (
+                      <>
+                        <Calendar className="w-3 h-3" aria-hidden="true" />
+                        {format(new Date(article.createdAt), "MMM d, yyyy")}
+                      </>
+                    )}
+                    {article.wordCount ? (
+                      <>
+                        <Clock3 className="ml-1.5 w-3 h-3" aria-hidden="true" />
+                        {Math.max(1, Math.ceil(article.wordCount / 220))} min read
+                      </>
+                    ) : null}
                   </div>
                 </div>
 
@@ -239,21 +230,11 @@ const AiNewsHub = () => {
                     variant="muted"
                     className="text-sm line-clamp-3 mb-6"
                   >
-                    {article.summary || article.content}
+                    {article.summary}
                   </Typography>
 
                   <div className="mt-auto pt-6 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/50">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-full bg-linear-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-[10px] font-black uppercase">
-                        R
-                      </div>
-                      <Typography
-                        variant="small"
-                        className="text-[11px] font-black uppercase tracking-wider truncate max-w-[120px]"
-                      >
-                        {article.authorName || "ReadHub AI"}
-                      </Typography>
-                    </div>
+                    <AiByline report={article} />
 
                     <div className="flex items-center gap-2">
                       {article.sources?.length ? (

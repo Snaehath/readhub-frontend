@@ -1,151 +1,70 @@
 import { API_BASE_URL } from "@/constants";
-import { NewsArticle, RawNewsArticle, PaginatedNewsResponse } from "@/types";
+import { NewsArticle, PaginatedNewsResponse, RawNewsArticle } from "@/types";
 
-export const fetchNews = async (
-  page: number = 1,
-  limit: number = 12,
-  category: string = "all",
-  country: string = "us",
-  sort: string = "latest",
-  freshness: string = "any"
-): Promise<PaginatedNewsResponse> => {
-  const params = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
-    sort,
-    freshness,
-  });
+export interface NewsQuery {
+  q?: string;
+  page?: number;
+  limit?: number;
+  category?: string;
+  country?: string;
+  sort?: string;
+  freshness?: string;
+  language?: string;
+}
 
-  if (category !== "all") {
-    params.append("category", category);
+/** US and India English news come from ReadHub's saved archive; everything else is the live global feed. */
+export const savedRegionFor = (country: string, language: string): "us" | "in" | undefined =>
+  (country === "us" || country === "in") && language === "en" ? country : undefined;
+
+/** Path and query string for a news request, relative to the API base URL. */
+export function buildNewsPath({ q, page = 1, limit = 12, category = "all", country = "world", sort = "latest", freshness = "any", language = "en" }: NewsQuery) {
+  const params = new URLSearchParams({ page: String(page), limit: String(limit), sort, freshness });
+  if (q?.trim()) params.set("q", q.trim());
+  if (category !== "all") params.set("category", category);
+
+  const savedRegion = savedRegionFor(country, language);
+  if (!savedRegion) {
+    params.set("language", language);
+    if (country !== "world") params.set("country", country);
   }
+  const endpoint = savedRegion === "in" ? "/news/newIn/pagination" : savedRegion === "us" ? "/news/new/pagination" : "/news/world/pagination";
+  return { path: `${endpoint}?${params.toString()}`, savedRegion };
+}
 
-  const endpoint =
-    country === "in"
-      ? `${API_BASE_URL}/news/newIn/pagination`
-      : `${API_BASE_URL}/news/new/pagination`;
+export const toNewsArticle = (article: RawNewsArticle, savedRegion?: "us" | "in"): NewsArticle => ({
+  id: article._id || article.id || article.url,
+  title: article.title,
+  description: article.description,
+  url: article.url,
+  urlToImage: article.urlToImage || undefined,
+  publishedAt: article.publishedAt,
+  source: article.source ?? { name: "Unknown" },
+  category: article.category ?? [],
+  sourceCountry: article.sourceCountry,
+  sourceLanguage: article.sourceLanguage,
+  dateLabel: article.dateLabel,
+  savedRegion: savedRegion && article._id ? savedRegion : undefined,
+});
 
-  const res = await fetch(`${endpoint}?${params.toString()}`, {
-    cache: "no-store",
-  });
-
+export async function parseNewsResponse(res: Response, savedRegion?: "us" | "in"): Promise<PaginatedNewsResponse> {
   if (!res.ok) {
-    throw new Error(`Failed to fetch news for ${country}`);
+    const error = await res.json().catch(() => null);
+    throw new Error(error?.error || "News is temporarily unavailable.");
   }
-
   const data = await res.json();
-  
-  // Format consistent with types
-  const news: NewsArticle[] = data.articles.map((article: RawNewsArticle) => ({
-    id: article._id?.toString() || article.id || "",
-    title: article.title,
-    description: article.description,
-    content: article.content,
-    url: article.url,
-    urlToImage: article.urlToImage,
-    publishedAt: article.publishedAt,
-    dateOriginal: article.publishedAt,
-    source: article.source ?? { name: "Unknown" },
-    category: article.category ?? [],
-  }));
-
   return {
-    news,
-    totalPages: data.totalPages,
-    currentPage: data.currentPage,
-    totalArticles: data.totalArticles,
+    news: (data.articles || []).map((article: RawNewsArticle) => toNewsArticle(article, savedRegion)),
+    totalPages: data.totalPages ?? 0,
+    currentPage: data.currentPage ?? 1,
+    totalArticles: data.totalArticles ?? 0,
+    hasMore: typeof data.hasMore === "boolean" ? data.hasMore : (data.currentPage ?? 1) < (data.totalPages ?? 0),
+    totalIsEstimate: Boolean(data.totalIsEstimate),
+    provider: data.provider || (savedRegion === "us" ? "NewsAPI" : savedRegion === "in" ? "GNews" : "GDELT"),
   };
-};
+}
 
-export const searchNewsApi = async (
-  q: string,
-  page: number = 1,
-  limit: number = 12,
-  country: string = "us",
-  category: string = "all",
-  sort: string = "latest",
-  freshness: string = "any"
-): Promise<PaginatedNewsResponse> => {
-  const params = new URLSearchParams({
-    q,
-    page: String(page),
-    limit: String(limit),
-    sort,
-    freshness,
-  });
-
-  if (category && category !== "all") {
-    params.append("category", category);
-  }
-
-  const endpoint =
-    country === "in" 
-      ? `${API_BASE_URL}/news/search/in` 
-      : `${API_BASE_URL}/news/search/us`;
-
-  const res = await fetch(`${endpoint}?${params.toString()}`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to search news for ${country}`);
-  }
-
-  const data = await res.json();
-
-  const news: NewsArticle[] = data.articles.map((article: RawNewsArticle) => ({
-    id: article._id?.toString() || article.id || "",
-    title: article.title,
-    description: article.description,
-    content: article.content,
-    url: article.url,
-    urlToImage: article.urlToImage,
-    publishedAt: article.publishedAt,
-    dateOriginal: article.publishedAt,
-    source: article.source ?? { name: "Unknown" },
-    category: article.category ?? [],
-  }));
-
-  return {
-    news,
-    totalPages: data.totalPages,
-    currentPage: data.currentPage,
-    totalArticles: data.totalArticles,
-  };
-};
-
-export const refreshNewsApi = async (country: "us" | "in") => {
-  const res = await fetch(`${API_BASE_URL}/news/fetch-categories/${country}`, {
-    method: "POST",
-    credentials: "include",
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to refresh ${country.toUpperCase()} news`);
-  }
-  return res.json();
-};
-
-export const getTickerNewsApi = async (
-  country: string = "us"
-): Promise<NewsArticle[]> => {
-  const endpoint =
-    country === "in"
-      ? `${API_BASE_URL}/news/newIn/pagination`
-      : `${API_BASE_URL}/news/new/pagination`;
-
-  // Fetch more for ticker to ensure variety
-  const res = await fetch(`${endpoint}?page=1&limit=20`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) return [];
-
-  const data = await res.json();
-  return data.articles.map((article: RawNewsArticle) => ({
-    id: article._id?.toString() || article.id || "",
-    title: article.title,
-    url: article.url,
-    category: article.category ?? [],
-    publishedAt: article.publishedAt,
-  }));
-};
+export async function fetchNews(query: NewsQuery, signal?: AbortSignal): Promise<PaginatedNewsResponse> {
+  const { path, savedRegion } = buildNewsPath(query);
+  const res = await fetch(`${API_BASE_URL}${path}`, { signal });
+  return parseNewsResponse(res, savedRegion);
+}

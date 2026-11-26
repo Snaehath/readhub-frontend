@@ -9,6 +9,70 @@
   { id: "entertainment", name: "Entertainment" },
 ];
 
+export const newsCountries = [
+  { id: "world", name: "Global" },
+  { id: "us", name: "United States" },
+  { id: "in", name: "India" },
+  { id: "gb", name: "United Kingdom" },
+  { id: "ca", name: "Canada" },
+  { id: "au", name: "Australia" },
+  { id: "fr", name: "France" },
+  { id: "de", name: "Germany" },
+  { id: "es", name: "Spain" },
+  { id: "it", name: "Italy" },
+  { id: "br", name: "Brazil" },
+  { id: "mx", name: "Mexico" },
+  { id: "jp", name: "Japan" },
+  { id: "kr", name: "South Korea" },
+  { id: "cn", name: "China" },
+  { id: "ru", name: "Russia" },
+  { id: "za", name: "South Africa" },
+  { id: "ng", name: "Nigeria" },
+  { id: "eg", name: "Egypt" },
+  { id: "ae", name: "United Arab Emirates" },
+  { id: "sg", name: "Singapore" },
+  { id: "bd", name: "Bangladesh" },
+  { id: "id", name: "Indonesia" },
+  { id: "my", name: "Malaysia" },
+  { id: "pk", name: "Pakistan" },
+  { id: "ph", name: "Philippines" },
+  { id: "th", name: "Thailand" },
+  { id: "vn", name: "Vietnam" },
+  { id: "sa", name: "Saudi Arabia" },
+  { id: "tr", name: "Turkey" },
+  { id: "ua", name: "Ukraine" },
+  { id: "pl", name: "Poland" },
+  { id: "nl", name: "Netherlands" },
+  { id: "se", name: "Sweden" },
+  { id: "ch", name: "Switzerland" },
+  { id: "ke", name: "Kenya" },
+  { id: "gh", name: "Ghana" },
+  { id: "ma", name: "Morocco" },
+  { id: "il", name: "Israel" },
+  { id: "pt", name: "Portugal" },
+  { id: "ar", name: "Argentina" },
+  { id: "cl", name: "Chile" },
+  { id: "co", name: "Colombia" },
+  { id: "pe", name: "Peru" },
+];
+
+export const newsLanguages = [
+  { id: "en", name: "English" },
+  { id: "all", name: "All languages" },
+  { id: "ar", name: "Arabic" },
+  { id: "zh", name: "Chinese" },
+  { id: "fr", name: "French" },
+  { id: "de", name: "German" },
+  { id: "hi", name: "Hindi" },
+  { id: "it", name: "Italian" },
+  { id: "ja", name: "Japanese" },
+  { id: "ko", name: "Korean" },
+  { id: "pt", name: "Portuguese" },
+  { id: "ru", name: "Russian" },
+  { id: "es", name: "Spanish" },
+  { id: "tr", name: "Turkish" },
+];
+
 export const NEWS_CATEGORY_COLORS: Record<string, string> = {
   technology: "bg-blue-100 text-blue-900 border-blue-300 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-800",
   sports: "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-200 dark:border-emerald-800",
@@ -28,11 +92,6 @@ export const BOOK_CATEGORY_COLORS: Record<string, string> = {
   sports: "bg-orange-100 text-orange-950 border-orange-300 dark:bg-orange-950 dark:text-orange-200 dark:border-orange-800",
   science: "bg-indigo-100 text-indigo-950 border-indigo-300 dark:bg-indigo-950 dark:text-indigo-200 dark:border-indigo-800",
 };
-
-export const newsCountries = [
-  { id: "us", name: "USA", tag: "US", icon: "/country_icons/us_icon.png" },
-  { id: "in", name: "INDIA", tag: "IN", icon: "/country_icons/india_icon.png" },
-];
 
 export const avatarOptions = [
   {
@@ -72,13 +131,13 @@ export interface Suggestion {
 
 export const suggestions: Suggestion[] = [
   { icon: "🌍", label: "Top Story",      query: "What is the biggest story in the world right now?" },
-  { icon: "⚡", label: "News Briefing",  query: "Give me todays news in 60 seconds" },
+  { icon: "⚡", label: "News Briefing",  query: "Give me today’s news in 60 seconds" },
   { icon: "📈", label: "Business Pulse", query: "Tell me one big business headline and why it matters" },
   { icon: "🇮🇳", label: "India Updates", query: "Any important updates from India today?" },
   { icon: "💻", label: "Tech Trends",    query: "What is trending in tech today?" },
   { icon: "📚", label: "Book Pick",      query: "Recommend me a great book to read this week" },
   { icon: "👻", label: "Horror Picks",   query: "What are some must-read horror books?" },
-  { icon: "🧒", label: "Kids Books",     query: "Suggest some good childrens books" },
+  { icon: "🧒", label: "Kids Books",     query: "Suggest some good children’s books" },
 ];
 
 export const API_BASE_URL = "/api";

@@ -9,9 +9,9 @@ The Next.js frontend for ReadHub, a news discovery and digital reading app with 
 ## ✨ Key Features
 
 ### News
-- Browse saved coverage from US and India news sources, with category, region, and search controls.
-- Open the original publisher article or use the in-app article preview where available.
-- View a headline ticker for recently collected stories.
+- Browse global news coverage across monitored publishers, with category, freshness, sort, and search controls.
+- See source country and language metadata, then open the original publisher article.
+- View a ticker of recent global headlines.
 
 ### E-books
 - Browse and search the book catalog by category.
@@ -73,7 +73,7 @@ The Next.js frontend for ReadHub, a news discovery and digital reading app with 
    ```env
    BACKEND_API_URL=http://localhost:5000
    ```
-   The frontend proxies `/api` requests to this server. In production, set `BACKEND_API_URL` to the deployed backend URL in the frontend host's server-side environment. Configure the backend's `FRONTEND_ORIGINS` with the deployed frontend origin.
+   The frontend proxies `/api` requests to this server. In production, set `BACKEND_API_URL` to the deployed backend URL in the frontend host's server-side environment. Requests through this proxy pass the backend CSRF check automatically; `FRONTEND_ORIGINS` is only needed for other origins.
 
 4. **Run the development server:**
    ```bash
@@ -87,7 +87,7 @@ The Next.js frontend for ReadHub, a news discovery and digital reading app with 
 
 ## News refresh and AI reports
 
-News refresh and AI report generation are manual for now. An admin can refresh saved US or India coverage and generate an AI report from the app. The app remains usable without a scheduled workflow; it will not automatically refresh headlines or publish daily editions. See the [backend operations guide](https://github.com/Snaehath/readhub-backend#operations-and-deployment-checklist) for details.
+The public news feed queries GDELT's global news metadata API by default, with English selected initially and country/language filters available. US and India English selections use the existing NewsAPI and GNews collections; other country/language combinations use GDELT. GNews is also used as a backend fallback when configured. AI reports and article analysis still use saved US and India coverage; they do not yet use the live global feed. Reports are generated on demand, with no scheduled publishing. See the [backend operations guide](https://github.com/Snaehath/readhub-backend#operations-and-deployment-checklist) for details.
 
 ---
 

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EyeClosed, Eye } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { avatarOptions, API_BASE_URL } from "@/constants";
@@ -32,7 +32,7 @@ export default function RegisterForm() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/user/adduser`, {
+      const response = await fetch(`${API_BASE_URL}/user/addUser`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -40,13 +40,10 @@ export default function RegisterForm() {
         body: JSON.stringify({ email, username, password, avatar }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || "Registration failed. Please try again.");
 
-      if (!response.ok) {
-        throw new Error(data.error || "Registration failed");
-      }
-
-      toast.success("User registered successfully!");
+      toast.success("Account created. Please sign in.");
       router.push("/login");
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -60,7 +57,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <Card className="w-full border border-gray-200 shadow-lg rounded-xl">
+    <Card className="w-full rounded-xl shadow-lg">
       <CardHeader className="pb-2">
         <CardTitle className="text-2xl text-center font-semibold text-primary">
           Create your ReadHub account
@@ -87,7 +84,7 @@ export default function RegisterForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="bg-white border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary"
+             
             />
           </div>
 
@@ -106,7 +103,7 @@ export default function RegisterForm() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Your username"
-              className="bg-white border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary"
+             
             />
           </div>
 
@@ -126,6 +123,7 @@ export default function RegisterForm() {
                       : "border-transparent"
                   }`}
                   aria-label={opt.label}
+                  aria-pressed={avatar === opt.value}
                   title={opt.label}
                 >
                   <img
@@ -158,15 +156,15 @@ export default function RegisterForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Create a password"
-                className="pr-10 bg-white border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary"
+                className="pr-12"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-2.5 text-muted-foreground hover:text-primary transition"
-                aria-label="Toggle password visibility"
+                className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showPassword ? <Eye size={18} /> : <EyeClosed size={18} />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -184,16 +182,17 @@ export default function RegisterForm() {
             <Input
               id="confirmPassword"
               type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
               required
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Re-enter your password"
-              className="bg-white border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary"
+             
             />
           </div>
 
           <Button type="submit" className="w-full mt-2" disabled={loading}>
-            {loading ? "Registering..." : "Register"}
+            {loading ? "Creating account…" : "Create account"}
           </Button>
         </form>
       </CardContent>

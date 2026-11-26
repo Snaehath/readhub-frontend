@@ -1,22 +1,26 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-
-import { API_BASE_URL } from "@/constants";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
-export const getCoverBaseUrl = () => {
-  return API_BASE_URL.replace(/\/api\/?$/, "") + "/covers";
-};
+/** Returns the URL normalised if it is http(s), otherwise null. Use before rendering untrusted links. */
+export function safeHttpUrl(value: string | undefined | null): URL | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:" ? url : null;
+  } catch {
+    return null;
+  }
+}
 
-export const getImageUrl = (path: string | undefined | null) => {
-  if (!path) return "";
-  if (path.startsWith("http")) return path;
-  
-  // Prepend backend base URL if path is relative
-  const baseUrl = API_BASE_URL.replace(/\/api\/?$/, "");
-  return `${baseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
-};
-
+/** Replace bare citation markers like [2] with in-page links when that source exists. */
+export function linkCitations(markdown: string, citationNumbers: number[], anchorPrefix: string) {
+  if (citationNumbers.length === 0) return markdown;
+  const known = new Set(citationNumbers);
+  return markdown.replace(/\[(\d+)\](?!\()/g, (match, number: string) =>
+    known.has(Number(number)) ? `[${number}](#${anchorPrefix}-${number})` : match,
+  );
+}

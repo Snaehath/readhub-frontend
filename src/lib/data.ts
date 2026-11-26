@@ -1,227 +1,58 @@
-"use server";
+// Server-only data helpers. Server components cannot use the relative /api
+// rewrite, so they call the backend directly.
+import { buildNewsPath, parseNewsResponse, NewsQuery } from "@/api/news";
+import { AiNews, NewsArticle } from "@/types";
 
-import { NewsArticle, PaginatedNewsResponse, RawNewsArticle } from "@/types";
-import client from "../lib/mongodb";
-import { API_BASE_URL } from "@/constants";
-
-//get news data from database country:us
-export async function getNewsPaginated(
-  page: number = 1,
-  limit: number = 12,
-  category: string = "all",
-  country: string = "us",
-): Promise<PaginatedNewsResponse> {
-  try {
-    const params = new URLSearchParams({
-      page: String(page),
-      limit: String(limit),
-    });
-
-    if (category !== "all") {
-      params.append("category", category);
-    }
-
-    const configuredBackendUrl =
-      process.env.BACKEND_API_URL ||
-      (process.env.NODE_ENV === "development"
-        ? "http://localhost:5000"
-        : "https://readhub-backend.onrender.com");
-    const normalizedBackendUrl = configuredBackendUrl.replace(/\/+$/, "");
-    const baseUrl = normalizedBackendUrl.endsWith("/api")
-      ? normalizedBackendUrl
-      : `${normalizedBackendUrl}/api`;
-    const endpoint =
-      country === "in"
-        ? `${baseUrl}/news/newIn/pagination`
-        : `${baseUrl}/news/new/pagination`;
-
-    const res = await fetch(`${endpoint}?${params.toString()}`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch news for ${country}`);
-    }
-
-    const data = await res.json();
-
-    const formattedNews: NewsArticle[] = data.articles.map(
-      (article: RawNewsArticle) => ({
-        id: article._id?.toString() || article.id || "",
-        title: article.title,
-        description: article.description,
-        content: article.content,
-        url: article.url,
-        urlToImage: article.urlToImage,
-        publishedAt: article.publishedAt,
-        dateOriginal: article.publishedAt,
-        source: article.source ?? { name: "Unknown" },
-        category: article.category ?? [],
-      }),
-    );
-
-    return {
-      news: formattedNews,
-      totalPages: data.totalPages,
-      currentPage: data.currentPage,
-      totalArticles: data.totalArticles,
-    };
-  } catch (error) {
-    console.error("Error fetching paginated news:", error);
-    return {
-      news: [],
-      totalPages: 0,
-      currentPage: 1,
-      totalArticles: 0,
-    };
-  }
+export function getBackendApiUrl() {
+  const configured = process.env.BACKEND_API_URL
+    || (process.env.NODE_ENV === "development" ? "http://localhost:5000" : "https://readhub-backend.onrender.com");
+  const base = configured.replace(/\/+$/, "");
+  return base.endsWith("/api") ? base : `${base}/api`;
 }
 
-export async function searchNews(
-  q: string,
-  page: number = 1,
-  limit: number = 12,
-  country: string = "us",
-  category: string = "all",
-): Promise<PaginatedNewsResponse> {
+export async function getNewsServer(query: NewsQuery): Promise<NewsArticle[]> {
   try {
-    const params = new URLSearchParams({
-      q,
-      page: String(page),
-      limit: String(limit),
-    });
-
-    if (category && category !== "all") {
-      params.append("category", category);
-    }
-
-    const baseUrl = API_BASE_URL;
-    const endpoint =
-      country === "in" ? `${baseUrl}/news/search/in` : `${baseUrl}/news/search/us`;
-
-    const res = await fetch(`${endpoint}?${params.toString()}`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      throw new Error(`Failed to search news for ${country}`);
-    }
-
-    const data = await res.json();
-
-    const formattedNews: NewsArticle[] = data.articles.map(
-      (article: RawNewsArticle) => ({
-        id: article._id?.toString() || article.id || "",
-        title: article.title,
-        description: article.description,
-        content: article.content,
-        url: article.url,
-        urlToImage: article.urlToImage,
-        publishedAt: article.publishedAt,
-        dateOriginal: article.publishedAt,
-        source: article.source ?? { name: "Unknown" },
-        category: article.category ?? [],
-      }),
-    );
-
-    return {
-      news: formattedNews,
-      totalPages: data.totalPages,
-      currentPage: data.currentPage,
-      totalArticles: data.totalArticles,
-    };
+    const { path, savedRegion } = buildNewsPath(query);
+    const res = await fetch(`${getBackendApiUrl()}${path}`, { next: { revalidate: 300 } });
+    return (await parseNewsResponse(res, savedRegion)).news;
   } catch (error) {
-    console.error("Error searching news:", error);
-    return {
-      news: [],
-      totalPages: 0,
-      currentPage: 1,
-      totalArticles: 0,
-    };
-  }
-}
-
-export async function getTickerNews(
-  country: string = "us",
-): Promise<NewsArticle[]> {
-  try {
-    const baseUrl = API_BASE_URL;
-    const endpoint =
-      country === "in"
-        ? `${baseUrl}/news/newIn/pagination`
-        : `${baseUrl}/news/new/pagination`;
-
-    // Fetch more for ticker to ensure variety
-    const res = await fetch(`${endpoint}?page=1&limit=20`, {
-      cache: "no-store",
-    });
-
-    if (!res.ok) return [];
-
-    const data = await res.json();
-    return data.articles.map((article: RawNewsArticle) => ({
-      id: article._id?.toString() || article.id || "",
-      title: article.title,
-      category: article.category ?? [],
-      publishedAt: article.publishedAt,
-    }));
-  } catch (error) {
-    console.error("Error fetching ticker news:", error);
+    console.error("Featured news request failed:", error instanceof Error ? error.message : error);
     return [];
   }
 }
 
-export async function getFeaturedBooks() {
-  try {
-    const mongoClient = await client.connect();
-    const db = mongoClient.db();
-    const booksCollection = db.collection("books");
+/**
+ * Home-page featured stories: the newest saved US/India articles that have an
+ * image, one per topic so the selection varies as the news changes.
+ */
+export async function getFeaturedNewsServer(count = 3): Promise<NewsArticle[]> {
+  const [us, india] = await Promise.all([
+    getNewsServer({ country: "us", language: "en", limit: 24 }),
+    getNewsServer({ country: "in", language: "en", limit: 24 }),
+  ]);
+  const candidates = [...us, ...india]
+    .filter((article) => article.urlToImage && article.description)
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
 
-    const books = await booksCollection.find({}).limit(4).toArray();
-
-    const formattedBooks = books.map((book) => ({
-      _id: book._id.toString(),
-      title: book.title,
-      summaries: book.summaries,
-      url: book.readUrl,
-      urlToImage: book.coverImage,
-      category: book.category,
-      author: {
-        ...book.authors[0],
-        _id: book.authors[0]?._id?.toString?.() ?? undefined,
-      },
-    }));
-
-    return formattedBooks;
-  } catch (error) {
-    console.error("Error fetching books:", error);
-    return [];
+  const picked: NewsArticle[] = [];
+  const usedTopics = new Set<string>();
+  for (const article of candidates) {
+    const topic = article.category[0] || "general";
+    if (usedTopics.has(topic)) continue;
+    usedTopics.add(topic);
+    picked.push(article);
+    if (picked.length === count) return picked;
   }
+  // Not enough distinct topics: fill with the next newest stories.
+  return [...picked, ...candidates.filter((article) => !picked.includes(article))].slice(0, count);
 }
-export async function getBooks() {
+
+export async function getAiReportServer(id: string): Promise<AiNews | null> {
   try {
-    const mongoClient = await client.connect();
-    const db = mongoClient.db();
-    const booksCollection = db.collection("books");
-
-    const books = await booksCollection.find({}).toArray();
-
-    const formattedBooks = books.map((book) => ({
-      _id: book._id.toString(),
-      title: book.title,
-      summaries: book.summaries,
-      url: book.readUrl,
-      urlToImage: book.coverImage,
-      category: book.category,
-      author: {
-        ...book.authors[0],
-        _id: book.authors[0]?._id?.toString?.() ?? undefined,
-      },
-    }));
-
-    return formattedBooks;
-  } catch (error) {
-    console.error("Error fetching books:", error);
-    return [];
+    const res = await fetch(`${getBackendApiUrl()}/ai-hub/news/${encodeURIComponent(id)}`, { next: { revalidate: 300 } });
+    if (!res.ok) return null;
+    return (await res.json()).news ?? null;
+  } catch {
+    return null;
   }
 }

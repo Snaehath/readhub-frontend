@@ -1,15 +1,18 @@
-import LoginForm from "@/components/login-form";
+import { Suspense } from "react";
+import { Metadata } from "next";
 import Link from "next/link";
+import LoginForm from "@/components/login-form";
+
+export const metadata: Metadata = { title: "Sign in" };
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 sm:px-6 lg:px-8">
+    <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
       <div className="w-full max-w-md space-y-4">
-        <LoginForm />
-        <Link
-          href="/register"
-          className="block text-sm text-center text-muted-foreground hover:text-primary transition"
-        >
+        <Suspense>
+          <LoginForm />
+        </Suspense>
+        <Link href="/register" className="block text-center text-sm text-muted-foreground transition hover:text-primary">
           New to ReadHub? Create a free account
         </Link>
       </div>

@@ -1,22 +1,9 @@
 export type AgentEvent = {
-  type: "status" | "tool_call" | "tool_result" | "llm_step" | "final" | "error";
+  type: "status" | "tool_call" | "tool_result" | "final" | "error";
   message: string;
   tool?: string;
   args?: Record<string, unknown>;
-  result?: string;
   timestamp?: string;
-  sources?: string[];
-};
-
-export type ChatMessage = {
-  sender: "user" | "bot";
-  message: string;
-  thoughts?: string[];
-  latency?: string;
-  sources?: ChatSourceReference[];
-  events?: AgentEvent[];
-  status?: "error" | "success" | "neutral";
-  feedback?: "helpful" | "not_helpful";
 };
 
 export type ChatSourceReference = {
@@ -26,20 +13,55 @@ export type ChatSourceReference = {
   url: string;
 };
 
+export type ChatMessage = {
+  _id?: string;
+  sender: "user" | "bot";
+  message: string;
+  /** Legacy reasoning log stored by earlier versions; newer messages use `events`. */
+  thoughts?: string[];
+  latency?: string;
+  sources?: ChatSourceReference[];
+  events?: AgentEvent[];
+  status?: "error" | "neutral";
+  feedback?: "helpful" | "not_helpful";
+};
+
+export type ChatSession = {
+  sessionId: string;
+  title: string;
+  updatedAt: string;
+  messageCount: number;
+};
+
 export type NewsArticle = {
   id: string;
-  _id?: string;
-  content: string;
-  source: {
-    name: string;
-  };
   title: string;
   description?: string;
   url: string;
   urlToImage?: string;
   publishedAt: string;
-  dateOriginal: string;
+  source: { name: string };
   category: string[];
+  sourceCountry?: string;
+  sourceLanguage?: string;
+  dateLabel?: string;
+  /** Set for articles stored in ReadHub's US/India archive; these support likes and bookmarks. */
+  savedRegion?: "us" | "in";
+};
+
+export type ForecastScenario = {
+  name: string;
+  likelihood: "high" | "medium" | "low";
+  summary: string;
+  drivers: string[];
+};
+
+export type ArticleForecast = {
+  outlook: string;
+  timeline: { horizon: string; development: string }[];
+  scenarios: ForecastScenario[];
+  signals: string[];
+  assumptions: string[];
 };
 
 export interface PaginatedNewsResponse {
@@ -47,32 +69,32 @@ export interface PaginatedNewsResponse {
   totalPages: number;
   currentPage: number;
   totalArticles: number;
+  hasMore: boolean;
+  /** True when more articles exist than `totalArticles` (global feed fetches in batches). */
+  totalIsEstimate?: boolean;
+  provider?: "GDELT" | "GNews" | "NewsAPI";
 }
 
 export interface RawNewsArticle {
-  _id?: { toString: () => string };
+  _id?: string;
   id?: string;
   title: string;
   description?: string;
-  content?: string;
   url: string;
-  urlToImage?: string;
+  urlToImage?: string | null;
   publishedAt: string;
   source?: { name: string };
   category?: string[];
+  sourceCountry?: string;
+  sourceLanguage?: string;
+  dateLabel?: string;
 }
 
-export type NewsCardProps = {
-  articlesUS: NewsArticle[];
-};
-
 export type Book = {
-  key?: string;
-  cover_edition_key?: string;
-  cover_id?: number;
   title: string;
   author_name: string[];
-  author_key: string[];
+  cover_id?: number;
+  cover_edition_key?: string;
   lending_identifier_s?: string;
   work_key: string;
   tag: string;
@@ -80,29 +102,15 @@ export type Book = {
 
 export interface OpenLibraryBook {
   title: string;
-  author_key?: string[];
-  author_name?: string[];
-  cover_id?: number;
-  cover_edition_key?: string;
   key: string;
-  lending_identifier_s?: string;
-  cover_i?: number;
+  author_name?: string[];
   authors?: Array<{ key?: string; name?: string }>;
+  cover_id?: number;
+  cover_i?: number;
+  cover_edition_key?: string;
+  lending_identifier_s?: string;
+  lending_identifier?: string;
 }
-export type BookCopy = {
-  authors: string;
-  _id: string;
-  work_id: string;
-  title: string;
-  author_name: string[];
-  author_key: string[];
-  coverImage: string;
-  readUrl: string;
-  summaries: string[];
-  category: string[];
-  gutenbergId: number;
-  tag: string;
-};
 
 export type Category =
   | "technology"
@@ -116,7 +124,14 @@ export type Category =
   | "horror"
   | "children";
 
-
+export type AiNewsSource = {
+  citationNumber?: number;
+  title?: string;
+  url?: string;
+  sourceName?: string;
+  category?: string;
+  publishedAt?: string;
+};
 
 export type AiNews = {
   _id: string;
@@ -126,27 +141,16 @@ export type AiNews = {
   topic: string;
   summary: string;
   authorName: string;
-  content: string;
+  /** AI writing persona; absent on reports created before personas existed. */
+  persona?: { id: string; penName: string; desk: string; bio: string };
+  /** Present on the single-report endpoint only. */
+  content?: string;
+  /** Present on the list endpoint, which omits `content`. */
+  wordCount?: number;
   category: string;
-  hashtags: string[];
-  isCompleted: boolean;
   createdAt: string;
-  sources?: Array<{
-    citationNumber?: number;
-    title?: string;
-    url?: string;
-    sourceName?: string;
-    category?: string;
-    publishedAt?: string;
-  }>;
+  sources?: AiNewsSource[];
 };
 
-export type AiNewsResponse = {
-  message: string;
-  news: AiNews[];
-};
-
-export type SingleAiNewsResponse = {
-  message: string;
-  news: AiNews;
-};
+export type AiNewsResponse = { news: AiNews[] };
+export type SingleAiNewsResponse = { news: AiNews };

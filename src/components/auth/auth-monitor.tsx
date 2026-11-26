@@ -3,17 +3,18 @@
 import { useEffect } from "react";
 import { useUserStore } from "@/lib/store/userStore";
 
+/** Loads the session on start and re-checks it when the tab regains focus (e.g. after the cookie expires). */
 export const AuthMonitor = () => {
-  const { fetchUser } = useUserStore();
+  const fetchUser = useUserStore((state) => state.fetchUser);
 
   useEffect(() => {
-    // Remove JWTs saved by older frontend versions after migrating to cookies.
-    localStorage.removeItem("jwt");
     void fetchUser();
-    const interval = setInterval(() => void fetchUser(), 5 * 60 * 1000);
-
-    return () => clearInterval(interval);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void fetchUser();
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => document.removeEventListener("visibilitychange", refreshWhenVisible);
   }, [fetchUser]);
 
   return null;
-}
+};

@@ -1,134 +1,87 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EyeClosed, Eye } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useUserStore } from "@/lib/store/userStore";
-import { toast } from "sonner";
 import { API_BASE_URL } from "@/constants";
-import ResetPasswordForm from "./reset-password-form";
+
+/** Only allow same-site relative redirects to avoid open-redirects via ?next=. */
+const safeNextPath = (value: string | null) => (value && value.startsWith("/") && !value.startsWith("//") ? value : "/");
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showReset, setShowReset] = useState(false);
-
   const router = useRouter();
-  const { setAuthenticated, fetchUser } = useUserStore();
+  const searchParams = useSearchParams();
+  const fetchUser = useUserStore((state) => state.fetchUser);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
     setLoading(true);
-
     try {
       const response = await fetch(`${API_BASE_URL}/user/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ email, password }),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Login failed");
-      }
-      setAuthenticated(true);
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || "Sign-in failed. Please try again.");
       await fetchUser();
-      toast.success("Logged in successfully!");
-      router.push("/");
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        toast.error(err.message);
-      } else {
-        toast.error("An unknown error occurred");
-      }
+      toast.success("Signed in.");
+      router.replace(safeNextPath(searchParams.get("next")));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Sign-in failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  if (showReset) {
-    return <ResetPasswordForm onBack={() => setShowReset(false)} />;
-  }
-
   return (
-    <Card className="w-full border border-gray-200 shadow-lg rounded-xl animate-in fade-in slide-in-from-left-4 duration-300">
+    <Card className="w-full rounded-xl shadow-lg">
       <CardHeader className="pb-2">
-        <CardTitle className="text-2xl text-center font-semibold text-primary">
-          Welcome back 👋
-        </CardTitle>
-        <p className="text-sm text-center text-muted-foreground">
-          Sign in to access your AI tools and saved stories.
-        </p>
+        <CardTitle className="text-center text-2xl font-semibold">Welcome back</CardTitle>
+        <p className="text-center text-sm text-muted-foreground">Sign in to use the AI tools and your saved stories.</p>
       </CardHeader>
-
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <Label
-              htmlFor="email"
-              className="text-sm font-medium text-muted-foreground"
-            >
-              Email
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="bg-white border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary"
-            />
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
           </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <Label
-                htmlFor="password"
-                className="text-sm font-medium text-muted-foreground"
-              >
-                Password
-              </Label>
-              <button
-                type="button"
-                onClick={() => setShowReset(true)}
-                className="text-xs text-primary font-bold hover:underline"
-              >
-                Forgot password?
-              </button>
-            </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="password">Password</Label>
             <div className="relative">
               <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
                 required
+                maxLength={72}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="pr-10 bg-white border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary"
+                className="pr-12"
               />
               <button
                 type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-2.5 text-muted-foreground hover:text-primary transition"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-1 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:text-foreground"
               >
-                {showPassword ? <Eye size={18} /> : <EyeClosed size={18} />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
           </div>
-
-          <Button type="submit" className="w-full mt-2" disabled={loading}>
-            {loading ? "Signing in..." : "Sign in"}
+          <Button type="submit" className="mt-2 w-full" disabled={loading}>
+            {loading ? "Signing in…" : "Sign in"}
           </Button>
         </form>
       </CardContent>

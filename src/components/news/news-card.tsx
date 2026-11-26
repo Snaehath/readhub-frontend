@@ -1,522 +1,306 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { RefreshCcw, ChevronDown, ChevronUp } from "lucide-react";
-import ReactCountryFlag from "react-country-flag";
-
-// custom
-import { toast } from "sonner";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Globe2, Languages, Loader2, Newspaper, RefreshCcw, SlidersHorizontal } from "lucide-react";
+import { PoweredBy } from "../misc/powered-by";
 import { Button } from "../ui/button";
-import TopLoadingBar from "../misc/topLoadBar";
+import { Input } from "../ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SearchableSelect, SelectOption } from "../misc/searchable-select";
+import { CountryFlag } from "../misc/country-flag";
+import { CardsSkeleton } from "../misc/skeletons";
 import NewsCardItems from "./news-card-items";
 import NewsTicker from "./news-ticker";
-import Typography from "../ui/custom/typography";
-import AiSummaryModal from "./ai-summary-modal";
-import FutureInsightModal from "./future-insight-modal";
-
-import { NewsArticle } from "@/types";
-import { newsCategories, newsCountries, API_BASE_URL } from "@/constants";
-import { fetchNews, searchNewsApi, refreshNewsApi } from "@/api/news";
-import { sendChatRequest } from "@/api/ai";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Input } from "../ui/input";
-import { differenceInHours } from "date-fns";
-import { useFutureAi } from "@/lib/hooks/useFutureAi";
+import ArticleAiModal from "./article-ai-modal";
+import { NewsArticle, PaginatedNewsResponse } from "@/types";
+import { newsCategories, newsCountries, newsLanguages } from "@/constants";
+import { fetchNews } from "@/api/news";
 import { useDebounce } from "@/lib/hooks/useDebounce";
+import { useArticleAi } from "@/lib/hooks/useArticleAi";
 import { useUserStore } from "@/lib/store/userStore";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+const PAGE_SIZE = 12;
+const FRESHNESS_OPTIONS = [
+  { id: "any", name: "Any time" },
+  { id: "24h", name: "Past 24 hours" },
+  { id: "7d", name: "Past week" },
+  { id: "30d", name: "Past month" },
+];
+const PROVIDERS = {
+  GDELT: { name: "GDELT Project", href: "https://www.gdeltproject.org/", icon: Globe2 },
+  GNews: { name: "GNews", href: "https://gnews.io/", icon: Newspaper },
+  NewsAPI: { name: "NewsAPI", href: "https://newsapi.org/", icon: Newspaper },
+} as const;
+
+type Filters = { q: string; category: string; country: string; language: string; sort: string; freshness: string };
+
+const pick = (value: string | null, allowed: { id: string }[], fallback: string) =>
+  value && allowed.some(({ id }) => id === value) ? value : fallback;
+
+function readFilters(params: URLSearchParams): Filters {
+  return {
+    q: (params.get("query") || "").slice(0, 100),
+    category: pick(params.get("category"), newsCategories, "all"),
+    country: pick(params.get("country"), newsCountries, "world"),
+    language: pick(params.get("language"), newsLanguages, "en"),
+    sort: params.get("sort") === "oldest" ? "oldest" : "latest",
+    freshness: pick(params.get("freshness"), FRESHNESS_OPTIONS, "any"),
+  };
+}
+
+const URL_KEYS: Record<keyof Filters, { key: string; fallback: string }> = {
+  q: { key: "query", fallback: "" },
+  category: { key: "category", fallback: "all" },
+  country: { key: "country", fallback: "world" },
+  language: { key: "language", fallback: "en" },
+  sort: { key: "sort", fallback: "latest" },
+  freshness: { key: "freshness", fallback: "any" },
+};
+
+type FeedState = { articles: NewsArticle[]; page: number; hasMore: boolean; total: number; totalIsEstimate: boolean; provider: NonNullable<PaginatedNewsResponse["provider"]> };
+const EMPTY_FEED: FeedState = { articles: [], page: 0, hasMore: false, total: 0, totalIsEstimate: false, provider: "GDELT" };
 
 export default function NewsCard() {
-  // hooks
   const searchParams = useSearchParams();
   const router = useRouter();
-
-  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get("category") || "all");
-  const [selectedCountry, setSelectedCountry] = useState<string>(searchParams.get("country") === "in" ? "in" : "us");
-  const [sortOrder, setSortOrder] = useState<string>(searchParams.get("sort") === "oldest" ? "oldest" : "latest");
-  const [freshness, setFreshness] = useState<string>(["any", "24h", "7d", "30d"].includes(searchParams.get("freshness") || "") ? searchParams.get("freshness")! : "any");
-  const [articles, setArticles] = useState<NewsArticle[]>([]);
-  const [totalArticles, setTotalArticles] = useState(0);
-  const [page, setPage] = useState<number>(1);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [showAll, setShowAll] = useState<boolean>(false);
-  const [refreshTrigger, setRefreshTrigger] = useState<number>(0);
-
-  const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(
-    null,
-  );
-  const [aiResponse, setAiResponse] = useState<string>("");
-  const [aiLoading, setAiLoading] = useState<boolean>(false);
-  const [showDialog, setShowDialog] = useState<boolean>(false);
-  const [showFutureDialog, setShowFutureDialog] = useState<boolean>(false);
+  const pathname = usePathname();
   const isAuthenticated = useUserStore((state) => state.isAuthenticated);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [userLikes, setUserLikes] = useState<string[]>([]);
-  const [userBookmarks, setUserBookmarks] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>(
-    searchParams.get("query") ?? "",
-  );
+  const ai = useArticleAi(isAuthenticated);
 
-  const debouncedSearchQuery = useDebounce(searchQuery, 500);
-
-  const MAX_CATEGORIES = 4;
-
-  useEffect(() => {
-    const urlCategory = searchParams.get("category") || "all";
-    if (urlCategory === "all" || newsCategories.some((category) => category.id === urlCategory)) {
-      setSelectedCategory(urlCategory);
-    }
-    setSelectedCountry(searchParams.get("country") === "in" ? "in" : "us");
-    setSortOrder(searchParams.get("sort") === "oldest" ? "oldest" : "latest");
-    const urlFreshness = searchParams.get("freshness") || "any";
-    setFreshness(["any", "24h", "7d", "30d"].includes(urlFreshness) ? urlFreshness : "any");
-    setSearchQuery(searchParams.get("query") || "");
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const fetchUserData = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/user/me`, { credentials: "include" });
-        if (res.ok) {
-          const data = await res.json();
-          setIsAdmin(data.role === "admin");
-          setUserLikes([...(data.likes_us || []), ...(data.likes_in || [])]);
-          setUserBookmarks([
-            ...(data.bookmarks_us || []),
-            ...(data.bookmarks_in || []),
-          ]);
-        }
-      } catch (err) {
-        console.error("Error fetching user data:", err);
-      }
-    };
-
-    fetchUserData();
-  }, [isAuthenticated]);
-
-  // Fetch paginated news based on country + category (or search)
-  useEffect(() => {
-    const loadArticles = async () => {
-      setIsLoading(true);
-      try {
-        let res;
-        if (debouncedSearchQuery.trim()) {
-          res = await searchNewsApi(
-            debouncedSearchQuery,
-            page,
-            12,
-            selectedCountry,
-            selectedCategory,
-            sortOrder,
-            freshness,
-          );
-        } else {
-          res = await fetchNews(
-            page,
-            12,
-            selectedCategory,
-            selectedCountry,
-            sortOrder,
-            freshness,
-          );
-        }
-
-        if (page === 1) {
-          setArticles(res.news);
-        } else {
-          setArticles((prev) => [...prev, ...res.news]);
-        }
-
-        setTotalArticles(res.totalArticles);
-        setHasMore(res.currentPage < res.totalPages);
-      } catch (err) {
-        console.error("Error fetching news:", err);
-        toast("Failed to fetch news.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadArticles();
-  }, [
-    page,
-    selectedCountry,
-    selectedCategory,
-    refreshTrigger,
-    debouncedSearchQuery,
-    sortOrder,
-    freshness,
-  ]);
-
-  // Reset pagination when country, category, or search changes
-  useEffect(() => {
-    setPage(1);
-  }, [selectedCountry, selectedCategory, debouncedSearchQuery, sortOrder, freshness]);
-
-  const delay = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
-
-  const handleRefreshNews = async () => {
-    if (!isAuthenticated || !isAdmin) {
-      toast.error("Only administrators can refresh news.");
-      return;
-    }
-
-    // GUARDRAILS: Client-side cooldown for administrator refreshes
-    const now = Date.now();
-    const lastAuthRefresh = parseInt(
-      localStorage.getItem("last_auth_refresh") || "0",
-    );
-    const cooldownPeriod = 5 * 60 * 1000;
-
-    if (now - lastAuthRefresh < cooldownPeriod) {
-      const minsLeft = Math.ceil(
-        (cooldownPeriod - (now - lastAuthRefresh)) / 60000,
-      );
-      toast.warning(
-        `Please wait ${minsLeft} minute${minsLeft > 1 ? "s" : ""} before refreshing again.`,
-      );
-      return;
-    }
-    localStorage.setItem("last_auth_refresh", now.toString());
-
-    try {
-      setIsLoading(true);
-
-      await refreshNewsApi("us");
-      await refreshNewsApi("in");
-
-      await delay(1000);
-
-      toast.success("✨ Latest news updated successfully!");
-      setRefreshTrigger((prev) => prev + 1);
-
-      setPage(1);
-    } catch {
-      toast.error(
-        "Unable to refresh news. Please check your internet connection and try again.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleAskAi = async (article: NewsArticle) => {
-    setSelectedArticle(article);
-    setAiResponse("");
-    setAiLoading(true);
-    setShowDialog(true);
-    const id = article.id;
-
-      if (!isAuthenticated) {
-      setAiLoading(false);
-      return;
-    }
-
-    try {
-      const data = await sendChatRequest({
-        userMessage: { id, selectedCountry },
-      });
-      setAiResponse(data?.reply?.trim() || "No response.");
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (_error) {
-      setAiResponse(
-        `⚠️ Unable to generate AI summary. This could be due to:
- 
-• Network connectivity issues
-• Server temporarily unavailable
-• Rate limit exceeded
- 
-Please try again in a few moments.`,
-      );
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
-  const {
-    loading: futureLoading,
-    futureAiArticle,
-    currentYear,
-    error: aiError,
-    fetchFutureAi,
-    resetFutureAi,
-  } = useFutureAi(isAuthenticated, selectedCountry);
-
-  const handleFutureAi = (article: NewsArticle) => {
-    setSelectedArticle(article);
-    setShowFutureDialog(true);
-    fetchFutureAi(article.id, 1);
-  };
-
-  useEffect(() => {
+  // The URL is the single source of truth for filters so links and back/forward work.
+  const filters = useMemo(() => readFilters(new URLSearchParams(searchParams.toString())), [searchParams]);
+  const updateFilters = useCallback((patch: Partial<Filters>) => {
     const params = new URLSearchParams(window.location.search);
-
-    if (searchQuery) {
-      params.set("query", searchQuery.toLowerCase());
-    } else {
-      params.delete("query");
+    for (const [field, value] of Object.entries(patch) as [keyof Filters, string][]) {
+      const { key, fallback } = URL_KEYS[field];
+      if (value && value !== fallback) params.set(key, value);
+      else params.delete(key);
     }
-    if (selectedCategory !== "all") params.set("category", selectedCategory);
-    else params.delete("category");
-    params.set("country", selectedCountry);
-    params.set("sort", sortOrder);
-    params.set("freshness", freshness);
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [pathname, router]);
 
-    // Replace the URL without scrolling
-    const newUrl = `${window.location.pathname}?${params.toString()}`;
-    router.replace(newUrl, { scroll: false });
-  }, [router, searchQuery, selectedCategory, selectedCountry, sortOrder, freshness]);
-  const categoriesToShow = showAll
-    ? newsCategories
-    : newsCategories.slice(0, MAX_CATEGORIES);
+  // Search input is local while typing and written to the URL once debounced.
+  const [searchInput, setSearchInput] = useState(filters.q);
+  const debouncedSearch = useDebounce(searchInput.trim(), 400);
+  const lastWrittenQuery = useRef(filters.q);
+  useEffect(() => {
+    if (debouncedSearch === filters.q) return;
+    lastWrittenQuery.current = debouncedSearch;
+    updateFilters({ q: debouncedSearch });
+  }, [debouncedSearch, filters.q, updateFilters]);
+  useEffect(() => {
+    // Sync the box only for external URL changes (e.g. back navigation), not our own writes.
+    if (filters.q !== lastWrittenQuery.current) {
+      lastWrittenQuery.current = filters.q;
+      setSearchInput(filters.q);
+    }
+  }, [filters.q]);
 
-  const isLatest = (dateOriginal: string) => {
-    const hoursAgo = differenceInHours(new Date(), new Date(dateOriginal));
-    return hoursAgo <= 12;
-  };
+  const [feed, setFeed] = useState<FeedState>(EMPTY_FEED);
+  const [status, setStatus] = useState<"loading" | "loadingMore" | "ready" | "error">("loading");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
+  const generation = useRef(0);
+
+  const loadPage = useCallback(async (page: number, signal?: AbortSignal) => {
+    const currentGeneration = generation.current;
+    setStatus(page === 1 ? "loading" : "loadingMore");
+    try {
+      const res = await fetchNews({ ...filters, page, limit: PAGE_SIZE }, signal);
+      if (currentGeneration !== generation.current) return;
+      setFeed((previous) => ({
+        articles: page === 1 ? res.news : [...previous.articles, ...res.news.filter((item) => !previous.articles.some((existing) => existing.id === item.id))],
+        page: res.currentPage,
+        hasMore: res.hasMore,
+        total: res.totalArticles,
+        totalIsEstimate: Boolean(res.totalIsEstimate),
+        provider: res.provider || "GDELT",
+      }));
+      setStatus("ready");
+    } catch (error) {
+      if (signal?.aborted || currentGeneration !== generation.current) return;
+      setErrorMessage(error instanceof Error ? error.message : "News is temporarily unavailable.");
+      setStatus("error");
+    }
+  }, [filters]);
+
+  useEffect(() => {
+    generation.current += 1;
+    const controller = new AbortController();
+    void loadPage(1, controller.signal);
+    return () => controller.abort();
+  }, [loadPage, refreshKey]);
+
+  const hasMore = feed.hasMore;
 
   return (
     <>
-      <NewsTicker country={selectedCountry} />
-      <div className="w-full px-4 sm:px-6 lg:px-8">
-        <Typography variant="h2" className="mb-4">
-          📰 Latest News
-        </Typography>
-        {/* AI Dialog */}
-        <AiSummaryModal
-          isOpen={showDialog}
-          onOpenChange={setShowDialog}
-          aiResponse={aiResponse}
-          aiLoading={aiLoading}
+      <NewsTicker country={filters.country} language={filters.language} />
+      <div className="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
+        <ArticleAiModal
+          article={ai.article}
+          mode={ai.mode}
+          explanation={ai.explanation}
+          forecast={ai.forecast}
+          basis={ai.basis}
+          loading={ai.loading}
+          error={ai.error}
           isAuthenticated={isAuthenticated}
-          article={selectedArticle}
+          onClose={ai.close}
+          onRetry={ai.retry}
         />
 
-        <FutureInsightModal
-          isOpen={showFutureDialog}
-          onOpenChange={(open) => {
-            setShowFutureDialog(open);
-            if (!open) {
-              resetFutureAi();
-            }
-          }}
-          insightResponse={futureAiArticle || ""}
-          insightLoading={futureLoading}
-          insightError={aiError}
-          isAuthenticated={isAuthenticated}
-          article={selectedArticle}
-          currentYear={currentYear}
-          onProjectNext={() => {
-            if (selectedArticle) {
-              fetchFutureAi(
-                selectedArticle.id,
-                currentYear + 1,
-                futureAiArticle || "",
-              );
-            }
-          }}
-        />
-
-        {isLoading && <TopLoadingBar duration={15000} />}
-
-        {/* Filters */}
-        <div className="flex flex-col md:flex-row md:items-center sm:justify-between flex-wrap gap-3 mb-4">
-          {/* Category buttons + refresh */}
-          <div className="flex flex-wrap items-center gap-2">
-            {categoriesToShow.map((cat) => (
-              <button
-                type="button"
-                key={cat.id}
-                onClick={() => {
-                  setSelectedCategory(cat.id);
-                  setPage(1);
-                }}
-                className={`min-h-10 rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 transition-colors duration-150 flex items-center justify-center ${
-                  selectedCategory === cat.id
-                    ? "bg-blue-600 text-white scale-95"
-                    : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-zinc-800 dark:text-zinc-200"
-                }`}
-                aria-pressed={selectedCategory === cat.id}
-              >
-                {cat.name}
-              </button>
-            ))}
-            {!showAll && newsCategories.length > MAX_CATEGORIES && (
-              <button
-                type="button"
-                onClick={() => setShowAll(true)}
-                className="min-h-10 rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors duration-150 flex items-center justify-center gap-1"
-                aria-label="Show all categories"
-              >
-                More
-                <ChevronDown className="w-3 h-3" />
-              </button>
-            )}
-            {showAll && newsCategories.length > MAX_CATEGORIES && (
-              <button
-                type="button"
-                onClick={() => setShowAll(false)}
-                className="min-h-10 rounded-full cursor-pointer text-xs sm:text-sm px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors duration-150 flex items-center justify-center gap-1"
-                aria-label="Show less categories"
-              >
-                Less
-                <ChevronUp className="w-3 h-3" />
-              </button>
-            )}
-
-            {isAdmin && (
-              <Button
-                className="cursor-pointer rounded-full text-xs sm:text-sm px-4 py-1.5 sm:px-6 sm:py-3 font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2"
-                onClick={handleRefreshNews}
-                disabled={isLoading}
-                aria-label="Fetch latest news"
-              >
-                <RefreshCcw
-                  className={`${isLoading ? "animate-spin" : ""} w-4 h-4`}
-                />
-                <span className="hidden sm:inline">
-                  {isLoading ? "Updating..." : "Get Latest"}
-                </span>
-                <span className="sm:hidden">
-                  {isLoading ? "..." : "Latest"}
-                </span>
-              </Button>
-            )}
+        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="space-y-2">
+            <h1 className="text-2xl font-bold tracking-tight">News</h1>
+            <PoweredBy {...PROVIDERS[feed.provider]} />
+            <p className="sr-only" aria-live="polite">{status === "loading" ? "Loading articles" : `${feed.articles.length} articles shown`}</p>
           </div>
-
-          {/* Country buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 lg:max-w-md">
             <Input
               type="search"
               aria-label="Search news articles"
-              onClear={() => {
-                setSearchQuery("");
-                setPage(1);
-              }}
               placeholder="Search news…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="rounded-full"
+              value={searchInput}
+              maxLength={100}
+              onChange={(event) => setSearchInput(event.target.value)}
+              onClear={() => setSearchInput("")}
             />
-            <div className="relative flex items-center bg-gray-200 dark:bg-zinc-800/80 rounded-full p-1 min-w-[140px]">
-              {/* Animated Slider */}
-              <div
-                className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full bg-linear-to-r from-blue-600 to-indigo-600 shadow-md transition-all duration-300 ease-in-out ${
-                  selectedCountry === "us" ? "left-1" : "left-[50%]"
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-11 w-11 shrink-0 rounded-full"
+              onClick={() => setRefreshKey((key) => key + 1)}
+              disabled={status === "loading"}
+              aria-label="Refresh news"
+              title="Refresh"
+            >
+              <RefreshCcw className={`h-4 w-4 ${status === "loading" ? "animate-spin" : ""}`} />
+            </Button>
+          </div>
+        </div>
+
+        <div className="mb-6 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div role="group" aria-label="Filter by topic" className="-mx-1 flex min-w-0 gap-2 overflow-x-auto px-1 py-0.5">
+            {newsCategories.map((category) => (
+              <button
+                type="button"
+                key={category.id}
+                onClick={() => updateFilters({ category: category.id })}
+                aria-pressed={filters.category === category.id}
+                className={`min-h-9 shrink-0 rounded-full px-4 text-sm transition-colors ${
+                  filters.category === category.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
-              />
-              {newsCountries.map((country) => (
-                <button
-                  type="button"
-                  key={country.id}
-                  onClick={() => setSelectedCountry(country.id)}
-                  className={`relative z-10 flex min-h-10 flex-1 gap-2 items-center justify-center cursor-pointer px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-colors duration-300 ${
-                    selectedCountry === country.id
-                      ? "text-white"
-                      : "text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
-                  }`}
-                  aria-pressed={selectedCountry === country.id}
-                  aria-label={`Show ${country.name} news`}
-                >
-                  <ReactCountryFlag
-                    countryCode={country.id === "in" ? "IN" : "US"}
-                    svg
-                    style={{
-                      width: "1.2em",
-                      height: "1.2em",
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                    }}
-                    title={country.name}
-                  />
-                  <Typography
-                    variant="muted"
-                    className="tracking-wide uppercase font-bold text-inherit leading-none"
-                  >
-                    {country.tag}
-                  </Typography>
-                </button>
-              ))}
-            </div>
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <SearchableSelect
+              label="Country / region"
+              value={filters.country}
+              options={COUNTRY_OPTIONS}
+              searchPlaceholder="Search countries…"
+              onChange={(country) => updateFilters({ country, ...(country === "us" || country === "in" ? { language: "en" } : {}) })}
+              className="w-[170px]"
+            />
+            <SearchableSelect
+              label="Language"
+              value={filters.language}
+              options={LANGUAGE_OPTIONS}
+              searchPlaceholder="Search languages…"
+              onChange={(language) => updateFilters({ language })}
+              className="w-[150px]"
+            />
+            <FeedFilters sort={filters.sort} freshness={filters.freshness} onChange={updateFilters} />
           </div>
         </div>
 
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
-              <span>Sort by</span>
-              <Select value={sortOrder} onValueChange={setSortOrder}>
-                <SelectTrigger aria-label="Sort news" className="h-10 w-[170px] rounded-full bg-background px-4 text-sm text-foreground shadow-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="latest">Newest first</SelectItem>
-                  <SelectItem value="oldest">Oldest first</SelectItem>
-                </SelectContent>
-              </Select>
-            </label>
-            <label className="flex flex-col gap-1.5 text-xs font-medium text-muted-foreground">
-              <span>Published</span>
-              <Select value={freshness} onValueChange={setFreshness}>
-                <SelectTrigger aria-label="Filter by freshness" className="h-10 w-[170px] rounded-full bg-background px-4 text-sm text-foreground shadow-sm">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any time</SelectItem>
-                  <SelectItem value="24h">Past 24 hours</SelectItem>
-                  <SelectItem value="7d">Past week</SelectItem>
-                  <SelectItem value="30d">Past month</SelectItem>
-                </SelectContent>
-              </Select>
-            </label>
+        {status === "error" && (
+          <div role="alert" className="mb-6 flex flex-col items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center text-sm">
+            <p className="text-destructive">{errorMessage}</p>
+            <Button variant="outline" size="sm" onClick={() => setRefreshKey((key) => key + 1)}>Try again</Button>
           </div>
-          <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground sm:justify-end">
-          <p aria-live="polite" aria-atomic="true">
-            {isLoading
-              ? "Updating articles…"
-              : `Showing ${articles.length} of ${totalArticles} ${totalArticles === 1 ? "article" : "articles"}`}
-          </p>
-          </div>
-        </div>
-
-        {/* Articles */}
-
-        <NewsCardItems
-          filteredArticles={articles}
-          onAskAi={handleAskAi}
-          askFutureAi={handleFutureAi}
-          isLatest={isLatest}
-          isAuthenticated={isAuthenticated}
-          country={selectedCountry}
-          initialLikes={userLikes}
-          initialBookmarks={userBookmarks}
-        />
-
-        {/* No Results */}
-        {articles.length === 0 && !isLoading && (
-          <Typography variant="muted" className="text-center mt-6">
-            {searchQuery.trim()
-              ? `No articles match “${searchQuery.trim()}”. Try another search or clear the query.`
-              : "No articles found for these filters."}
-          </Typography>
         )}
 
-        {/* Load More */}
-        {hasMore && (
-          <div className="flex justify-center mt-6 pb-12">
-            <Button
-              className="cursor-pointer"
-              onClick={() => setPage((prev) => prev + 1)}
-            >
-              Load More
+        {status === "loading" && feed.articles.length === 0 ? (
+          <CardsSkeleton />
+        ) : (
+          <div className={status === "loading" ? "opacity-60 transition-opacity" : ""}>
+            <NewsCardItems articles={feed.articles} onOpenAi={ai.open} />
+          </div>
+        )}
+
+        {status === "ready" && feed.articles.length === 0 && (
+          <p className="mt-10 text-center text-sm text-muted-foreground">
+            {filters.q ? `No articles match “${filters.q}”. Try another search or clear it.` : "No articles found for these filters."}
+          </p>
+        )}
+
+        {hasMore && status !== "loading" && (
+          <div className="mt-8 flex justify-center pb-8">
+            <Button variant="outline" onClick={() => void loadPage(feed.page + 1)} disabled={status === "loadingMore"}>
+              {status === "loadingMore" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Load more
             </Button>
           </div>
         )}
       </div>
     </>
+  );
+}
+
+const COUNTRY_OPTIONS: SelectOption[] = newsCountries.map(({ id, name }) => ({ id, name, icon: <CountryFlag code={id} /> }));
+const LANGUAGE_OPTIONS: SelectOption[] = newsLanguages.map(({ id, name }) => ({ id, name, icon: <Languages className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" /> }));
+const SORT_OPTIONS = [{ id: "latest", name: "Newest first" }, { id: "oldest", name: "Oldest first" }];
+
+function Segment({ options, value, onSelect, label }: { options: { id: string; name: string }[]; value: string; onSelect: (id: string) => void; label: string }) {
+  return (
+    <fieldset>
+      <legend className="mb-2 text-xs font-medium text-muted-foreground">{label}</legend>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => onSelect(option.id)}
+            aria-pressed={value === option.id}
+            className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${value === option.id ? "border-primary bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+          >
+            {option.name}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+/** Sort and time window change rarely, so they live in a compact popover. */
+function FeedFilters({ sort, freshness, onChange }: { sort: string; freshness: string; onChange: (patch: Partial<Filters>) => void }) {
+  const active = (sort !== "latest" ? 1 : 0) + (freshness !== "any" ? 1 : 0);
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="outline" className="h-10 gap-2 rounded-full px-4 font-normal" aria-label={active ? `Sort and date filters, ${active} active` : "Sort and date filters"}>
+          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+          Filters
+          {active > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-semibold text-primary-foreground">{active}</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 space-y-4">
+        <Segment label="Sort by" options={SORT_OPTIONS} value={sort} onSelect={(id) => onChange({ sort: id })} />
+        <Segment label="Published" options={FRESHNESS_OPTIONS} value={freshness} onSelect={(id) => onChange({ freshness: id })} />
+        {active > 0 && (
+          <Button variant="ghost" size="sm" className="w-full" onClick={() => onChange({ sort: "latest", freshness: "any" })}>
+            Reset filters
+          </Button>
+        )}
+      </PopoverContent>
+    </Popover>
   );
 }

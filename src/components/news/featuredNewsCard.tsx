@@ -1,117 +1,53 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { NewsArticle } from "@/types";
+import { CalendarIcon } from "lucide-react";
+import { format, isValid } from "date-fns";
+import { Category, NewsArticle } from "@/types";
+import { NEWS_CATEGORY_COLORS } from "@/constants";
 import { Card } from "../ui/card";
-import { CalendarIcon, Sparkles } from "lucide-react";
-import { Badge } from "../ui/badge";
-import { formatDate, formatDistanceToNow, differenceInHours } from "date-fns";
-import Typography from "../ui/custom/typography";
-import ToolTip from "../ui/custom/tooltip";
-import { useState } from "react";
 
-interface FeaturedNewsCardProps {
-  article: NewsArticle;
-}
-
-const FeaturedNewsCard: React.FC<FeaturedNewsCardProps> = ({ article }) => {
-  const [imageError, setImageError] = useState(false);
-  const [isImageLoading, setIsImageLoading] = useState(true);
-
-  // Helper to check if news is recent (within 12 hours)
-  const isLatest = (dateStr: string) => {
-    try {
-      const hoursAgo = differenceInHours(new Date(), new Date(dateStr));
-      return hoursAgo <= 12;
-    } catch {
-      return false;
-    }
-  };
-
+export default function FeaturedNewsCard({ article }: { article: NewsArticle }) {
+  const published = new Date(article.publishedAt);
   return (
-    <Card className="group overflow-hidden transition-all duration-300 bg-background p-0">
-      <div className="relative h-64 overflow-hidden">
-        {/* Latest Ribbon (Matching news-card-items style) */}
-        {isLatest(article.publishedAt) && (
-          <div className="absolute top-0 left-0 z-20 pointer-events-none">
-            <div className="absolute top-3 -left-7 w-28 -rotate-45 bg-linear-to-r from-red-600 to-orange-500 text-white text-[10px] font-black uppercase py-1 text-center shadow-lg border-y border-white/20">
-              Latest
-            </div>
-          </div>
+    <Card className="group overflow-hidden p-0 transition-shadow hover:shadow-lg">
+      <div className="relative h-56 overflow-hidden bg-muted">
+        <img
+          src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
+          alt=""
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={(event) => {
+            event.currentTarget.src = "/ReadHub_PlaceHolder.png";
+          }}
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        {article.category[0] && (
+          <span className={`absolute left-3 top-3 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold capitalize ${NEWS_CATEGORY_COLORS[article.category[0] as Category] || "bg-background/90 text-foreground"}`}>
+            {article.category[0]}
+          </span>
         )}
-
-        {/* Source Badge Overlay */}
-        <div className="absolute top-4 right-4 z-20">
-          <Badge className="bg-zinc-900/80 text-white border-0 backdrop-blur-md font-bold tracking-widest text-[10px] py-1 px-3">
-            {article.source?.name ?? "Global News"}
-          </Badge>
-        </div>
-
-        {/* Image Container */}
-        <div className="relative w-full h-full">
-          <img
-            src={
-              imageError
-                ? "/ReadHub_PlaceHolder.png"
-                : article.urlToImage || "/ReadHub_PlaceHolder.png"
-            }
-            alt={article.title}
-            referrerPolicy="no-referrer"
-            decoding="async"
-            className={`object-cover w-full h-full transition-opacity duration-500 ${isImageLoading ? "opacity-0" : "opacity-100"}`}
-            onLoad={() => setIsImageLoading(false)}
-            onError={() => {
-              setImageError(true);
-              setIsImageLoading(false);
-            }}
-          />
-          {/* Skeleton Loader Background */}
-          {isImageLoading && !imageError && (
-            <div className="absolute inset-0 bg-zinc-100 dark:bg-zinc-800 animate-pulse flex items-center justify-center">
-              <Sparkles className="w-8 h-8 text-zinc-300 dark:text-zinc-700" />
-            </div>
-          )}
-        </div>
+        <span className="absolute right-3 top-3 max-w-[50%] truncate rounded-full bg-black/70 px-3 py-1 text-[11px] font-semibold text-white backdrop-blur">
+          {article.source?.name ?? "Publisher"}
+        </span>
       </div>
-
-      <div className="p-5 space-y-3">
-        <Typography
-          variant="h3"
-          className="text-lg font-bold tracking-tight leading-snug line-clamp-2 min-h-[3.2rem]"
-        >
-          {article.title}
-        </Typography>
-
-        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed min-h-[2.5rem]">
-          {article.description || "No description provided for this article."}
-        </p>
-
-        <div className="pt-4 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800">
-          <ToolTip
-            content={formatDistanceToNow(new Date(article.publishedAt), {
-              addSuffix: true,
-            })}
-          >
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <CalendarIcon className="h-4 w-4" />
-              <Typography variant="small" className="text-[11px] font-medium">
-                {formatDate(new Date(article.publishedAt), "MMM d, yyyy")}
-              </Typography>
-            </div>
-          </ToolTip>
-
-          <a
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs font-bold text-primary hover:underline uppercase tracking-wider"
-          >
-            Read More
+      <div className="space-y-3 p-5">
+        <h3 className="line-clamp-2 min-h-[3.25rem] text-lg font-semibold leading-snug">
+          <a href={article.url} target="_blank" rel="noopener noreferrer" className="hover:underline">{article.title}</a>
+        </h3>
+        {article.description && <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{article.description}</p>}
+        <div className="flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
+          {isValid(published) ? (
+            <time dateTime={article.publishedAt} className="flex items-center gap-1.5">
+              <CalendarIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              {format(published, "MMM d, yyyy")}
+            </time>
+          ) : <span />}
+          <a href={article.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">
+            Read story
           </a>
         </div>
       </div>
     </Card>
   );
-};
-
-export default FeaturedNewsCard;
+}

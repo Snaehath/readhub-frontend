@@ -2,7 +2,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { format } from "date-fns";
+import Link from "next/link";
+import { format, isValid } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,79 +12,60 @@ import { Label } from "@/components/ui/label";
 import { useUserStore } from "@/lib/store/userStore";
 import { API_BASE_URL, avatarOptions } from "@/constants";
 import { toast } from "sonner";
-import { AlertTriangle, Edit2, User as UserIcon } from "lucide-react";
+import { AlertTriangle, Edit2, Loader2, User as UserIcon } from "lucide-react";
 import Typography from "@/components/ui/custom/typography";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 
 const ProfileView = () => {
-  const { user, setUser, isAuthenticated, logout } = useUserStore(); // Zustand store
+  const { user, setUser, status, fetchUser, logout } = useUserStore();
   const router = useRouter();
-  const [joinedDate, setJoinedDate] = useState<string>("");
   const [isEditing, setIsEditing] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [newAvatar, setNewAvatar] = useState("");
   const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
   const [deletingAccount, setDeletingAccount] = useState(false);
 
+  // Refresh counts (likes/bookmarks) when the profile opens.
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/user/me`, {
-          credentials: "include",
-        });
+    void fetchUser();
+  }, [fetchUser]);
 
-        if (response.ok) {
-          const data = await response.json();
-          setUser(data);
-          setNewUsername(data.username);
-          setNewAvatar(data.avatar);
-          if (data.createdAt) {
-            setJoinedDate(format(new Date(data.createdAt), "MMMM d, yyyy"));
-          }
-        }
-      } catch (err) {
-        console.error("Failed to fetch user data:", err);
-      } finally {
-        setFetching(false);
-      }
-    };
+  const joinedDate = user?.createdAt && isValid(new Date(user.createdAt)) ? format(new Date(user.createdAt), "MMMM d, yyyy") : "";
 
-    fetchUserData();
-  }, [setUser]);
-
-  if (fetching) {
+  if (status === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-          <Typography variant="muted">Loading your profile...</Typography>
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center" role="status">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="sr-only">Loading your profile</span>
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-4 text-center space-y-4">
-        <div className="bg-muted p-4 rounded-full">
-          <UserIcon className="w-12 h-12 text-muted-foreground" />
+      <div className="flex min-h-[60vh] flex-col items-center justify-center space-y-4 p-4 text-center">
+        <div className="rounded-full bg-muted p-4">
+          <UserIcon className="h-12 w-12 text-muted-foreground" />
         </div>
         <div className="space-y-2">
-          <Typography variant="h3">User not found</Typography>
-          <Typography variant="muted">
-            Please log in to view your profile.
-          </Typography>
+          <Typography variant="h3">You&apos;re signed out</Typography>
+          <Typography variant="muted">Sign in to view your profile.</Typography>
         </div>
         <Button asChild>
-          <a href="/login">Sign In</a>
+          <Link href="/login?next=/profile">Sign in</Link>
         </Button>
       </div>
     );
   }
+
+  const startEditing = () => {
+    setNewUsername(user.username || "");
+    setNewAvatar(user.avatar || "");
+    setIsEditing(true);
+  };
 
   const handleSave = async () => {
     if (!newUsername.trim()) {
@@ -93,10 +75,6 @@ const ProfileView = () => {
 
     setLoading(true);
     try {
-      if (!isAuthenticated) {
-        throw new Error("Please log in again to update your profile.");
-      }
-
       const response = await fetch(`${API_BASE_URL}/user/update`, {
         method: "PUT",
         headers: {
@@ -104,25 +82,15 @@ const ProfileView = () => {
         },
         credentials: "include",
         body: JSON.stringify({
-          username: newUsername,
-          avatar: newAvatar,
+          username: newUsername.trim(),
+          ...(newAvatar ? { avatar: newAvatar } : {}),
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.error || "Failed to update profile");
 
-      if (!response.ok) {
-        throw new Error(
-          data.message || data.error || "Failed to update profile",
-        );
-      }
-
-      // Update local store
-      setUser({
-        ...user,
-        username: newUsername,
-        avatar: newAvatar,
-      });
+      setUser({ ...user, username: data.user.username, avatar: data.user.avatar });
 
       toast.success("Profile updated successfully!");
       setIsEditing(false);
@@ -137,11 +105,7 @@ const ProfileView = () => {
     }
   };
 
-  const handleCancel = () => {
-    setNewUsername(user.username);
-    setNewAvatar(user.avatar);
-    setIsEditing(false);
-  };
+  const handleCancel = () => setIsEditing(false);
 
   const handleDeleteAccount = async () => {
     setDeletingAccount(true);
@@ -200,6 +164,7 @@ const ProfileView = () => {
                         onChange={(e) => setNewUsername(e.target.value)}
                         className="pl-10 h-10 rounded-xl"
                         placeholder="Enter new username"
+                        maxLength={40}
                       />
                     </div>
                   </div>
@@ -214,6 +179,8 @@ const ProfileView = () => {
                           key={opt.value}
                           type="button"
                           onClick={() => setNewAvatar(opt.value)}
+                          aria-label={opt.label}
+                          aria-pressed={newAvatar === opt.value}
                           className={`relative rounded-xl border-2 p-1 transition-all hover:scale-105 active:scale-95 ${
                             newAvatar === opt.value
                               ? "border-primary ring-2 ring-primary/20 bg-primary/5 shadow-md"
@@ -222,7 +189,7 @@ const ProfileView = () => {
                         >
                           <img
                             src={opt.value}
-                            alt={opt.label}
+                            alt=""
                             width={60}
                             height={60}
                             className="rounded-lg object-cover mx-auto"
@@ -242,12 +209,14 @@ const ProfileView = () => {
                   {user.email}
                 </Typography>
                 <div className="pt-3 flex flex-wrap justify-center gap-2">
-                  <Typography
-                    variant="muted"
-                    className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold rounded-full border border-indigo-100 dark:border-indigo-900/50 uppercase tracking-wider leading-none"
-                  >
-                    Member since {joinedDate}
-                  </Typography>
+                  {joinedDate && (
+                    <Typography
+                      variant="muted"
+                      className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold rounded-full border border-indigo-100 dark:border-indigo-900/50 uppercase tracking-wider leading-none"
+                    >
+                      Member since {joinedDate}
+                    </Typography>
+                  )}
                   {user.role === "admin" && (
                     <Typography
                       variant="muted"
@@ -317,7 +286,7 @@ const ProfileView = () => {
             ) : (
               <>
                 <Button
-                  onClick={() => setIsEditing(true)}
+                  onClick={startEditing}
                   className="w-full sm:w-auto px-12 rounded-full h-10 shadow-lg hover:shadow-indigo-500/20 transition-all font-bold"
                 >
                   <Edit2 className="w-4 h-4 mr-2" />

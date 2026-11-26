@@ -1,319 +1,206 @@
-import { Bookmark, Sparkles, ThumbsUp, Telescope, ArrowUpRight } from "lucide-react";
-import { useEffect, useState } from "react";
+/* eslint-disable @next/next/no-img-element */
+"use client";
+
+import { useState } from "react";
+import { ArrowUpRight, Bookmark, Sparkles, Telescope, ThumbsUp } from "lucide-react";
+import { differenceInHours, format, formatDistanceToNow, isValid } from "date-fns";
 import { toast } from "sonner";
 import { Badge } from "../ui/badge";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
-import { Category, NewsArticle } from "@/types";
-import Link from "next/link";
-import { API_BASE_URL, NEWS_CATEGORY_COLORS } from "@/constants";
-import ToolTip from "../ui/custom/tooltip";
-import { formatDate, formatDistanceToNow } from "date-fns";
-import Typography from "../ui/custom/typography";
 import { Button } from "../ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card";
+import ToolTip from "../ui/custom/tooltip";
+import { API_BASE_URL, NEWS_CATEGORY_COLORS } from "@/constants";
+import { Category, NewsArticle } from "@/types";
+import { SavedListKey, useUserStore } from "@/lib/store/userStore";
+import { ArticleAiMode } from "@/lib/hooks/useArticleAi";
 
-interface NewsCardItemsProps {
-  filteredArticles: NewsArticle[];
-  onAskAi: (article: NewsArticle) => void;
-  askFutureAi: (article: NewsArticle) => void;
-  isLatest: (publishedAt: string) => boolean;
-  isAuthenticated: boolean;
-  country: string;
-  initialLikes: string[];
-  initialBookmarks: string[];
+type SaveKind = "likes" | "bookmarks";
+const SAVE_ENDPOINT: Record<SaveKind, string> = { likes: "/user/like-news", bookmarks: "/user/bookmark-news" };
+
+const isRecent = (date: Date) => isValid(date) && differenceInHours(new Date(), date) <= 12;
+
+function useSavedToggle() {
+  const user = useUserStore((state) => state.user);
+  const setSavedList = useUserStore((state) => state.setSavedList);
+  const [pending, setPending] = useState<string | null>(null);
+
+  const isSaved = (kind: SaveKind, article: NewsArticle) =>
+    Boolean(article.savedRegion && user?.[`${kind}_${article.savedRegion}` as SavedListKey]?.includes(article.id));
+
+  const toggle = async (kind: SaveKind, article: NewsArticle) => {
+    if (!article.savedRegion) return;
+    if (!user) {
+      toast("Sign in to save articles.", { action: { label: "Sign in", onClick: () => { window.location.href = "/login"; } } });
+      return;
+    }
+    const key = `${kind}_${article.savedRegion}` as SavedListKey;
+    const previous = user[key] || [];
+    const wasSaved = previous.includes(article.id);
+    // Optimistic update; the server response is the source of truth.
+    setSavedList(key, wasSaved ? previous.filter((id) => id !== article.id) : [...previous, article.id]);
+    setPending(`${kind}:${article.id}`);
+    try {
+      const res = await fetch(`${API_BASE_URL}${SAVE_ENDPOINT[kind]}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ newsId: article.id, country: article.savedRegion }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (Array.isArray(data[kind])) setSavedList(key, data[kind]);
+    } catch {
+      setSavedList(key, previous);
+      toast.error(`Couldn't update your ${kind === "likes" ? "likes" : "bookmarks"}. Please try again.`);
+    } finally {
+      setPending(null);
+    }
+  };
+
+  return { isSaved, toggle, pending };
 }
 
-export default function NewsCardItems({
-  filteredArticles,
-  onAskAi,
-  askFutureAi,
-  isLatest,
-  isAuthenticated,
-  country,
-  initialLikes,
-  initialBookmarks,
-}: NewsCardItemsProps) {
-  const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
-  const [likes, setLikes] = useState<Record<string, boolean>>({});
-  const [bookmarks, setBookmarks] = useState<Record<string, boolean>>({});
+interface NewsCardItemsProps {
+  articles: NewsArticle[];
+  onOpenAi: (article: NewsArticle, mode: ArticleAiMode) => void;
+}
 
-  useEffect(() => {
-    const likeMap = initialLikes.reduce(
-      (acc, id) => ({ ...acc, [id]: true }),
-      {},
-    );
-    const bookmarkMap = initialBookmarks.reduce(
-      (acc, id) => ({ ...acc, [id]: true }),
-      {},
-    );
-    setLikes(likeMap);
-    setBookmarks(bookmarkMap);
-  }, [initialLikes, initialBookmarks]);
+export default function NewsCardItems({ articles, onOpenAi }: NewsCardItemsProps) {
+  const { isSaved, toggle, pending } = useSavedToggle();
 
-  const handleImageLoad = (id: string) => {
-    setLoadedImages((prev) => ({ ...prev, [id]: true }));
-  };
-
-  const handleFutureClick = (article: NewsArticle) => {
-    askFutureAi(article);
-  };
-
-  const toggleLike = async (id: string) => {
-    if (!isAuthenticated) {
-      toast.warning("🔒 Login to save your preferences!", {
-        action: {
-          label: "Login",
-          onClick: () => (window.location.href = "/login"),
-        },
-      });
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/user/like-news`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ newsId: id, country }),
-      });
-
-      if (res.ok) {
-        setLikes((prev) => ({ ...prev, [id]: !prev[id] }));
-        toast.success(
-          likes[id] ? "Removed from likes" : "Added to liked articles",
-          {
-            duration: 1000,
-          },
-        );
-      }
-    } catch (err) {
-      console.error("Error toggling like:", err);
-      toast.error("Failed to update like");
-    }
-  };
-
-  const toggleBookmark = async (id: string) => {
-    if (!isAuthenticated) {
-      toast.warning("🔒 Login to bookmark articles!", {
-        action: {
-          label: "Login",
-          onClick: () => (window.location.href = "/login"),
-        },
-      });
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/user/bookmark-news`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ newsId: id, country }),
-      });
-
-      if (res.ok) {
-        setBookmarks((prev) => ({ ...prev, [id]: !prev[id] }));
-        toast.success(
-          bookmarks[id] ? "Removed from bookmarks" : "Saved to bookmarks",
-          {
-            duration: 1000,
-          },
-        );
-      }
-    } catch (err) {
-      console.error("Error toggling bookmark:", err);
-      toast.error("Failed to update bookmark");
-    }
-  };
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {filteredArticles.map((article) => (
-        <Card
-          key={article.id || article.url}
-          className="group/card overflow-hidden p-0 flex flex-col h-full border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600 hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
-        >
-          {/* ── Image ── */}
-          <CardHeader className="p-0">
-            <div className="relative h-44 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-              {/* Skeleton */}
-              {!loadedImages[article.id] && (
-                <div className="absolute inset-0 z-10 animate-pulse bg-zinc-200 dark:bg-zinc-700" />
-              )}
-
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
-                alt={article.title}
-                referrerPolicy="no-referrer"
-                decoding="async"
-                onLoad={() => handleImageLoad(article.id)}
-                onError={(e) => {
-                  const image = e.currentTarget;
-                  if (image.dataset.fallbackApplied !== "true") {
-                    image.dataset.fallbackApplied = "true";
-                    image.src = "/ReadHub_PlaceHolder.png";
-                  }
-                  handleImageLoad(article.id);
-                }}
-                className={`object-cover w-full h-full transition-all duration-500 contrast-[1.05] group-hover/card:scale-105 ${
-                  loadedImages[article.id] ? "opacity-100" : "opacity-0"
-                }`}
-              />
-
-              {/* Bottom gradient for overlaid text */}
-              <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
-
-              {/* 🔴 New badge */}
-              {isLatest(article.publishedAt) && (
-                <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-red-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-md z-10">
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                  New
-                </div>
-              )}
-
-              {/* Source name — bottom left */}
-              {article.source?.name && (
-                <span className="absolute bottom-2 left-2.5 text-[9px] font-bold uppercase tracking-widest text-white/80 truncate max-w-[55%] pointer-events-none">
-                  {article.source.name}
-                </span>
-              )}
-
-              {/* Time — bottom right */}
-              <ToolTip content={formatDate(new Date(article.publishedAt), "MMM d, yyyy • h:mm a")}>
-                <span className="absolute bottom-2 right-2.5 text-[9px] font-semibold text-white/70 cursor-default">
-                  {formatDistanceToNow(new Date(article.publishedAt), { addSuffix: true })}
-                </span>
-              </ToolTip>
-            </div>
-
-            {/* ── Categories + AI Buttons ── */}
-            <div className="flex items-center justify-between gap-3 px-3 pt-3 pb-0 w-full">
-              <div className="flex flex-wrap gap-1.5 items-center">
-                {article.category.map((cat, idx) => {
-                  const colorClass = NEWS_CATEGORY_COLORS[cat as Category];
-                  return (
-                    <Badge
-                      variant="outline"
-                      key={`${cat}-${idx}`}
-                      className={`rounded-full px-3 h-7 text-xs font-bold capitalize flex items-center justify-center shadow-sm ${colorClass}`}
-                    >
-                      {cat}
-                    </Badge>
-                  );
-                })}
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {articles.map((article) => {
+        const published = new Date(article.publishedAt);
+        const liked = isSaved("likes", article);
+        const bookmarked = isSaved("bookmarks", article);
+        return (
+          <Card key={article.id} className="group/card flex h-full flex-col overflow-hidden p-0 transition-shadow duration-200 hover:shadow-lg">
+            <CardHeader className="p-0">
+              <div className="relative h-44 w-full overflow-hidden bg-muted">
+                <img
+                  src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  onError={(event) => {
+                    const image = event.currentTarget;
+                    if (!image.dataset.fallback) {
+                      image.dataset.fallback = "1";
+                      image.src = "/ReadHub_PlaceHolder.png";
+                    }
+                  }}
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover/card:scale-105"
+                />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent" />
+                {isRecent(published) && (
+                  <span className="absolute left-2.5 top-2.5 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow">New</span>
+                )}
+                {article.source?.name && (
+                  <span className="pointer-events-none absolute bottom-2 left-2.5 max-w-[55%] truncate text-[10px] font-semibold uppercase tracking-wider text-white/90">
+                    {article.source.name}
+                  </span>
+                )}
+                {isValid(published) && (
+                  <ToolTip content={`${article.dateLabel ? "Detected by GDELT" : "Published"} · ${format(published, "MMM d, yyyy • h:mm a")}`}>
+                    <time dateTime={article.publishedAt} className="absolute bottom-2 right-2.5 cursor-default text-[10px] font-medium text-white/80">
+                      {formatDistanceToNow(published, { addSuffix: true })}
+                    </time>
+                  </ToolTip>
+                )}
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
-                <ToolTip content="Forecast AI — See the Future of this Story">
-                  <div className="relative">
-                    <span className="absolute inset-0 rounded-full bg-cyan-400/25 animate-ping-slow" />
+              <div className="flex w-full items-center justify-between gap-3 px-3 pt-3">
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                  {article.category.slice(0, 2).map((category) => (
+                    <Badge key={category} variant="outline" className={`h-6 rounded-full px-2.5 text-[11px] font-semibold capitalize ${NEWS_CATEGORY_COLORS[category as Category] || ""}`}>
+                      {category}
+                    </Badge>
+                  ))}
+                  {article.sourceLanguage && article.sourceLanguage.toLowerCase() !== "english" && (
+                    <Badge variant="outline" className="h-6 rounded-full px-2 text-[10px] font-medium text-muted-foreground">
+                      {article.sourceLanguage}
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <ToolTip content="Forecast how this story could develop">
                     <button
                       type="button"
-                      aria-label={`Explore possible future outcomes for: ${article.title}`}
-                      onClick={() => handleFutureClick(article)}
-                      className="is-shining relative overflow-hidden h-10 w-10 rounded-full bg-gradient-to-br from-sky-500 to-cyan-700 text-white flex items-center justify-center cursor-pointer transition-colors duration-200 ring-2 ring-cyan-400/60 shadow-md"
+                      aria-label={`Forecast: ${article.title}`}
+                      onClick={() => onOpenAi(article, "forecast")}
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-cyan-700 text-white shadow-sm transition-transform hover:scale-105"
                     >
-                      <Telescope className="w-4 h-4 relative z-10" />
+                      <Telescope className="h-4 w-4" aria-hidden="true" />
                     </button>
-                  </div>
-                </ToolTip>
-                <ToolTip content="Ask AI — Deep Insights on this Article">
-                  <div className="relative">
-                    <span className="absolute inset-0 rounded-full bg-violet-400/25 animate-ping-slow" />
+                  </ToolTip>
+                  <ToolTip content="Ask AI to explain this article">
                     <button
                       type="button"
                       aria-label={`Ask AI about: ${article.title}`}
-                      onClick={() => onAskAi(article)}
-                      className="is-shining relative overflow-hidden h-10 w-10 rounded-full bg-gradient-to-br from-violet-600 to-indigo-700 text-white flex items-center justify-center cursor-pointer transition-colors duration-200 ring-2 ring-violet-400/60 shadow-md"
+                      onClick={() => onOpenAi(article, "explain")}
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-700 text-white shadow-sm transition-transform hover:scale-105"
                     >
-                      <Sparkles className="w-4 h-4 relative z-10" />
+                      <Sparkles className="h-4 w-4" aria-hidden="true" />
                     </button>
-                  </div>
-                </ToolTip>
+                  </ToolTip>
+                </div>
               </div>
-            </div>
 
-            {/* ── Title ── */}
-            <CardTitle className="text-base font-black leading-snug px-3 pt-2 pb-0 line-clamp-2">
-              {article.title}
-            </CardTitle>
-          </CardHeader>
+              <CardTitle className="line-clamp-2 px-3 pt-2 text-base font-bold leading-snug">
+                <a href={article.url} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                  {article.title}
+                </a>
+              </CardTitle>
+            </CardHeader>
 
-          {/* ── Description ── */}
-          <CardContent className="px-3 pt-1.5 pb-3 flex-grow">
-            <Typography
-              variant="small"
-              color="muted"
-              className="line-clamp-2 leading-relaxed opacity-75"
-            >
-              {article.description || "No description available."}
-            </Typography>
-          </CardContent>
+            <CardContent className="flex-grow px-3 pb-3 pt-1.5">
+              {article.description && <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{article.description}</p>}
+            </CardContent>
 
-          {/* ── Footer ── */}
-          <CardFooter className="px-3 py-2.5 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/60 mt-auto">
-            {/* Like + Bookmark */}
-            <div className="flex items-center gap-0.5">
-              <ToolTip content={likes[article.id] ? "Unlike" : "Like"}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => toggleLike(article.id)}
-                  aria-label={likes[article.id] ? `Unlike: ${article.title}` : `Like: ${article.title}`}
-                  aria-pressed={Boolean(likes[article.id])}
-                  className={`h-10 w-10 rounded-full transition-colors duration-200 cursor-pointer ${
-                    likes[article.id]
-                      ? "text-rose-500 bg-rose-50 dark:bg-rose-950/30"
-                      : "text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30"
-                  }`}
-                >
-                  <ThumbsUp className={`w-3.5 h-3.5 ${likes[article.id] ? "fill-current" : ""}`} />
-                </Button>
-              </ToolTip>
-
-              <ToolTip content={bookmarks[article.id] ? "Remove Bookmark" : "Bookmark"}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => toggleBookmark(article.id)}
-                  aria-label={bookmarks[article.id] ? `Remove bookmark: ${article.title}` : `Bookmark: ${article.title}`}
-                  aria-pressed={Boolean(bookmarks[article.id])}
-                  className={`h-10 w-10 rounded-full transition-colors duration-200 cursor-pointer ${
-                    bookmarks[article.id]
-                      ? "text-amber-500 bg-amber-50 dark:bg-amber-950/30"
-                      : "text-zinc-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30"
-                  }`}
-                >
-                  <Bookmark className={`w-3.5 h-3.5 ${bookmarks[article.id] ? "fill-current" : ""}`} />
-                </Button>
-              </ToolTip>
-            </div>
-
-            {/* Read Source */}
-            <ToolTip content={`Read on ${article.source?.name || "Source"}`}>
-              <Link
+            <CardFooter className="mt-auto flex items-center justify-between border-t px-3 py-2">
+              {article.savedRegion ? (
+                <div className="flex items-center gap-0.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => void toggle("likes", article)}
+                    disabled={pending === `likes:${article.id}`}
+                    aria-label={liked ? `Unlike: ${article.title}` : `Like: ${article.title}`}
+                    aria-pressed={liked}
+                    className={`h-9 w-9 rounded-full ${liked ? "bg-rose-50 text-rose-600 dark:bg-rose-950/30" : "text-muted-foreground hover:text-rose-600"}`}
+                  >
+                    <ThumbsUp className={`h-4 w-4 ${liked ? "fill-current" : ""}`} />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => void toggle("bookmarks", article)}
+                    disabled={pending === `bookmarks:${article.id}`}
+                    aria-label={bookmarked ? `Remove bookmark: ${article.title}` : `Bookmark: ${article.title}`}
+                    aria-pressed={bookmarked}
+                    className={`h-9 w-9 rounded-full ${bookmarked ? "bg-amber-50 text-amber-600 dark:bg-amber-950/30" : "text-muted-foreground hover:text-amber-600"}`}
+                  >
+                    <Bookmark className={`h-4 w-4 ${bookmarked ? "fill-current" : ""}`} />
+                  </Button>
+                </div>
+              ) : (
+                <span />
+              )}
+              <a
                 href={article.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors group/link"
+                className="group/link flex min-h-9 items-center gap-1 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
               >
-                Source
-                <ArrowUpRight className="w-3 h-3 transition-transform group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5" />
-              </Link>
-            </ToolTip>
-          </CardFooter>
-        </Card>
-      ))}
+                Read on {article.source?.name ? <span className="max-w-[9rem] truncate">{article.source.name}</span> : "source"}
+                <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5" aria-hidden="true" />
+              </a>
+            </CardFooter>
+          </Card>
+        );
+      })}
     </div>
   );
 }
-

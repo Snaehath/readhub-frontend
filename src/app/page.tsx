@@ -1,12 +1,13 @@
 import FeaturedNews from "@/components/news/featured-news";
 import HomeContent from "@/components/homeContent";
-export const dynamic = "force-dynamic";
+
+// Featured headlines are fetched server-side and revalidated every 5 minutes.
+export const revalidate = 300;
 
 export default function Home() {
   return (
-    <main className="container mx-auto px-4 py-12 space-y-24">
+    <main className="container mx-auto space-y-20 px-4 py-12">
       <HomeContent />
-
       <FeaturedNews />
     </main>
   );

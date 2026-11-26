@@ -1,607 +1,423 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import ReactMarkdown from "react-markdown";
-import rehypeExternalLinks from "rehype-external-links";
-import { suggestions } from "@/constants";
-import { useChat } from "@/lib/hooks/useChat";
 import remarkGfm from "remark-gfm";
+import rehypeExternalLinks from "rehype-external-links";
+import { formatDistanceToNow } from "date-fns";
 import {
-  Send,
-  Trash2,
-  Copy,
+  Bot,
   Check,
   CheckCircle2,
-  BrainCircuit,
   ChevronDown,
-  Search,
-  Terminal,
-  Bot,
-  Sparkles,
+  Copy,
+  History,
+  Loader2,
+  MessageSquarePlus,
   RotateCcw,
+  Search,
+  Send,
   Square,
   ThumbsDown,
   ThumbsUp,
+  Trash2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import ToolTip from "../ui/custom/tooltip";
+import { suggestions } from "@/constants";
+import { useChat } from "@/lib/hooks/useChat";
+import { useUserStore } from "@/lib/store/userStore";
+import { linkCitations, safeHttpUrl } from "@/lib/utils";
+import { AgentEvent, ChatMessage, ChatSourceReference } from "@/types";
 
-import { AgentEvent, ChatSourceReference } from "@/types";
-import { API_BASE_URL } from "@/constants";
+// Older messages stored a text log instead of structured events.
+const legacyEvents = (thoughts: string[] = []): AgentEvent[] =>
+  thoughts.map((thought) => ({ type: /Action|Invoking/.test(thought) ? "tool_call" : "status", message: thought.replace(/^[^\w]*(Strategy|Action):\s*/u, "") }));
 
-const SourceReferences = ({ sources = [], idPrefix }: { sources?: ChatSourceReference[]; idPrefix: string }) => {
+function ActivityLog({ events, active, latency }: { events: AgentEvent[]; active: boolean; latency?: string }) {
+  const [open, setOpen] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const steps = events.filter((event) => event.type === "tool_call" || event.type === "tool_result" || active);
+
+  useEffect(() => {
+    if (!active) return;
+    const started = Date.now();
+    const timer = setInterval(() => setElapsed((Date.now() - started) / 1000), 200);
+    return () => clearInterval(timer);
+  }, [active]);
+
+  if (!active && steps.length === 0) return null;
+  const current = events[events.length - 1]?.message;
+
+  return (
+    <div className="mb-2 w-full max-w-2xl">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open || active}
+        className="flex items-center gap-2 rounded-full px-1 py-1 text-xs text-muted-foreground hover:text-foreground"
+      >
+        {active ? <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" /> : <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />}
+        <span className="font-medium">{active ? current || "Thinking" : `Researched in ${latency || "—"}s`}</span>
+        {active && <span className="tabular-nums">{elapsed.toFixed(1)}s</span>}
+        {!active && steps.length > 0 && <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />}
+      </button>
+      {(open || active) && steps.length > 0 && (
+        <ol className="ml-[7px] mt-1 space-y-1.5 border-l pl-4 text-xs text-muted-foreground">
+          {steps.map((event, index) => (
+            <li key={index} className="flex items-start gap-2">
+              {event.type === "tool_call" ? <Search className="mt-0.5 h-3 w-3 shrink-0 text-primary" /> : <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/50" />}
+              <span>{event.message}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
+function SourceList({ sources, idPrefix }: { sources: ChatSourceReference[]; idPrefix: string }) {
   const safeSources = sources.flatMap((source) => {
-    try {
-      const url = new URL(source.url);
-      if (url.protocol !== "https:" && url.protocol !== "http:") return [];
-      return [{ ...source, url: url.toString(), hostname: url.hostname.replace(/^www\./, "") }];
-    } catch {
-      return [];
-    }
+    const url = safeHttpUrl(source.url);
+    return url ? [{ ...source, href: url.toString(), host: url.hostname.replace(/^www\./, "") }] : [];
   });
-
   if (safeSources.length === 0) return null;
 
   return (
-    <section aria-label="Sources" className="mt-3 max-w-2xl space-y-2">
-      <div className="flex items-center gap-2 px-1">
-        <Search className="h-3.5 w-3.5 text-indigo-500" aria-hidden="true" />
-        <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-zinc-500">
-          Sources · {safeSources.length}
-        </span>
-      </div>
+    <section aria-label="Sources" className="mt-3 w-full max-w-2xl">
+      <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Sources</p>
       <div className="grid gap-2 sm:grid-cols-2">
         {safeSources.map((source) => (
           <a
-            key={`${source.citationNumber}-${source.url}`}
-            id={`${idPrefix}-source-${source.citationNumber}`}
-            href={source.url}
+            key={`${source.citationNumber}-${source.href}`}
+            id={`${idPrefix}-${source.citationNumber}`}
+            href={source.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="group rounded-xl border border-zinc-200 bg-white px-3 py-2.5 transition-colors hover:border-indigo-400 hover:bg-indigo-50/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-indigo-950/20"
+            className="group scroll-mt-24 rounded-xl border bg-card px-3 py-2.5 text-left transition-colors hover:border-primary/50 target:ring-2 target:ring-primary"
           >
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <span className="truncate text-[10px] font-bold uppercase tracking-wide text-indigo-600 dark:text-indigo-400">
-                [{source.citationNumber}] {source.publisher || source.hostname}
-              </span>
-              <span className="shrink-0 text-[9px] text-zinc-400">{source.hostname}</span>
-            </div>
-            <span className="line-clamp-2 text-xs font-medium leading-snug text-zinc-700 group-hover:text-indigo-700 dark:text-zinc-200 dark:group-hover:text-indigo-300">
-              {source.title}
+            <span className="mb-0.5 flex items-center justify-between gap-2 text-[11px]">
+              <span className="truncate font-semibold text-primary">[{source.citationNumber}] {source.publisher || source.host}</span>
+              <span className="shrink-0 text-muted-foreground">{source.host}</span>
             </span>
+            <span className="line-clamp-2 text-xs font-medium leading-snug group-hover:text-primary">{source.title}</span>
           </a>
         ))}
       </div>
     </section>
   );
-};
+}
 
-// --- 🧠 AGENTIC UI: REAL-TIME ACTIVITY SYSTEM ---
-const ThinkingContext = ({
-  events = [],
-  thoughts = [],
-  latency: externalLatency,
-  status = "finished",
+function BotMessage({
+  chat,
+  index,
+  isLast,
+  loading,
+  onRegenerate,
+  onFeedback,
 }: {
-  events?: AgentEvent[];
-  thoughts?: string[];
-  latency?: string;
-  status?: "active" | "finished";
-}) => {
-  const isFinished = status === "finished";
-  const [isOpen, setIsOpen] = useState(true); // Always open during investigation
-  const [seconds, setSeconds] = useState(0);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  chat: ChatMessage;
+  index: number;
+  isLast: boolean;
+  loading: boolean;
+  onRegenerate: () => void;
+  onFeedback: (messageId: string, rating: "helpful" | "not_helpful") => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const active = loading && isLast;
+  const sources = chat.sources || [];
+  const anchor = `message-${index}-source`;
+  const events = chat.events?.length ? chat.events : legacyEvents(chat.thoughts);
 
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (status === "active") {
-      timer = setInterval(() => setSeconds((prev) => +(prev + 0.1).toFixed(1)), 100);
-    }
-    return () => clearInterval(timer!);
-  }, [status]);
-
-  const latency = isFinished ? externalLatency : seconds.toString();
-
-  // Combine legacy thoughts (for history) and new events (for live)
-  const displayLogs: AgentEvent[] = events.length > 0 ? events : thoughts.map(t => {
-    if (t.includes("🎯 Strategy:")) return { type: 'llm_step', message: t.replace("🎯 Strategy:", "").trim() };
-    if (t.includes("🛠️ Action")) return { type: 'tool_call', message: t.replace(/🛠️ Action \(Turn \d+\):/, "").trim() };
-    if (t.includes("📝 Observation:")) return { type: 'tool_result', message: t.replace("📝 Observation:", "").trim() };
-    return { type: 'status', message: t };
-  });
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [events, thoughts]);
+  const copy = () => {
+    void navigator.clipboard.writeText(chat.message).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => undefined);
+  };
 
   return (
-    <div className="mb-4 animate-in fade-in slide-in-from-top-2 duration-700">
-      <div className="group relative overflow-hidden rounded-2xl border border-zinc-200/50 dark:border-zinc-800/50 bg-white/40 dark:bg-zinc-900/40 backdrop-blur-xl transition-all duration-500 hover:shadow-lg hover:shadow-indigo-500/5 hover:border-indigo-500/20">
-        {/* Subtle Ambient Glow */}
-        <div className="absolute -right-20 -top-20 h-40 w-40 rounded-full bg-indigo-500/5 blur-3xl transition-opacity group-hover:opacity-100" />
-
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="relative w-full flex items-center justify-between p-3.5 px-5 transition-colors"
-        >
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-950/40 text-indigo-500">
-              {isFinished ? (
-                <CheckCircle2 className="w-3.5 h-3.5" />
-              ) : (
-                <Terminal className="w-3.5 h-3.5 animate-pulse" />
-              )}
-            </div>
-            <div className="flex flex-col items-start leading-none">
-              <span className="text-[13px] font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
-                {isFinished ? "Investigative Report" : "Processing Intelligence..."}
-              </span>
-              <span className="mt-1 text-[10px] font-bold text-zinc-400 dark:text-zinc-500">
-                {isFinished ? "DATA READY" : "ACTIVE SEARCH"} • {latency || "0.0"}s
-              </span>
-            </div>
-          </div>
-          <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform duration-500 ${isOpen ? "rotate-180" : ""}`} />
-        </button>
-
-        <div className={`overflow-hidden transition-all duration-700 ${isOpen ? "max-h-[500px] border-t border-zinc-100/50 dark:border-zinc-800/50 opacity-100" : "max-h-0 opacity-0"}`}>
-          <div ref={scrollRef} className="p-5 space-y-3.5 max-h-[400px] overflow-y-auto scrollbar-none font-mono selection:bg-indigo-500/30">
-            {displayLogs.length === 0 && !isFinished && (
-              <div className="flex items-center gap-2 text-[11px] text-zinc-400 animate-pulse p-2">
-                <Sparkles className="w-3 h-3" />
-                <span>Initializing agent nodes...</span>
-              </div>
-            )}
-            {displayLogs.map((log: AgentEvent, idx) => {
-              const type = log.type || 'status';
-              const isLast = idx === displayLogs.length - 1;
-              const isActive = !isFinished && isLast;
-
-              return (
-                <div key={idx} className={`flex flex-col gap-2 p-3 rounded-xl transition-all duration-300 ${type === 'llm_step' ? "bg-amber-50/30 dark:bg-amber-950/10 border border-amber-100/50 dark:border-amber-900/20" : type === 'tool_result' ? "bg-blue-50/30 dark:bg-blue-950/10 border border-blue-100/50 dark:border-blue-900/20" : "bg-transparent"}`}>
-                  <div className="flex items-start gap-3 text-[11px] leading-relaxed">
-                    <div className="mt-1 flex shrink-0 items-center justify-center">
-                      {type === 'tool_call' ? <Terminal className="h-3.5 w-3.5 text-indigo-500" /> :
-                       type === 'tool_result' ? <Search className="h-3.5 w-3.5 text-blue-500" /> :
-                       type === 'llm_step' ? <BrainCircuit className="h-3.5 w-3.5 text-amber-500" /> :
-                       <div className="h-1.5 w-1.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />}
-                    </div>
-                    <div className="flex-1 flex flex-col gap-1">
-                      <div className="flex items-center justify-between">
-                        <span className={`font-black uppercase tracking-widest text-[9px] ${type === 'llm_step' ? "text-amber-500" : type === 'tool_call' ? "text-indigo-500" : type === 'tool_result' ? "text-blue-500" : "text-zinc-400"}`}>
-                          {type === 'tool_call' ? "Action" : type === 'tool_result' ? "Results" : type === 'llm_step' ? "Strategy" : "Status"}
-                        </span>
-                        {isActive && <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-ping" />}
-                      </div>
-                      <span className={`tracking-tight ${type === 'llm_step' ? "italic text-zinc-600 dark:text-zinc-300" : "font-medium text-zinc-500 dark:text-zinc-400"}`}>
-                      {log.message}
-                      </span>
-                      
-                      {log.sources && log.sources.length > 0 && (
-                        <div className="mt-3 p-3 rounded-xl bg-indigo-500/5 border border-indigo-500/10 animate-in fade-in slide-in-from-bottom-2">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Sparkles className="w-3 h-3 text-indigo-500" />
-                            <span className="text-[9px] font-black uppercase tracking-widest text-indigo-500">Cross-Referenced Sources</span>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {log.sources.map((url: string, i: number) => (
-                              <ToolTip key={i} content={url}>
-                                <a
-                                  href={url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="flex items-center gap-1.5 p-1.5 px-2.5 rounded-lg bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-[9px] font-mono text-zinc-500 hover:text-indigo-500 hover:border-indigo-500 transition-all group/link"
-                                >
-                                  <Terminal className="w-3 h-3 opacity-40 group-hover/link:opacity-100" />
-                                  <span className="max-w-[120px] truncate">{new URL(url).hostname}</span>
-                                </a>
-                              </ToolTip>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {log.args && <div className="mt-1 p-2 bg-zinc-100/50 dark:bg-zinc-800/50 rounded text-[9px] opacity-60 font-mono overflow-hidden text-ellipsis">args: {JSON.stringify(log.args)}</div>}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+    <div className="flex w-full flex-col items-start">
+      <ActivityLog events={events} active={active} latency={chat.latency} />
+      {chat.message && (
+        <div className={`w-full max-w-2xl rounded-2xl border px-5 py-4 ${chat.status === "error" ? "border-destructive/40 bg-destructive/5" : "bg-card"}`}>
+          <div className="prose prose-sm max-w-none dark:prose-invert sm:prose-base prose-p:my-2 prose-headings:mt-4 prose-headings:mb-2 prose-li:my-0.5">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[[rehypeExternalLinks, { target: "_blank", rel: ["noopener", "noreferrer"] }]]}
+              components={{
+                a: ({ href, children, target, rel }) =>
+                  href?.startsWith(`#${anchor}-`) ? (
+                    <a href={href} aria-label={`Source ${children}`} className="font-semibold text-primary no-underline hover:underline">[{children}]</a>
+                  ) : (
+                    <a href={href} target={target} rel={rel}>{children}</a>
+                  ),
+              }}
+            >
+              {linkCitations(chat.message, sources.map((source) => source.citationNumber), anchor)}
+            </ReactMarkdown>
           </div>
         </div>
-      </div>
+      )}
+      <SourceList sources={sources} idPrefix={anchor} />
+
+      {chat.message && !active && (
+        <div className="mt-1.5 flex items-center gap-0.5">
+          <ToolTip content={copied ? "Copied" : "Copy"}>
+            <button type="button" onClick={copy} aria-label="Copy response" className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
+              {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+            </button>
+          </ToolTip>
+          {isLast && (
+            <ToolTip content="Regenerate">
+              <button type="button" onClick={onRegenerate} aria-label="Regenerate response" className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
+                <RotateCcw className="h-3.5 w-3.5" />
+              </button>
+            </ToolTip>
+          )}
+          {chat._id && chat.status !== "error" && (
+            <>
+              <button
+                type="button"
+                onClick={() => onFeedback(chat._id!, "helpful")}
+                aria-pressed={chat.feedback === "helpful"}
+                aria-label="Helpful"
+                title="Helpful"
+                className={`flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent ${chat.feedback === "helpful" ? "text-emerald-600" : "text-muted-foreground"}`}
+              >
+                <ThumbsUp className={`h-3.5 w-3.5 ${chat.feedback === "helpful" ? "fill-current" : ""}`} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onFeedback(chat._id!, "not_helpful")}
+                aria-pressed={chat.feedback === "not_helpful"}
+                aria-label="Not helpful"
+                title="Not helpful"
+                className={`flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent ${chat.feedback === "not_helpful" ? "text-rose-600" : "text-muted-foreground"}`}
+              >
+                <ThumbsDown className={`h-3.5 w-3.5 ${chat.feedback === "not_helpful" ? "fill-current" : ""}`} />
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
-};
-
-import Link from "next/link";
-import { useUserStore } from "@/lib/store/userStore";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import Typography from "@/components/ui/custom/typography";
-import ToolTip from "../ui/custom/tooltip";
-
+}
 
 export const ChatbotView = () => {
-  const isAuthenticated = useUserStore((state) => state.isAuthenticated);
+  const status = useUserStore((state) => state.status);
   const user = useUserStore((state) => state.user);
+  const isAuthenticated = status === "authenticated";
+  const chat = useChat(isAuthenticated);
+  const [draft, setDraft] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  // App-like layout: the chat owns the viewport, so hide the site footer.
   useEffect(() => {
-    // Hide footer and disable body scroll for app-like feel
     const footer = document.querySelector("footer");
-    if (footer) footer.style.display = "none";
+    const previousOverflow = document.body.style.overflow;
+    if (footer) footer.hidden = true;
     document.body.style.overflow = "hidden";
-
     return () => {
-      if (footer) footer.style.display = "block";
-      document.body.style.overflow = "auto";
+      if (footer) footer.hidden = false;
+      document.body.style.overflow = previousOverflow;
     };
   }, []);
 
-  const {
-    chatHistory,
-    sendMessage,
-    clearChat,
-    deleteMessage,
-    loading,
-    messagesEndRef,
-    stopMessage,
-    regenerate,
-    sessionId,
-  } = useChat(isAuthenticated);
+  const lastMessage = chat.messages[chat.messages.length - 1];
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+  }, [chat.messages.length, lastMessage?.message, lastMessage?.events?.length]);
 
-  const [userMessage, setUserMessage] = useState("");
-  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
-  const [feedbackByIdx, setFeedbackByIdx] = useState<Record<number, "helpful" | "not_helpful">>({});
+  // Grow the composer with its content, up to a cap.
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+    input.style.height = "auto";
+    input.style.height = `${Math.min(input.scrollHeight, 160)}px`;
+  }, [draft]);
 
-  const submitFeedback = async (idx: number, rating: "helpful" | "not_helpful", message: string) => {
-    if (!sessionId) return;
-    setFeedbackByIdx((current) => ({ ...current, [idx]: rating }));
-    try {
-      const response = await fetch(`${API_BASE_URL}/ai/feedback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ sessionId, message, rating }),
-      });
-      if (!response.ok) throw new Error("Feedback could not be saved.");
-    } catch {
-      setFeedbackByIdx((current) => {
-        const next = { ...current };
-        delete next[idx];
-        return next;
-      });
-    }
+  const submit = () => {
+    if (!draft.trim() || chat.loading) return;
+    void chat.send(draft);
+    setDraft("");
   };
 
-  const handleCopy = (text: string, idx: number) => {
-    void navigator.clipboard.writeText(text).catch(() => undefined);
-    setCopiedIdx(idx);
-    setTimeout(() => setCopiedIdx(null), 2000);
-  };
-
-  const handleSendMessage = () => {
-    if (!userMessage.trim() || loading) return;
-    sendMessage(userMessage);
-    setUserMessage("");
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUserMessage(e.target.value);
-  };
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center" role="status">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <span className="sr-only">Loading</span>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
-        <div className="bg-zinc-100 dark:bg-zinc-900 p-6 rounded-full mb-4 relative group">
-          <Bot className="w-8 h-8 text-black dark:text-white relative z-10" />
-        </div>
-        <Typography
-          variant="h2"
-          className="mb-3 font-black uppercase tracking-tight"
-        >
-          AI Assistant
-        </Typography>
-        <Typography
-          variant="muted"
-          className="text-[10px] font-black uppercase tracking-[0.2em] max-w-sm mb-8 leading-relaxed opacity-60"
-        >
-          Sign in to ask questions about current news, get article context, or
-          find books. News and book browsing are available without an account.
-        </Typography>
-        <Button
-          asChild
-          className="rounded-full px-8 h-12 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-widest shadow-xl transition-all hover:scale-105 active:scale-95"
-        >
-          <Link href="/login">Sign in to continue</Link>
-        </Button>
-        <Link
-          href="/register"
-          className="mt-4 text-sm font-medium text-primary underline-offset-4 hover:underline"
-        >
-          Create a free account
-        </Link>
+      <div className="flex min-h-[70vh] flex-col items-center justify-center px-4 text-center">
+        <span className="mb-4 rounded-full bg-muted p-5"><Bot className="h-8 w-8" aria-hidden="true" /></span>
+        <h1 className="mb-2 text-2xl font-bold">AI Assistant</h1>
+        <p className="mb-6 max-w-sm text-sm text-muted-foreground">
+          Sign in to ask about current news with cited sources, get context on a story, or find your next book.
+        </p>
+        <Button asChild className="rounded-full px-8"><Link href="/login?next=/chatbot">Sign in to continue</Link></Button>
+        <Link href="/register" className="mt-4 text-sm font-medium text-primary underline-offset-4 hover:underline">Create a free account</Link>
       </div>
     );
   }
 
   return (
-    <div className="relative flex flex-col h-[calc(100svh-4rem)] max-w-6xl mx-auto p-4 sm:p-6 overflow-hidden">
-      {/* Persistent Reset Action (Minimal) */}
-      <div className="absolute top-6 right-6 z-30">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={clearChat}
-          disabled={loading || chatHistory.length === 0}
-          className="h-9 px-3 text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/30 hover:text-black dark:hover:text-white transition-all cursor-pointer"
-          title="Clear Conversation"
-        >
-          <Trash2 className="w-3.5 h-3.5 mr-2" />
-          Clear
+    <div className="mx-auto flex h-[calc(100svh-4rem)] max-w-4xl flex-col px-4">
+      <div className="flex items-center justify-between gap-2 py-3">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+              <History className="h-4 w-4" /> History
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="max-h-96 w-72 overflow-y-auto">
+            <DropdownMenuLabel>Recent conversations</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {chat.sessions.length === 0 ? (
+              <p className="px-2 py-3 text-sm text-muted-foreground">No saved conversations yet.</p>
+            ) : (
+              chat.sessions.map((session) => (
+                <DropdownMenuItem
+                  key={session.sessionId}
+                  onSelect={() => void chat.openSession(session.sessionId)}
+                  className={`group flex items-start justify-between gap-2 ${session.sessionId === chat.sessionId ? "bg-accent" : ""}`}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm">{session.title || "Untitled"}</span>
+                    <span className="block text-xs text-muted-foreground">{formatDistanceToNow(new Date(session.updatedAt), { addSuffix: true })}</span>
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={`Delete conversation: ${session.title}`}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      event.preventDefault();
+                      void chat.deleteSession(session.sessionId);
+                    }}
+                    className="rounded p-1 text-muted-foreground opacity-60 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </DropdownMenuItem>
+              ))
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button variant="ghost" size="sm" onClick={chat.newChat} disabled={chat.messages.length === 0 && !chat.sessionId} className="gap-2 text-muted-foreground">
+          <MessageSquarePlus className="h-4 w-4" /> New chat
         </Button>
       </div>
 
-      {/* Immersive Chat Canvas */}
-      <ScrollArea className="min-h-0 flex-1 px-4 mb-2 mt-4">
-        <div className="max-w-4xl mx-auto space-y-10 pb-32 scroll-smooth">
-          {chatHistory.length === 0 ? (
-            <div className="flex flex-col items-center justify-center min-h-[400px] text-center space-y-10">
-              <div className="max-w-xl space-y-4">
-                <Typography
-                  variant="h1"
-                  className="text-4xl sm:text-6xl font-black tracking-tighter leading-tight text-zinc-900 dark:text-white mb-2"
-                >
-                  Hello, {user?.username || "Guest"}
-                </Typography>
-                <p className="mx-auto max-w-lg text-sm leading-relaxed text-muted-foreground">
-                  Ask about a current story, request source-backed context, or
-                  get a book recommendation. You can start with a suggestion
-                  below.
-                </p>
-              </div>
-
-              <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 px-2 lg:px-6">
-                {suggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    className="group relative flex items-center text-left p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-sm hover:border-black dark:hover:border-white hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 cursor-pointer overflow-hidden"
-                    onClick={() => sendMessage(s.query)}
-                    disabled={loading}
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-center mr-4 text-xl shrink-0 group-hover:scale-110 transition-transform duration-200">
-                      {s.icon}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-black dark:group-hover:text-white transition-colors">
-                        {s.label}
-                      </span>
-                      <span className="text-xs text-zinc-500 dark:text-zinc-400 line-clamp-1 mt-0.5">
-                        {s.query}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto pb-6">
+        {chat.historyLoading ? (
+          <div className="flex h-full items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+        ) : chat.messages.length === 0 ? (
+          <div className="flex min-h-full flex-col items-center justify-center gap-8 py-8 text-center">
+            <div className="space-y-3">
+              <h1 className="text-3xl font-black tracking-tight sm:text-5xl">Hello, {user?.username || "there"}</h1>
+              <p className="mx-auto max-w-md text-sm text-muted-foreground">
+                Ask about a current story and get an answer with sources, or tell me what you like to read.
+              </p>
             </div>
-          ) : (
-            <div className="space-y-6">
-              {chatHistory.map((chat, idx) => (
-                <div
-                  key={idx}
-                  className={`flex gap-3 ${
-                    chat.sender === "user" ? "flex-row-reverse" : "flex-row"
-                  } items-end animate-in fade-in slide-in-from-bottom-6 duration-700`}
+            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+              {suggestions.map((suggestion) => (
+                <button
+                  key={suggestion.label}
+                  type="button"
+                  onClick={() => void chat.send(suggestion.query)}
+                  className="flex items-center gap-3 rounded-xl border bg-card p-3.5 text-left transition-colors hover:border-foreground/30 hover:bg-accent"
                 >
-                  <div className="shrink-0 mb-1">
-                    {chat.sender === "user" ? (
-                      <Avatar className="w-10 h-10 border-2 border-zinc-100 dark:border-zinc-800 shadow-lg grayscale">
-                        <AvatarImage src={user?.avatar} />
-                        <AvatarFallback className="bg-zinc-900 text-white font-black text-xs uppercase px-1">
-                          {user?.username?.[0]?.toUpperCase() || "U"}
-                        </AvatarFallback>
-                      </Avatar>
-                    ) : (
-                      <div className="w-10 h-10 bg-black dark:bg-zinc-100 border-2 border-zinc-200 dark:border-zinc-800 rounded-2xl flex items-center justify-center shadow-lg animate-in zoom-in duration-500">
-                        <Bot className="w-6 h-6 text-white dark:text-black" />
-                      </div>
-                    )}
-                  </div>
-
-                  <div
-                    className={`flex flex-col max-w-[85%] sm:max-w-[80%] space-y-1.5 ${chat.sender === "user" ? "items-end text-right" : "items-start text-left"}`}
-                  >
-                    <Typography
-                      variant="muted"
-                      className="text-[10px] font-black uppercase tracking-[0.3em] px-3 opacity-40"
-                    >
-                      {chat.sender === "user"
-                        ? user?.username || "You"
-                        : "ReadHub AI"}
-                    </Typography>
-
-                    <div className="group/msg flex flex-col">
-                      {/* 🧠 Collapsible Thinking Context — Perplexity/ChatGPT style */}
-                      {chat.sender === "bot" &&
-                        ((chat.thoughts && chat.thoughts.length > 0) || (chat.events && chat.events.length > 0)) && (
-                          <ThinkingContext
-                            thoughts={chat.thoughts}
-                            events={chat.events}
-                            latency={chat.latency}
-                            status={loading && idx === chatHistory.length - 1 ? "active" : "finished"}
-                          />
-                        )}
-
-                      {chat.message && (
-                        <>
-                          {chat.sender === "bot" && chat.sources?.length ? (
-                            <div className="mb-2 flex flex-wrap items-center gap-2 px-2 text-xs" aria-label="Response evidence guide">
-                              <span className="rounded-full bg-emerald-50 px-2.5 py-1 font-medium text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">Sourced facts: citations</span>
-                              <span className="rounded-full bg-indigo-50 px-2.5 py-1 font-medium text-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-300">Analysis: ReadHub AI</span>
-                              <span className="text-muted-foreground">Conclusions may be uncertain when sources disagree or are limited.</span>
-                            </div>
-                          ) : null}
-                          <div
-                            className={`relative p-[1px] rounded-[1.8rem] overflow-hidden ${
-                              chat.sender === "user"
-                                ? "bg-zinc-200 dark:bg-zinc-800"
-                                : "bg-zinc-300 dark:bg-zinc-700"
-                            }`}
-                          >
-                            <div
-                              className={`p-4 px-6 text-base leading-relaxed rounded-[1.75rem] bg-white dark:bg-zinc-950 text-foreground`}
-                            >
-                              <div
-                                className={`prose dark:prose-invert max-w-none prose-sm sm:prose-base leading-relaxed prose-p:m-0 prose-headings:font-black`}
-                              >
-                                <ReactMarkdown
-                                  components={{
-                                    a: ({ href, children, ...props }) => {
-                                      const citationMatch = href?.match(/^#source-(\d+)$/);
-                                      const citation = citationMatch?.[1];
-                                      if (citation && chat.sources?.some((source) => source.citationNumber === Number(citation))) {
-                                        return <a href={`#message-${idx}-source-${citation}`} aria-label={`Jump to source ${citation}`} className="font-semibold text-indigo-700 underline decoration-indigo-400 underline-offset-2 dark:text-indigo-300" {...props}>{children}</a>;
-                                      }
-                                      return <a href={href} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
-                                    },
-                                  }}
-                                  remarkPlugins={[remarkGfm]}
-                                  rehypePlugins={[
-                                    [
-                                      rehypeExternalLinks,
-                                      {
-                                        target: "_blank",
-                                        rel: "noopener noreferrer",
-                                      },
-                                    ],
-                                  ]}
-                                >
-                                  {chat.sources?.length
-                                    ? chat.message.replace(/\[(\d+)\](?!\()/g, (match, number: string) =>
-                                        chat.sources?.some((source) => source.citationNumber === Number(number))
-                                            ? `[${number}](#source-${number})`
-                                          : match,
-                                      )
-                                    : chat.message}
-                                </ReactMarkdown>
-                              </div>
-                            </div>
-                          </div>
-
-                          {chat.sender === "bot" && (
-                            <SourceReferences sources={chat.sources} idPrefix={`message-${idx}`} />
-                          )}
-
-                          {/* Bot Message Action Bar */}
-                          {chat.sender === "bot" && (
-                            <div className="flex items-center gap-1 mt-1.5 ml-2">
-                              {idx === chatHistory.length - 1 && !loading && chat.status !== "error" && (
-                                <ToolTip content="Regenerate response">
-                                  <button type="button" onClick={regenerate} aria-label="Regenerate response" className="inline-flex h-10 w-10 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100">
-                                    <RotateCcw className="h-3.5 w-3.5" />
-                                  </button>
-                                </ToolTip>
-                              )}
-                              {idx === chatHistory.length - 1 && !loading && (
-                                <>
-                                  <button type="button" onClick={() => void submitFeedback(idx, "helpful", chat.message)} aria-pressed={feedbackByIdx[idx] ? feedbackByIdx[idx] === "helpful" : chat.feedback === "helpful"} aria-label="Mark response helpful" title="Helpful" className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-950/30 dark:hover:text-emerald-300 ${feedbackByIdx[idx] === "helpful" || (!feedbackByIdx[idx] && chat.feedback === "helpful") ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300" : ""}`}><ThumbsUp className="h-3.5 w-3.5" /></button>
-                                  <button type="button" onClick={() => void submitFeedback(idx, "not_helpful", chat.message)} aria-pressed={feedbackByIdx[idx] ? feedbackByIdx[idx] === "not_helpful" : chat.feedback === "not_helpful"} aria-label="Mark response not helpful" title="Not helpful" className={`inline-flex h-10 w-10 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/30 dark:hover:text-rose-300 ${feedbackByIdx[idx] === "not_helpful" || (!feedbackByIdx[idx] && chat.feedback === "not_helpful") ? "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300" : ""}`}><ThumbsDown className="h-3.5 w-3.5" /></button>
-                                </>
-                              )}
-                              {/* 🗑️ DELETE INTERACTION BUTTON */}
-                              <ToolTip content="Delete interaction">
-                                <button
-                                  type="button"
-                                  onClick={() => deleteMessage(idx)}
-                                  aria-label="Delete this response"
-                                  className="inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors cursor-pointer text-zinc-500 hover:text-red-700 hover:bg-red-50 dark:text-zinc-400 dark:hover:text-red-300 dark:hover:bg-red-950/20"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </ToolTip>
-
-                              {/* 📋 COPY BUTTON */}
-                              <ToolTip
-                                content={
-                                  copiedIdx === idx ? "Copied!" : "Copy response"
-                                }
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() => handleCopy(chat.message, idx)}
-                                  aria-label={copiedIdx === idx ? "Response copied" : "Copy response"}
-                                  className={`inline-flex h-10 w-10 items-center justify-center rounded-full transition-colors cursor-pointer ${
-                                    copiedIdx === idx
-                                      ? "text-green-800 bg-green-50 dark:text-green-300 dark:bg-green-950/30"
-                                      : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                                  }`}
-                                >
-                                  {copiedIdx === idx ? (
-                                    <Check className="w-3.5 h-3.5" />
-                                  ) : (
-                                    <Copy className="w-3.5 h-3.5" />
-                                  )}
-                                </button>
-                              </ToolTip>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-lg" aria-hidden="true">{suggestion.icon}</span>
+                  <span className="min-w-0">
+                    <span className="block text-xs font-semibold">{suggestion.label}</span>
+                    <span className="block truncate text-xs text-muted-foreground">{suggestion.query}</span>
+                  </span>
+                </button>
               ))}
-
-              <div ref={messagesEndRef} />
             </div>
+          </div>
+        ) : (
+          <div className="space-y-6 pt-2">
+            {chat.messages.map((message, index) =>
+              message.sender === "user" ? (
+                <div key={index} className="flex items-end justify-end gap-2">
+                  <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl bg-primary px-4 py-2.5 text-sm text-primary-foreground sm:text-base">
+                    {message.message}
+                  </div>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user?.avatar} alt="" />
+                    <AvatarFallback className="text-xs">{user?.username?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+                  </Avatar>
+                </div>
+              ) : (
+                <BotMessage
+                  key={index}
+                  chat={message}
+                  index={index}
+                  isLast={index === chat.messages.length - 1}
+                  loading={chat.loading}
+                  onRegenerate={chat.regenerate}
+                  onFeedback={(id, rating) => void chat.submitFeedback(id, rating)}
+                />
+              ),
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="pb-4 pt-2">
+        <p className="sr-only" role="status" aria-live="polite">{chat.loading ? "ReadHub is researching your question." : ""}</p>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            submit();
+          }}
+          className="flex items-end gap-2 rounded-2xl border-2 bg-card p-2 transition-colors focus-within:border-foreground/40"
+        >
+          <textarea
+            ref={inputRef}
+            rows={1}
+            value={draft}
+            maxLength={4000}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
+                event.preventDefault();
+                submit();
+              }
+            }}
+            placeholder="Ask about the news or books…"
+            aria-label="Message the assistant"
+            className="max-h-40 min-h-11 flex-1 resize-none bg-transparent px-3 py-2.5 text-base outline-none placeholder:text-muted-foreground"
+          />
+          {chat.loading ? (
+            <Button type="button" size="icon" variant="outline" onClick={chat.stop} aria-label="Stop generating" className="h-11 w-11 shrink-0 rounded-xl">
+              <Square className="h-4 w-4 fill-current" />
+            </Button>
+          ) : (
+            <Button type="submit" size="icon" disabled={!draft.trim()} aria-label="Send message" className="h-11 w-11 shrink-0 rounded-xl">
+              <Send className="h-4 w-4" />
+            </Button>
           )}
-        </div>
-      </ScrollArea>
-
-      {/* Futuristic Command Interface */}
-      <div className="mt-auto px-4 pt-6 pb-2 relative z-20">
-        <div className="max-w-4xl mx-auto">
-          <div className="relative group transition-all duration-300">
-            <p className="sr-only" role="status" aria-live="polite">{loading ? "ReadHub is researching your question and preparing a response." : ""}</p>
-            <div className="relative bg-white dark:bg-zinc-900 border-2 border-zinc-200 dark:border-zinc-800 rounded-[2rem] p-2 pr-3 flex items-center gap-3 transition-all duration-300 focus-within:border-black dark:focus-within:border-white">
-              <div className="pl-4 text-zinc-400 opacity-40 group-focus-within:opacity-100 transition-opacity">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <Input
-                placeholder="Ask me anything about news or books..."
-                value={userMessage}
-                onChange={handleChange}
-                disabled={loading}
-                onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-0 h-12 text-base placeholder:text-zinc-400 dark:placeholder:text-zinc-600 shadow-none font-medium"
-              />
-              {loading ? (
-                <Button size="icon" variant="outline" onClick={stopMessage} aria-label="Stop generating response" className="h-12 w-12 shrink-0 rounded-2xl">
-                  <Square className="h-4 w-4 fill-current" />
-                </Button>
-              ) : <Button
-                size="icon"
-                onClick={handleSendMessage}
-                disabled={loading || !userMessage.trim()}
-                className="rounded-2xl w-12 h-12 shrink-0 cursor-pointer bg-black dark:bg-white text-white dark:text-black hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg disabled:opacity-30 disabled:scale-100"
-              >
-                <Send className="w-5 h-5" />
-              </Button>}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-center gap-6 mt-5">
-            <Typography
-              variant="muted"
-              className="text-[10px] font-black uppercase tracking-[0.5em] opacity-30"
-            >
-              Intelligence Node • ReadHub AI
-            </Typography>
-          </div>
-        </div>
+        </form>
+        <p className="mt-2 text-center text-[11px] text-muted-foreground">AI can make mistakes. Check important facts against the cited sources.</p>
       </div>
     </div>
   );

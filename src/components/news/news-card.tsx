@@ -4,12 +4,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { Globe2, Loader2, Newspaper, RefreshCcw, Settings2, SlidersHorizontal } from "lucide-react";
+import { AlertCircle, Globe2, Newspaper, RefreshCcw, SearchX, Settings2, SlidersHorizontal } from "lucide-react";
 import { PoweredBy } from "../misc/powered-by";
-import { FilterChip } from "../misc/filter-chip";
+import { CategoryFilter } from "../misc/filter-chip";
+import { SearchInput } from "../misc/search-input";
 import ToolTip from "../ui/custom/tooltip";
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
+import { Badge } from "../ui/badge";
+import { Spinner } from "../ui/spinner";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "../ui/empty";
+import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SearchableSelect, SelectOption } from "../misc/searchable-select";
 import { CountryFlag } from "../misc/country-flag";
@@ -202,8 +207,7 @@ export default function NewsCard() {
             <p className="sr-only" aria-live="polite">{status === "loading" ? "Loading articles" : `${feed.articles.length} articles shown`}</p>
           </div>
           <div className="flex w-full items-center gap-2 lg:max-w-md">
-            <Input
-              type="search"
+            <SearchInput
               aria-label="Search news articles"
               placeholder="Search news…"
               value={searchInput}
@@ -227,17 +231,13 @@ export default function NewsCard() {
         </div>
 
         <div className="mb-6 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-          <div role="group" aria-label="Filter by topic" className="-mx-1.5 flex min-w-0 gap-2 overflow-x-auto p-1.5">
-            {newsCategories.map((category) => (
-              <FilterChip
-                key={category.id}
-                id={category.id}
-                label={category.name}
-                selected={filters.category === category.id}
-                onSelect={() => updateFilters({ category: category.id })}
-              />
-            ))}
-          </div>
+          <CategoryFilter
+            label="Filter by topic"
+            options={newsCategories}
+            value={filters.category}
+            onChange={(category) => updateFilters({ category })}
+            className="min-w-0"
+          />
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             <RegionSwitcher
               value={filters.country}
@@ -250,10 +250,14 @@ export default function NewsCard() {
         </div>
 
         {status === "error" && (
-          <div role="alert" className="mb-6 flex flex-col items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center text-sm">
-            <p className="text-destructive">{errorMessage}</p>
-            <Button variant="outline" size="sm" onClick={refreshFeed}>Try again</Button>
-          </div>
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle />
+            <AlertTitle>Couldn&apos;t load the news</AlertTitle>
+            <AlertDescription>
+              <p>{errorMessage}</p>
+              <Button variant="outline" size="sm" className="mt-2" onClick={refreshFeed}>Try again</Button>
+            </AlertDescription>
+          </Alert>
         )}
 
         {status === "loading" && feed.articles.length === 0 ? (
@@ -265,15 +269,21 @@ export default function NewsCard() {
         )}
 
         {status === "ready" && feed.articles.length === 0 && (
-          <p className="mt-10 text-center text-sm text-muted-foreground">
-            {filters.q ? `No articles match “${filters.q}”. Try another search or clear it.` : "No articles found for these filters."}
-          </p>
+          <Empty className="mt-6 border border-dashed">
+            <EmptyHeader>
+              <EmptyMedia variant="icon"><SearchX /></EmptyMedia>
+              <EmptyTitle>No articles found</EmptyTitle>
+              <EmptyDescription>
+                {filters.q ? `Nothing matches “${filters.q}”. Try another search or clear it.` : "Try another topic, region or time window."}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         )}
 
         {hasMore && status !== "loading" && (
           <div className="mt-8 flex justify-center pb-8">
             <Button variant="outline" onClick={() => void loadPage(feed.page + 1)} disabled={status === "loadingMore"}>
-              {status === "loadingMore" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {status === "loadingMore" && <Spinner />}
               Load more
             </Button>
           </div>
@@ -331,24 +341,33 @@ function RegionSwitcher({ value, regions, isAuthenticated, onChange }: { value: 
 }
 const SORT_OPTIONS = [{ id: "latest", name: "Newest first" }, { id: "oldest", name: "Oldest first" }];
 
+/** Labelled single-choice pill row (shadcn ToggleGroup). */
 function Segment({ options, value, onSelect, label }: { options: { id: string; name: string }[]; value: string; onSelect: (id: string) => void; label: string }) {
+  const id = `segment-${label.toLowerCase().replace(/\W+/g, "-")}`;
   return (
-    <fieldset>
-      <legend className="mb-2 text-xs font-medium text-muted-foreground">{label}</legend>
-      <div className="flex flex-wrap gap-1.5">
+    <div className="space-y-2">
+      <p id={id} className="text-xs font-medium text-muted-foreground">{label}</p>
+      <ToggleGroup
+        type="single"
+        value={value}
+        onValueChange={(next) => next && onSelect(next)}
+        variant="outline"
+        size="sm"
+        spacing={1.5}
+        aria-labelledby={id}
+        className="flex-wrap"
+      >
         {options.map((option) => (
-          <button
+          <ToggleGroupItem
             key={option.id}
-            type="button"
-            onClick={() => onSelect(option.id)}
-            aria-pressed={value === option.id}
-            className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${value === option.id ? "border-primary bg-primary text-primary-foreground" : "hover:bg-accent"}`}
+            value={option.id}
+            className="rounded-full px-3 data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
           >
             {option.name}
-          </button>
+          </ToggleGroupItem>
         ))}
-      </div>
-    </fieldset>
+      </ToggleGroup>
+    </div>
   );
 }
 
@@ -361,7 +380,7 @@ function FeedFilters({ sort, freshness, onChange }: { sort: string; freshness: s
         <Button variant="outline" className="h-10 gap-2 rounded-full px-4 font-normal" aria-label={active ? `Sort and date filters, ${active} active` : "Sort and date filters"}>
           <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
           Filters
-          {active > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-semibold text-primary-foreground">{active}</span>}
+          {active > 0 && <Badge className="h-5 min-w-5 rounded-full px-1 tabular-nums">{active}</Badge>}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 space-y-4">

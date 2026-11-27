@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Library, Search } from "lucide-react";
+import { AlertCircle, Library, SearchX } from "lucide-react";
 import { PoweredBy } from "../misc/powered-by";
-import { FilterChip } from "../misc/filter-chip";
-import { Input } from "@/components/ui/input";
+import { CategoryFilter } from "../misc/filter-chip";
+import { SearchInput } from "../misc/search-input";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { BOOK_GRID, BookGridSkeleton } from "@/components/misc/skeletons";
 import BookCard from "./book-card";
 import { Book } from "@/types";
@@ -45,8 +47,7 @@ export default function LibraryView() {
           <PoweredBy name="Open Library" href="https://openlibrary.org" icon={Library} iconClassName="bg-[#e2dcc5] text-[#3d3424] dark:bg-[#3d3424] dark:text-[#e2dcc5]" />
         </div>
         <div className="w-full lg:max-w-md">
-          <Input
-            type="search"
+          <SearchInput
             placeholder="Search by title, author, or subject…"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
@@ -56,24 +57,24 @@ export default function LibraryView() {
         </div>
       </div>
 
-      <div role="group" aria-label="Filter by subject" className="-mx-1.5 mb-5 flex gap-2 overflow-x-auto p-1.5">
-        {booksCategories.map((item) => (
-          <FilterChip key={item.id} id={item.id} label={item.name} selected={category === item.id} onSelect={() => setCategory(item.id)} />
-        ))}
-      </div>
+      <CategoryFilter label="Filter by subject" options={booksCategories} value={category} onChange={setCategory} className="mb-5" />
 
       {error ? (
-        <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-6 text-center text-sm text-destructive">
-          We couldn&apos;t reach Open Library. Check your connection and try again.
-        </div>
+        <Alert variant="destructive">
+          <AlertCircle />
+          <AlertTitle>Couldn&apos;t reach Open Library</AlertTitle>
+          <AlertDescription>Check your connection and try again.</AlertDescription>
+        </Alert>
       ) : isLoading ? (
         <BookGridSkeleton />
       ) : books.length === 0 ? (
-        <div className="flex flex-col items-center py-20 text-center">
-          <span className="mb-4 rounded-full bg-muted p-5"><Search className="h-7 w-7 text-muted-foreground" aria-hidden="true" /></span>
-          <h2 className="text-lg font-semibold">No books match</h2>
-          <p className="max-w-xs text-sm text-muted-foreground">Try a different search or subject.</p>
-        </div>
+        <Empty className="border border-dashed">
+          <EmptyHeader>
+            <EmptyMedia variant="icon"><SearchX /></EmptyMedia>
+            <EmptyTitle>No books match</EmptyTitle>
+            <EmptyDescription>Try a different search or subject.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       ) : (
         <>
           <div className={BOOK_GRID}>

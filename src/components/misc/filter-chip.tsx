@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Atom,
   BookOpen,
@@ -13,6 +15,7 @@ import {
   Trophy,
   type LucideIcon,
 } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_ICONS: Record<string, LucideIcon> = {
@@ -30,34 +33,45 @@ const CATEGORY_ICONS: Record<string, LucideIcon> = {
   fiction: BookOpen,
 };
 
-interface FilterChipProps {
-  id: string;
+/** Chip look shared by topic filters and other pill toggles (h-10 matches the Region/Filters controls). */
+export const chipClassName = cn(
+  "h-10 shrink-0 gap-2 rounded-full border border-border bg-background px-4 text-sm font-medium text-foreground transition-all",
+  "hover:-translate-y-px hover:border-primary/60 hover:bg-primary/5 hover:text-primary hover:shadow-sm active:translate-y-0",
+  "data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=on]:shadow-sm data-[state=on]:hover:translate-y-0",
+);
+
+interface CategoryFilterProps {
+  options: { id: string; name: string }[];
+  value: string;
+  onChange: (id: string) => void;
   label: string;
-  selected: boolean;
-  onSelect: () => void;
+  className?: string;
 }
 
 /**
- * Selectable topic chip. Unselected chips use a bordered, full-contrast style
- * (not muted grey) so they read as clickable rather than disabled.
+ * Single-select topic chips built on shadcn ToggleGroup (roving focus and arrow
+ * keys). Unselected chips are bordered and full-contrast so they read as clickable.
  */
-export function FilterChip({ id, label, selected, onSelect }: FilterChipProps) {
-  const Icon = CATEGORY_ICONS[id];
+export function CategoryFilter({ options, value, onChange, label, className }: CategoryFilterProps) {
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      aria-pressed={selected}
-      className={cn(
-        "inline-flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm font-medium transition-all",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-        selected
-          ? "border-primary bg-primary text-primary-foreground shadow-sm"
-          : "border-border bg-background text-foreground hover:-translate-y-px hover:border-primary/60 hover:bg-primary/5 hover:text-primary hover:shadow-sm active:translate-y-0",
-      )}
+    <ToggleGroup
+      type="single"
+      value={value}
+      // A topic is always selected; ignore Radix's "deselect" event.
+      onValueChange={(next) => next && onChange(next)}
+      spacing={2}
+      aria-label={label}
+      className={cn("-mx-1.5 w-full justify-start overflow-x-auto p-1.5", className)}
     >
-      {Icon && <Icon className="h-4 w-4" aria-hidden="true" />}
-      {label}
-    </button>
+      {options.map(({ id, name }) => {
+        const Icon = CATEGORY_ICONS[id];
+        return (
+          <ToggleGroupItem key={id} value={id} className={chipClassName}>
+            {Icon && <Icon className="h-4 w-4" aria-hidden="true" />}
+            {name}
+          </ToggleGroupItem>
+        );
+      })}
+    </ToggleGroup>
   );
 }

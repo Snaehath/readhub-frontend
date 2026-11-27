@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
 // Loading placeholders for every content surface. Each mirrors the layout of the
@@ -127,7 +128,7 @@ export function BookGridSkeleton({ count = 10 }: { count?: number }) {
 
 // --- Shared ----------------------------------------------------------------------
 
-/** A row of filter chips (same h-10 size as FilterChip). */
+/** A row of filter chips (same h-10 size as CategoryFilter chips). */
 export function ChipRowSkeleton({ count = 7, className }: { count?: number; className?: string }) {
   return (
     <div className={cn("flex gap-2 overflow-hidden", className)} aria-hidden="true">
@@ -221,7 +222,7 @@ export function AiReportsSkeleton({ count = 6 }: { count?: number }) {
       <div className="space-y-10">
         <div className="flex items-center gap-6" aria-hidden="true">
           <Skeleton className="h-3 w-32 shrink-0" />
-          <div className="h-px w-full bg-border" />
+          <Separator className="flex-1" />
         </div>
         <div className={REPORT_GRID}>{repeat(count, (index) => <AiReportCardSkeleton key={index} />)}</div>
       </div>

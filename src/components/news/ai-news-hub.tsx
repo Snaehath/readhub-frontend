@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Calendar, Clock3, ExternalLink, Loader2, Microscope, Newspaper, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowRight, Calendar, Clock3, ExternalLink, Microscope, Newspaper, Sparkles } from "lucide-react";
 import { apiRequest, fetcher } from "@/lib/api-client";
 import useSWR, { mutate } from "swr";
 import { toast } from "sonner";
@@ -12,10 +12,15 @@ import { AiNews, AiNewsResponse } from "@/types";
 import { useUserStore } from "@/lib/store/userStore";
 import { format, isValid } from "date-fns";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { readMinutes, safeHttpUrl } from "@/lib/utils";
 import { AiReportsSkeleton, REPORT_GRID } from "@/components/misc/skeletons";
 import AiByline from "./ai-byline";
 import AiReportCard from "./ai-report-card";
+import { Badge } from "@/components/ui/badge";
 
 function DailyEditionFeature({ article }: { article: AiNews }) {
   const editionSources = (article.sources || []).flatMap((source, sourceIndex) => {
@@ -29,7 +34,7 @@ function DailyEditionFeature({ article }: { article: AiNews }) {
     <section aria-labelledby="daily-edition-title" className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/40 px-5 py-4 sm:px-7">
         <div className="flex items-center gap-2">
-          <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">{isCurrentEdition ? "Today’s edition" : "Latest daily edition"}</span>
+          <Badge variant="default" className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary-foreground">{isCurrentEdition ? "Today’s edition" : "Latest daily edition"}</Badge>
           <span className="text-xs font-medium text-muted-foreground">AI-written · {editionSources.length} sources</span>
         </div>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -65,7 +70,7 @@ function DailyEditionFeature({ article }: { article: AiNews }) {
                     <span className="min-w-0">
                       <span className="block text-sm font-medium leading-5 text-foreground group-hover:text-primary">{source.title || "Open source article"}</span>
                       <span className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                        {source.category && <span className="rounded-full bg-primary/10 px-2 py-0.5 font-medium capitalize text-primary">{source.category}</span>}
+                        {source.category && <Badge variant="secondary" className="rounded-full bg-primary/10 px-2 py-0.5 font-medium capitalize text-primary">{source.category}</Badge>}
                         {source.sourceName || "Publisher"}
                         {source.publishedAt && isValid(new Date(source.publishedAt)) ? ` · ${format(new Date(source.publishedAt), "MMM d, h:mm a")}` : ""}
                         <ExternalLink aria-hidden="true" className="h-3 w-3" />
@@ -139,7 +144,7 @@ const AiNewsHub = () => {
           <div className="flex w-full gap-2 lg:max-w-md">
             <Input value={topic} onChange={(event) => setTopic(event.target.value)} maxLength={200} placeholder="e.g. India stock market, AI regulation" aria-label="Report topic" disabled={loading} />
             <Button type="submit" disabled={loading || !topic.trim()} className="h-11 shrink-0 rounded-full px-5">
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+              {loading ? <Spinner /> : <Sparkles />}
               {loading ? "Writing…" : "Generate"}
             </Button>
           </div>
@@ -152,22 +157,27 @@ const AiNewsHub = () => {
             <h2 className="whitespace-nowrap text-xs font-black uppercase tracking-[0.3em] text-primary">
               {dailyEdition ? "Previous reports" : "AI reports"}
             </h2>
-            <div className="h-px w-full bg-primary/10" />
+            <Separator className="flex-1 bg-primary/10" />
           </div>
         )}
 
         {error ? (
-          <div role="alert" className="py-16 text-center space-y-4">
-            <p className="text-sm text-muted-foreground">Could not load AI reports. Check your connection and try again.</p>
-            <Button variant="outline" onClick={() => mutate(aiNewsKey)}>Try again</Button>
-          </div>
+          <Alert variant="destructive">
+            <AlertCircle />
+            <AlertTitle>Couldn&apos;t load AI reports</AlertTitle>
+            <AlertDescription>
+              <p>Check your connection and try again.</p>
+              <Button variant="outline" size="sm" className="mt-2" onClick={() => mutate(aiNewsKey)}>Try again</Button>
+            </AlertDescription>
+          </Alert>
         ) : articles.length === 0 ? (
-          <div className="py-20 text-center space-y-4">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-dashed bg-muted/40">
-              <Newspaper className="h-8 w-8 text-muted-foreground/50" aria-hidden="true" />
-            </div>
-            <p className="text-sm text-muted-foreground">No AI reports have been published yet.</p>
-          </div>
+          <Empty className="border border-dashed">
+            <EmptyHeader>
+              <EmptyMedia variant="icon"><Newspaper /></EmptyMedia>
+              <EmptyTitle>No AI reports yet</EmptyTitle>
+              <EmptyDescription>Reports appear here once they are published.</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : archiveArticles.length > 0 ? (
           <div className={REPORT_GRID}>
             {archiveArticles.map((article) => <AiReportCard key={article._id} report={article} />)}

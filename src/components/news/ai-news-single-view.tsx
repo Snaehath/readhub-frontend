@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { linkCitations, readMinutes, safeHttpUrl } from "@/lib/utils";
 import { AiReportArticleSkeleton } from "@/components/misc/skeletons";
 import AiByline from "./ai-byline";
+import { Badge } from "@/components/ui/badge";
 
 export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
   const resolvedParams = use(params);
@@ -92,9 +93,9 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
       <article>
         <header className="space-y-5 border-b pb-8">
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+            <Badge variant="secondary" className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
               {news.reportType === "daily" ? "Daily edition" : "AI report"}
-            </span>
+            </Badge>
             {createdAt && isValid(createdAt) && <time dateTime={news.createdAt}>{format(createdAt, "MMMM d, yyyy")}</time>}
             <span aria-hidden="true">·</span>
             <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" aria-hidden="true" />{readTime} min read</span>

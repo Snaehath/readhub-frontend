@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUpRight, Bookmark, Sparkles, Telescope, ThumbsUp } from "lucide-react";
+import { ArrowUpRight, Bookmark, ThumbsUp } from "lucide-react";
 import { differenceInHours, format, formatDistanceToNow, isValid } from "date-fns";
 import { toast } from "sonner";
 import { Badge } from "../ui/badge";
@@ -13,6 +13,7 @@ import { Category, NewsArticle } from "@/types";
 import { SavedListKey, useUserStore } from "@/lib/store/userStore";
 import { ArticleAiMode } from "@/lib/hooks/useArticleAi";
 import { NEWS_GRID } from "@/components/misc/skeletons";
+import { AiActionButton } from "./ai-action-button";
 import { apiRequest } from "@/lib/api-client";
 import { CoverImage } from "@/components/misc/cover-image";
 
@@ -83,7 +84,7 @@ export default function NewsCardItems({ articles, onOpenAi }: NewsCardItemsProps
                 />
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent" />
                 {isRecent(published) && (
-                  <span className="absolute left-2.5 top-2.5 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow">New</span>
+                  <Badge variant="default" className="absolute left-2.5 top-2.5 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow">New</Badge>
                 )}
                 {article.source?.name && (
                   <span className="pointer-events-none absolute bottom-2 left-2.5 max-w-[55%] truncate text-[10px] font-semibold uppercase tracking-wider text-white/90">
@@ -113,26 +114,8 @@ export default function NewsCardItems({ articles, onOpenAi }: NewsCardItemsProps
                   )}
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
-                  <ToolTip content="Forecast how this story could develop">
-                    <button
-                      type="button"
-                      aria-label={`Forecast: ${article.title}`}
-                      onClick={() => onOpenAi(article, "forecast")}
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 to-cyan-700 text-white shadow-sm transition-transform hover:scale-105"
-                    >
-                      <Telescope className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  </ToolTip>
-                  <ToolTip content="Ask AI to explain this article">
-                    <button
-                      type="button"
-                      aria-label={`Ask AI about: ${article.title}`}
-                      onClick={() => onOpenAi(article, "explain")}
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-700 text-white shadow-sm transition-transform hover:scale-105"
-                    >
-                      <Sparkles className="h-4 w-4" aria-hidden="true" />
-                    </button>
-                  </ToolTip>
+                  <AiActionButton mode="forecast" articleTitle={article.title} onClick={() => onOpenAi(article, "forecast")} />
+                  <AiActionButton mode="explain" articleTitle={article.title} onClick={() => onOpenAi(article, "explain")} />
                 </div>
               </div>
 
@@ -144,7 +127,11 @@ export default function NewsCardItems({ articles, onOpenAi }: NewsCardItemsProps
             </CardHeader>
 
             <CardContent className="flex-grow px-3 pb-3 pt-1.5">
-              {article.description && <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{article.description}</p>}
+              {article.description ? (
+                <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{article.description}</p>
+              ) : (
+                <p className="text-sm italic text-muted-foreground/80">No summary from {article.source?.name || "the publisher"}. Open the story or use Ask AI.</p>
+              )}
             </CardContent>
 
             <CardFooter className="mt-auto flex items-center justify-between border-t px-3 py-2">

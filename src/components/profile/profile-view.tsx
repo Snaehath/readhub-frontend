@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { cn } from "@/lib/utils";
@@ -8,17 +7,38 @@ import { format, isValid } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Spinner } from "@/components/ui/spinner";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AvatarPicker } from "@/components/misc/avatar-picker";
+import { PasswordInput } from "@/components/misc/password-input";
 import { useUserStore } from "@/lib/store/userStore";
-import { avatarOptions } from "@/constants";
 import { toast } from "sonner";
 import { AlertTriangle, Edit2, User as UserIcon } from "lucide-react";
 import { ProfileSkeleton } from "@/components/misc/skeletons";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { NewsPreferencesCard } from "./news-preferences-card";
 import { apiRequest } from "@/lib/api-client";
+
+function Stat({ label, value, className }: { label: string; value: number; className?: string }) {
+  return (
+    <div className="rounded-2xl border bg-muted/40 p-3 text-center">
+      <dd className={cn("text-2xl font-semibold tracking-tight", className)}>{value}</dd>
+      <dt className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</dt>
+    </div>
+  );
+}
 
 const ProfileView = () => {
   const { user, setUser, status, fetchUser, logout } = useUserStore();
@@ -128,101 +148,43 @@ const ProfileView = () => {
             </div>
 
             {isEditing ? (
-              <div className="w-full space-y-2 animate-in slide-in-from-bottom-2 duration-300">
-                <div className="space-y-2">
-                  <div className="space-y-1.5">
-                    <Label
-                      htmlFor="username"
-                      className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1"
-                    >
-                      Username
-                    </Label>
-                    <div className="relative">
-                      <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="username"
-                        value={newUsername}
-                        onChange={(e) => setNewUsername(e.target.value)}
-                        className="pl-10 h-10 rounded-xl"
-                        placeholder="Enter new username"
-                        maxLength={40}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground ml-1">
-                      Select Avatar
-                    </Label>
-                    <div className="grid grid-cols-4 gap-3">
-                      {avatarOptions.map((opt) => (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => setNewAvatar(opt.value)}
-                          aria-label={opt.label}
-                          aria-pressed={newAvatar === opt.value}
-                          className={`relative rounded-xl border-2 p-1 transition-all hover:scale-105 active:scale-95 ${
-                            newAvatar === opt.value
-                              ? "border-primary ring-2 ring-primary/20 bg-primary/5 shadow-md"
-                              : "border-zinc-100 dark:border-zinc-800 hover:border-indigo-200"
-                          }`}
-                        >
-                          <img
-                            src={opt.value}
-                            alt=""
-                            width={60}
-                            height={60}
-                            className="rounded-lg object-cover mx-auto"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <FieldGroup className="w-full animate-in slide-in-from-bottom-2 duration-300">
+                <Field>
+                  <FieldLabel htmlFor="username">Username</FieldLabel>
+                  <InputGroup className="h-10 rounded-xl">
+                    <InputGroupAddon>
+                      <UserIcon aria-hidden="true" />
+                    </InputGroupAddon>
+                    <InputGroupInput id="username" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} placeholder="Enter new username" maxLength={40} />
+                  </InputGroup>
+                </Field>
+                <Field>
+                  <FieldLabel id="profile-avatar-label">Avatar</FieldLabel>
+                  <AvatarPicker value={newAvatar} onChange={setNewAvatar} size={52} aria-labelledby="profile-avatar-label" />
+                </Field>
+              </FieldGroup>
             ) : (
-              <div className="text-center space-y-1">
-                <h2 className={cn("text-3xl font-semibold tracking-tight", "tracking-tight")}>
-                  {user.username}
-                </h2>
-                <p className={cn("text-sm text-muted-foreground", "font-medium text-sm")}>
-                  {user.email}
-                </p>
-                <div className="pt-3 flex flex-wrap justify-center gap-2">
+              <div className="space-y-1 text-center">
+                <h2 className="text-3xl font-semibold tracking-tight">{user.username}</h2>
+                <p className="text-sm font-medium text-muted-foreground">{user.email}</p>
+                <div className="flex flex-wrap justify-center gap-2 pt-3">
                   {joinedDate && (
-                    <p className={cn("text-sm text-muted-foreground", "px-3 py-1 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold rounded-full border border-indigo-100 dark:border-indigo-900/50 uppercase tracking-wider leading-none")}>
+                    <Badge variant="outline" className="rounded-full border-primary/20 bg-primary/5 text-[11px] font-bold uppercase tracking-wider text-primary">
                       Member since {joinedDate}
-                    </p>
+                    </Badge>
                   )}
                   {user.role === "admin" && (
-                    <p className={cn("text-sm text-muted-foreground", "px-3 py-1 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-[11px] font-bold rounded-full border border-amber-100 dark:border-amber-900/50 uppercase tracking-wider leading-none")}>
+                    <Badge variant="outline" className="rounded-full border-amber-200 bg-amber-50 text-[11px] font-bold uppercase tracking-wider text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-400">
                       Administrator
-                    </p>
+                    </Badge>
                   )}
                 </div>
 
-                {/* User Stats/Summary */}
-                <div className="grid grid-cols-2 gap-4 w-full pt-6 border-t mt-6 dark:border-zinc-800">
-                  <div className="text-center p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800/50">
-                    <h3 className={cn("text-2xl font-semibold tracking-tight", "text-indigo-600 dark:text-indigo-400")}>
-                      {(user.likes_us?.length || 0) +
-                        (user.likes_in?.length || 0)}
-                    </h3>
-                    <p className={cn("text-sm text-muted-foreground", "text-[10px] uppercase font-bold tracking-widest")}>
-                      Liked Articles
-                    </p>
-                  </div>
-                  <div className="text-center p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800/50">
-                    <h3 className={cn("text-2xl font-semibold tracking-tight", "text-emerald-600 dark:text-emerald-400")}>
-                      {(user.bookmarks_us?.length || 0) +
-                        (user.bookmarks_in?.length || 0)}
-                    </h3>
-                    <p className={cn("text-sm text-muted-foreground", "text-[10px] uppercase font-bold tracking-widest")}>
-                      Bookmarked Articles
-                    </p>
-                  </div>
-                </div>
+                <Separator className="mt-6" />
+                <dl className="grid w-full grid-cols-2 gap-4 pt-6">
+                  <Stat label="Liked articles" value={(user.likes_us?.length || 0) + (user.likes_in?.length || 0)} className="text-primary" />
+                  <Stat label="Bookmarked articles" value={(user.bookmarks_us?.length || 0) + (user.bookmarks_in?.length || 0)} className="text-emerald-600 dark:text-emerald-400" />
+                </dl>
               </div>
             )}
           </CardContent>
@@ -243,7 +205,8 @@ const ProfileView = () => {
                   disabled={loading}
                   className="flex-1 rounded-xl h-10 shadow-lg shadow-indigo-500/20"
                 >
-                  {loading ? "Saving..." : "Save Changes"}
+                  {loading && <Spinner />}
+                  {loading ? "Saving…" : "Save changes"}
                 </Button>
               </div>
             ) : (
@@ -255,30 +218,32 @@ const ProfileView = () => {
                   <Edit2 className="w-4 h-4 mr-2" />
                   Edit Profile
                 </Button>
-                <button type="button" onClick={() => setDeleteDialogOpen(true)} className="min-h-10 text-sm font-medium text-destructive underline-offset-4 hover:underline">Delete account</button>
+                <Button variant="link" onClick={() => setDeleteDialogOpen(true)} className="text-destructive">Delete account</Button>
               </>
             )}
           </CardFooter>
         </Card>
         <NewsPreferencesCard />
-        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete your ReadHub account?</DialogTitle>
-              <DialogDescription>This permanently deletes your account, chat history, likes, and bookmarks. Enter your password to confirm.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-2">
-              <Label htmlFor="delete-account-password">Password</Label>
-              <Input id="delete-account-password" type="password" autoComplete="current-password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} />
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={deletingAccount}>Cancel</Button>
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete your ReadHub account?</AlertDialogTitle>
+              <AlertDialogDescription>This permanently deletes your account, chat history, likes, and bookmarks. Enter your password to confirm.</AlertDialogDescription>
+            </AlertDialogHeader>
+            <Field>
+              <FieldLabel htmlFor="delete-account-password">Password</FieldLabel>
+              <PasswordInput id="delete-account-password" autoComplete="current-password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} />
+            </Field>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deletingAccount}>Cancel</AlertDialogCancel>
+              {/* A plain Button (not AlertDialogAction) so the dialog stays open while the request runs. */}
               <Button variant="destructive" onClick={() => void handleDeleteAccount()} disabled={deletingAccount || !deletePassword}>
-                <AlertTriangle className="mr-2 h-4 w-4" />{deletingAccount ? "Deleting…" : "Delete account"}
+                {deletingAccount ? <Spinner /> : <AlertTriangle />}
+                {deletingAccount ? "Deleting…" : "Delete account"}
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

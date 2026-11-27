@@ -2,6 +2,7 @@
 
 import { Check, Languages, X } from "lucide-react";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
 import { SearchableSelect } from "@/components/misc/searchable-select";
 import { CountryFlag } from "@/components/misc/country-flag";
 import { newsCountries, newsLanguages } from "@/constants";
@@ -57,16 +58,13 @@ export function PreferencesForm({ language, regions, onLanguageChange, onRegions
           <ul className="flex flex-wrap gap-1.5" aria-label="Selected regions">
             {regions.map((id) => (
               <li key={id}>
-                <button
-                  type="button"
-                  onClick={() => toggleRegion(id)}
-                  className="inline-flex items-center gap-1.5 rounded-full border bg-card py-1 pl-2 pr-1.5 text-xs hover:border-destructive/50"
-                  aria-label={`Remove ${countryName(id)}`}
-                >
-                  <CountryFlag code={id} />
-                  {countryName(id)}
-                  <X className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
-                </button>
+                <Badge asChild variant="outline" className="h-7 gap-1.5 rounded-full bg-card pl-2 pr-1.5 font-normal hover:border-destructive/50">
+                  <button type="button" onClick={() => toggleRegion(id)} aria-label={`Remove ${countryName(id)}`}>
+                    <CountryFlag code={id} />
+                    {countryName(id)}
+                    <X className="text-muted-foreground" aria-hidden="true" />
+                  </button>
+                </Badge>
               </li>
             ))}
           </ul>

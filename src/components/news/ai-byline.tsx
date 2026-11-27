@@ -1,4 +1,5 @@
 import { AiNews } from "@/types";
+import { Badge } from "@/components/ui/badge";
 
 // Each persona gets a stable accent colour so readers recognise the desk.
 const PERSONA_COLORS: Record<string, string> = {
@@ -43,7 +44,7 @@ export default function AiByline({ report, size = "sm", showBio = false }: { rep
       <span className="min-w-0">
         <span className="flex items-center gap-1.5">
           <span className={`truncate font-semibold ${size === "lg" ? "text-base" : "text-sm"}`}>{persona.penName}</span>
-          <span className="rounded bg-primary/10 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-primary">AI</span>
+          <Badge variant="secondary" className="rounded bg-primary/10 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-primary">AI</Badge>
         </span>
         <span className="block truncate text-xs text-muted-foreground">{persona.desk}</span>
         {showBio && <span className="mt-1 block max-w-md text-xs text-muted-foreground">{persona.bio}</span>}

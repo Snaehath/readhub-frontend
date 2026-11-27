@@ -6,6 +6,9 @@ import { format, isValid } from "date-fns";
 import { AlertCircle, ExternalLink, Eye, Info, Lock, RotateCcw, Sparkles, Telescope } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Skeleton } from "../ui/skeleton";
+import { Spinner } from "../ui/spinner";
 import { ArticleForecast, ForecastScenario, NewsArticle } from "@/types";
 import { ArticleAiMode } from "@/lib/hooks/useArticleAi";
 import { InsightBasis } from "@/api/ai";
@@ -112,15 +115,15 @@ function ForecastView({ forecast }: { forecast: ArticleForecast }) {
 function LoadingState({ message }: { message: string }) {
   return (
     <div role="status" className="space-y-4">
-      <p className="text-sm text-muted-foreground">{message}</p>
-      <div className="animate-pulse space-y-3" aria-hidden="true">
-        <div className="h-4 w-1/3 rounded bg-muted" />
-        <div className="h-3.5 w-full rounded bg-muted" />
-        <div className="h-3.5 w-11/12 rounded bg-muted" />
-        <div className="h-3.5 w-4/5 rounded bg-muted" />
-        <div className="h-4 w-1/4 rounded bg-muted pt-4" />
-        <div className="h-3.5 w-full rounded bg-muted" />
-        <div className="h-3.5 w-3/4 rounded bg-muted" />
+      <p className="flex items-center gap-2 text-sm text-muted-foreground"><Spinner className="text-primary" />{message}</p>
+      <div className="space-y-3">
+        <Skeleton className="h-4 w-1/3" />
+        <Skeleton className="h-3.5 w-full" />
+        <Skeleton className="h-3.5 w-11/12" />
+        <Skeleton className="h-3.5 w-4/5" />
+        <Skeleton className="mt-4 h-4 w-1/4" />
+        <Skeleton className="h-3.5 w-full" />
+        <Skeleton className="h-3.5 w-3/4" />
       </div>
     </div>
   );
@@ -185,22 +188,24 @@ export default function ArticleAiModal({ article, mode, explanation, forecast, b
               ) : loading ? (
                 <LoadingState message={copy.loading} />
               ) : error ? (
-                <div role="alert" className="flex flex-col items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm">
-                  <p className="flex items-center gap-2 font-medium text-destructive">
-                    <AlertCircle className="h-4 w-4" aria-hidden="true" />
-                    {error}
-                  </p>
-                  <Button size="sm" variant="outline" onClick={onRetry}>
-                    <RotateCcw className="mr-2 h-3.5 w-3.5" aria-hidden="true" /> Try again
-                  </Button>
-                </div>
+                <Alert variant="destructive">
+                  <AlertCircle />
+                  <AlertTitle>{error}</AlertTitle>
+                  <AlertDescription>
+                    <Button size="sm" variant="outline" className="mt-2" onClick={onRetry}>
+                      <RotateCcw aria-hidden="true" /> Try again
+                    </Button>
+                  </AlertDescription>
+                </Alert>
               ) : hasResult ? (
                 <>
                   {basis === "summary_only" && (
-                    <p className="mb-5 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-950 dark:bg-amber-950/40 dark:text-amber-200">
-                      <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                      The publisher&apos;s full text wasn&apos;t available, so this is based on the headline and summary only.
-                    </p>
+                    <Alert className="mb-5 border-amber-200 bg-amber-50 text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
+                      <Info />
+                      <AlertDescription className="text-xs text-inherit">
+                        The publisher&apos;s full text wasn&apos;t available, so this is based on the headline and summary only.
+                      </AlertDescription>
+                    </Alert>
                   )}
                   {mode === "forecast" && forecast ? (
                     <ForecastView forecast={forecast} />

@@ -13,7 +13,6 @@ import {
   ChevronDown,
   Copy,
   History,
-  Loader2,
   MessageSquarePlus,
   RotateCcw,
   Search,
@@ -24,6 +23,10 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemMedia, ItemTitle } from "@/components/ui/item";
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupTextarea } from "@/components/ui/input-group";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -37,7 +40,7 @@ import ToolTip from "../ui/custom/tooltip";
 import { suggestions } from "@/constants";
 import { useChat } from "@/lib/hooks/useChat";
 import { useUserStore } from "@/lib/store/userStore";
-import { linkCitations, safeHttpUrl } from "@/lib/utils";
+import { cn, linkCitations, safeHttpUrl } from "@/lib/utils";
 import { ChatMessagesSkeleton, ChatSkeleton } from "@/components/misc/skeletons";
 import { AgentEvent, ChatMessage, ChatSourceReference } from "@/types";
 
@@ -61,19 +64,17 @@ function ActivityLog({ events, active, latency }: { events: AgentEvent[]; active
   const current = events[events.length - 1]?.message;
 
   return (
-    <div className="mb-2 w-full max-w-2xl">
-      <button
-        type="button"
-        onClick={() => setOpen((value) => !value)}
-        aria-expanded={open || active}
-        className="flex items-center gap-2 rounded-full px-1 py-1 text-xs text-muted-foreground hover:text-foreground"
+    <Collapsible open={open || active} onOpenChange={setOpen} className="mb-2 w-full max-w-2xl">
+      <CollapsibleTrigger
+        disabled={active || steps.length === 0}
+        className="flex items-center gap-2 rounded-full px-1 py-1 text-xs text-muted-foreground hover:text-foreground disabled:cursor-default"
       >
-        {active ? <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" /> : <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />}
+        {active ? <Spinner className="size-3.5 text-primary" /> : <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />}
         <span className="font-medium">{active ? current || "Thinking" : `Researched in ${latency || "—"}s`}</span>
         {active && <span className="tabular-nums">{elapsed.toFixed(1)}s</span>}
         {!active && steps.length > 0 && <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />}
-      </button>
-      {(open || active) && steps.length > 0 && (
+      </CollapsibleTrigger>
+      <CollapsibleContent>
         <ol className="ml-[7px] mt-1 space-y-1.5 border-l pl-4 text-xs text-muted-foreground">
           {steps.map((event, index) => (
             <li key={index} className="flex items-start gap-2">
@@ -82,8 +83,8 @@ function ActivityLog({ events, active, latency }: { events: AgentEvent[]; active
             </li>
           ))}
         </ol>
-      )}
-    </div>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -175,40 +176,42 @@ function BotMessage({
       {chat.message && !active && (
         <div className="mt-1.5 flex items-center gap-0.5">
           <ToolTip content={copied ? "Copied" : "Copy"}>
-            <button type="button" onClick={copy} aria-label="Copy response" className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
-              {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-            </button>
+            <Button variant="ghost" size="icon-sm" onClick={copy} aria-label="Copy response" className="rounded-full text-muted-foreground">
+              {copied ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+            </Button>
           </ToolTip>
           {isLast && (
             <ToolTip content="Regenerate">
-              <button type="button" onClick={onRegenerate} aria-label="Regenerate response" className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground">
-                <RotateCcw className="h-3.5 w-3.5" />
-              </button>
+              <Button variant="ghost" size="icon-sm" onClick={onRegenerate} aria-label="Regenerate response" className="rounded-full text-muted-foreground">
+                <RotateCcw className="size-3.5" />
+              </Button>
             </ToolTip>
           )}
           {chat._id && chat.status !== "error" && (
             <>
               <ToolTip content="Helpful">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => onFeedback(chat._id!, "helpful")}
                   aria-pressed={chat.feedback === "helpful"}
                   aria-label="Helpful"
-                  className={`flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent ${chat.feedback === "helpful" ? "text-emerald-600" : "text-muted-foreground"}`}
+                  className={cn("rounded-full", chat.feedback === "helpful" ? "text-emerald-600" : "text-muted-foreground")}
                 >
-                  <ThumbsUp className={`h-3.5 w-3.5 ${chat.feedback === "helpful" ? "fill-current" : ""}`} />
-                </button>
+                  <ThumbsUp className={cn("size-3.5", chat.feedback === "helpful" && "fill-current")} />
+                </Button>
               </ToolTip>
               <ToolTip content="Not helpful">
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => onFeedback(chat._id!, "not_helpful")}
                   aria-pressed={chat.feedback === "not_helpful"}
                   aria-label="Not helpful"
-                  className={`flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent ${chat.feedback === "not_helpful" ? "text-rose-600" : "text-muted-foreground"}`}
+                  className={cn("rounded-full", chat.feedback === "not_helpful" ? "text-rose-600" : "text-muted-foreground")}
                 >
-                  <ThumbsDown className={`h-3.5 w-3.5 ${chat.feedback === "not_helpful" ? "fill-current" : ""}`} />
-                </button>
+                  <ThumbsDown className={cn("size-3.5", chat.feedback === "not_helpful" && "fill-current")} />
+                </Button>
               </ToolTip>
             </>
           )}
@@ -299,18 +302,19 @@ export const ChatbotView = () => {
                     <span className="block truncate text-sm">{session.title || "Untitled"}</span>
                     <span className="block text-xs text-muted-foreground">{formatDistanceToNow(new Date(session.updatedAt), { addSuffix: true })}</span>
                   </span>
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
                     aria-label={`Delete conversation: ${session.title}`}
                     onClick={(event) => {
                       event.stopPropagation();
                       event.preventDefault();
                       void chat.deleteSession(session.sessionId);
                     }}
-                    className="rounded p-1 text-muted-foreground opacity-60 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
+                    className="text-muted-foreground opacity-60 hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100"
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                    <Trash2 className="size-3.5" />
+                  </Button>
                 </DropdownMenuItem>
               ))
             )}
@@ -332,22 +336,19 @@ export const ChatbotView = () => {
                 Ask about a current story and get an answer with sources, or tell me what you like to read.
               </p>
             </div>
-            <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+            <ItemGroup className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
               {suggestions.map((suggestion) => (
-                <button
-                  key={suggestion.label}
-                  type="button"
-                  onClick={() => void chat.send(suggestion.query)}
-                  className="flex items-center gap-3 rounded-xl border bg-card p-3.5 text-left transition-colors hover:border-foreground/30 hover:bg-accent"
-                >
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-lg" aria-hidden="true">{suggestion.icon}</span>
-                  <span className="min-w-0">
-                    <span className="block text-xs font-semibold">{suggestion.label}</span>
-                    <span className="block truncate text-xs text-muted-foreground">{suggestion.query}</span>
-                  </span>
-                </button>
+                <Item key={suggestion.label} variant="outline" size="sm" asChild className="bg-card text-left hover:border-foreground/30">
+                  <button type="button" onClick={() => void chat.send(suggestion.query)}>
+                    <ItemMedia variant="icon" className="text-lg" aria-hidden="true">{suggestion.icon}</ItemMedia>
+                    <ItemContent className="min-w-0">
+                      <ItemTitle className="text-xs">{suggestion.label}</ItemTitle>
+                      <ItemDescription className="truncate text-xs">{suggestion.query}</ItemDescription>
+                    </ItemContent>
+                  </button>
+                </Item>
               ))}
-            </div>
+            </ItemGroup>
           </div>
         ) : (
           <div className="space-y-6 pt-2">
@@ -385,9 +386,9 @@ export const ChatbotView = () => {
             event.preventDefault();
             submit();
           }}
-          className="flex items-end gap-2 rounded-2xl border-2 bg-card p-2 transition-colors focus-within:border-foreground/40"
         >
-          <textarea
+          <InputGroup className="h-auto items-end rounded-2xl border-2 bg-card p-1">
+          <InputGroupTextarea
             ref={inputRef}
             rows={1}
             value={draft}
@@ -401,17 +402,20 @@ export const ChatbotView = () => {
             }}
             placeholder="Ask about the news or books…"
             aria-label="Message the assistant"
-            className="max-h-40 min-h-11 flex-1 resize-none bg-transparent px-3 py-2.5 text-base outline-none placeholder:text-muted-foreground"
+            className="max-h-40 min-h-11 px-3 py-2.5 text-base md:text-base"
           />
-          {chat.loading ? (
-            <Button type="button" size="icon" variant="outline" onClick={chat.stop} aria-label="Stop generating" className="h-11 w-11 shrink-0 rounded-xl">
-              <Square className="h-4 w-4 fill-current" />
-            </Button>
-          ) : (
-            <Button type="submit" size="icon" disabled={!draft.trim()} aria-label="Send message" className="h-11 w-11 shrink-0 rounded-xl">
-              <Send className="h-4 w-4" />
-            </Button>
-          )}
+          <InputGroupAddon align="inline-end" className="self-end pb-0.5 pr-0.5">
+            {chat.loading ? (
+              <InputGroupButton variant="outline" onClick={chat.stop} aria-label="Stop generating" className="size-11 rounded-xl p-0">
+                <Square className="size-4 fill-current" />
+              </InputGroupButton>
+            ) : (
+              <InputGroupButton type="submit" variant="default" disabled={!draft.trim()} aria-label="Send message" className="size-11 rounded-xl p-0">
+                <Send className="size-4" />
+              </InputGroupButton>
+            )}
+          </InputGroupAddon>
+          </InputGroup>
         </form>
         <p className="mt-2 text-center text-[11px] text-muted-foreground">AI can make mistakes. Check important facts against the cited sources.</p>
       </div>

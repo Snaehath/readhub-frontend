@@ -1,32 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Newspaper,
-  Sparkles,
-  Loader2,
-  ArrowRight,
-  Calendar,
-  Microscope,
-  Clock3,
-  ExternalLink,
-} from "lucide-react";
-import { fetcher } from "@/lib/fetcher";
+import { ArrowRight, Calendar, Clock3, ExternalLink, Loader2, Microscope, Newspaper, Sparkles } from "lucide-react";
+import { apiRequest, fetcher } from "@/lib/api-client";
 import useSWR, { mutate } from "swr";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import Typography from "@/components/ui/custom/typography";
 import { API_BASE_URL } from "@/constants";
 import { AiNews, AiNewsResponse } from "@/types";
 import { useUserStore } from "@/lib/store/userStore";
 import { format, isValid } from "date-fns";
 import { Input } from "@/components/ui/input";
-import { safeHttpUrl } from "@/lib/utils";
+import { readMinutes, safeHttpUrl } from "@/lib/utils";
+import { AiReportsSkeleton, REPORT_GRID } from "@/components/misc/skeletons";
 import AiByline from "./ai-byline";
+import AiReportCard from "./ai-report-card";
 
 function DailyEditionFeature({ article }: { article: AiNews }) {
-  const readMinutes = Math.max(1, Math.ceil((article.wordCount || 0) / 220));
   const editionSources = (article.sources || []).flatMap((source, sourceIndex) => {
     const url = safeHttpUrl(source.url);
     return url ? [{ ...source, url: url.toString(), citationNumber: source.citationNumber || sourceIndex + 1 }] : [];
@@ -46,7 +37,7 @@ function DailyEditionFeature({ article }: { article: AiNews }) {
           <time dateTime={article.editionDate}>{isValid(editionDate) ? format(editionDate, "EEEE, MMM d") : "Daily edition"}</time>
           <span aria-hidden="true">·</span>
           <Clock3 className="h-3.5 w-3.5" />
-          <span>{readMinutes} min read</span>
+          <span>{readMinutes(article.wordCount)} min read</span>
         </div>
       </div>
 
@@ -111,14 +102,11 @@ const AiNewsHub = () => {
     setLoading(true);
     toast.loading("Writing an AI report from saved coverage…", { id: "gen-news" });
     try {
-      const res = await fetch(`${API_BASE_URL}/ai-hub/news/trigger`, {
+      await apiRequest("/ai-hub/news/trigger", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ topic: trimmedTopic }),
+        body: { topic: trimmedTopic },
+        errorMessage: "The report could not be written. Please try again.",
       });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || "The report could not be written. Please try again.");
       toast.success("AI report published.", { id: "gen-news" });
       setTopic("");
       void mutate(aiNewsKey);
@@ -129,20 +117,14 @@ const AiNewsHub = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center gap-3 py-20 text-sm text-muted-foreground" role="status">
-        <Loader2 className="h-5 w-5 animate-spin" /> Loading AI reports…
-      </div>
-    );
-  }
+  if (isLoading) return <AiReportsSkeleton />;
 
   const articles = data?.news || [];
   const dailyEdition = articles.find((article) => article.reportType === "daily" && article.editionDate);
   const archiveArticles = articles.filter((article) => article._id !== dailyEdition?._id);
 
   return (
-      <div className="space-y-12">
+    <div className="space-y-12">
       {dailyEdition && <DailyEditionFeature article={dailyEdition} />}
 
       {isAdmin && (
@@ -164,92 +146,31 @@ const AiNewsHub = () => {
         </form>
       )}
 
-      {/* Articles Grid */}
       <div className="space-y-10">
-        {archiveArticles.length > 0 && <div className="flex items-center gap-6">
-          <Typography
-            variant="muted"
-            className="text-xs font-black uppercase tracking-[0.3em] whitespace-nowrap text-indigo-600"
-          >
-            {dailyEdition ? "Previous reports" : "AI reports"}
-          </Typography>
-          <div className="h-px w-full bg-indigo-500/10" />
-        </div>}
+        {archiveArticles.length > 0 && (
+          <div className="flex items-center gap-6">
+            <h2 className="whitespace-nowrap text-xs font-black uppercase tracking-[0.3em] text-primary">
+              {dailyEdition ? "Previous reports" : "AI reports"}
+            </h2>
+            <div className="h-px w-full bg-primary/10" />
+          </div>
+        )}
 
         {error ? (
           <div role="alert" className="py-16 text-center space-y-4">
-            <Typography variant="muted">Could not load AI reports. Check your connection and try again.</Typography>
+            <p className="text-sm text-muted-foreground">Could not load AI reports. Check your connection and try again.</p>
             <Button variant="outline" onClick={() => mutate(aiNewsKey)}>Try again</Button>
           </div>
         ) : articles.length === 0 ? (
           <div className="py-20 text-center space-y-4">
-            <div className="w-16 h-16 bg-zinc-50 dark:bg-zinc-900 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-full flex items-center justify-center mx-auto">
-              <Newspaper className="w-8 h-8 text-zinc-300" />
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-dashed bg-muted/40">
+              <Newspaper className="h-8 w-8 text-muted-foreground/50" aria-hidden="true" />
             </div>
-            <Typography variant="muted">
-              No AI reports have been published yet.
-            </Typography>
+            <p className="text-sm text-muted-foreground">No AI reports have been published yet.</p>
           </div>
         ) : archiveArticles.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {archiveArticles.map((article) => (
-              <Link
-                key={article._id}
-                href={`/ai-news/${article._id}`}
-                className="group flex h-full flex-col rounded-2xl border bg-card p-6 transition-shadow hover:shadow-lg"
-              >
-                <div className="flex items-center gap-2 mb-6">
-                  <span className="text-[10px] font-black uppercase tracking-widest bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 px-3 py-1 rounded-full">
-                    {article.reportType === "daily" ? "Daily edition" : "AI report"}
-                  </span>
-                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground uppercase font-bold tracking-widest ml-auto">
-                    {isValid(new Date(article.createdAt)) && (
-                      <>
-                        <Calendar className="w-3 h-3" aria-hidden="true" />
-                        {format(new Date(article.createdAt), "MMM d, yyyy")}
-                      </>
-                    )}
-                    {article.wordCount ? (
-                      <>
-                        <Clock3 className="ml-1.5 w-3 h-3" aria-hidden="true" />
-                        {Math.max(1, Math.ceil(article.wordCount / 220))} min read
-                      </>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="space-y-4 flex-grow flex flex-col">
-                  <Typography
-                    variant="h3"
-                    className="text-xl font-bold leading-snug group-hover:text-indigo-600 transition-colors"
-                  >
-                    {article.title}
-                  </Typography>
-
-                  <Typography
-                    variant="muted"
-                    className="text-sm line-clamp-3 mb-6"
-                  >
-                    {article.summary}
-                  </Typography>
-
-                  <div className="mt-auto pt-6 flex items-center justify-between border-t border-zinc-100 dark:border-zinc-800/50">
-                    <AiByline report={article} />
-
-                    <div className="flex items-center gap-2">
-                      {article.sources?.length ? (
-                        <span className="text-[10px] text-muted-foreground">
-                          {article.sources.length} {article.sources.length === 1 ? "source" : "sources"}
-                        </span>
-                      ) : null}
-                      <div className="bg-zinc-100 dark:bg-zinc-800 p-2 rounded-full group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                      <ArrowRight className="w-4 h-4" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
+          <div className={REPORT_GRID}>
+            {archiveArticles.map((article) => <AiReportCard key={article._id} report={article} />)}
           </div>
         ) : null}
       </div>

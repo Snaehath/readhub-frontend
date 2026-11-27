@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { formatDistanceToNow } from "date-fns";
 import { Globe2, Loader2, Newspaper, RefreshCcw, Settings2, SlidersHorizontal } from "lucide-react";
 import { PoweredBy } from "../misc/powered-by";
 import { FilterChip } from "../misc/filter-chip";
@@ -12,7 +13,7 @@ import { Input } from "../ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SearchableSelect, SelectOption } from "../misc/searchable-select";
 import { CountryFlag } from "../misc/country-flag";
-import { CardsSkeleton } from "../misc/skeletons";
+import { NewsGridSkeleton, TickerSkeleton } from "../misc/skeletons";
 import NewsCardItems from "./news-card-items";
 import NewsTicker from "./news-ticker";
 import ArticleAiModal from "./article-ai-modal";
@@ -65,7 +66,7 @@ const URL_KEYS: Record<Exclude<keyof Filters, "country">, { key: string; fallbac
 
 const ALL_REGION_IDS = newsCountries.map(({ id }) => id);
 
-type FeedState = { articles: NewsArticle[]; page: number; hasMore: boolean; total: number; totalIsEstimate: boolean; provider: NonNullable<PaginatedNewsResponse["provider"]> };
+type FeedState = { articles: NewsArticle[]; page: number; hasMore: boolean; total: number; totalIsEstimate: boolean; provider: NonNullable<PaginatedNewsResponse["provider"]>; updatedAt?: string };
 const EMPTY_FEED: FeedState = { articles: [], page: 0, hasMore: false, total: 0, totalIsEstimate: false, provider: "GDELT" };
 
 export default function NewsCard() {
@@ -127,13 +128,15 @@ export default function NewsCard() {
   const [status, setStatus] = useState<"loading" | "loadingMore" | "ready" | "error">("loading");
   const [errorMessage, setErrorMessage] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
+  // Set by the refresh button so only that reload asks the backend for new headlines.
+  const forceRefresh = useRef(false);
   const generation = useRef(0);
 
-  const loadPage = useCallback(async (page: number, signal?: AbortSignal) => {
+  const loadPage = useCallback(async (page: number, signal?: AbortSignal, refresh = false) => {
     const currentGeneration = generation.current;
     setStatus(page === 1 ? "loading" : "loadingMore");
     try {
-      const res = await fetchNews({ ...filters, language, page, limit: PAGE_SIZE }, signal);
+      const res = await fetchNews({ ...filters, language, page, limit: PAGE_SIZE, refresh }, signal);
       if (currentGeneration !== generation.current) return;
       setFeed((previous) => ({
         articles: page === 1 ? res.news : [...previous.articles, ...res.news.filter((item) => !previous.articles.some((existing) => existing.id === item.id))],
@@ -142,6 +145,7 @@ export default function NewsCard() {
         total: res.totalArticles,
         totalIsEstimate: Boolean(res.totalIsEstimate),
         provider: res.provider || "GDELT",
+        updatedAt: page === 1 ? res.updatedAt : previous.updatedAt,
       }));
       setStatus("ready");
     } catch (error) {
@@ -156,15 +160,22 @@ export default function NewsCard() {
     if (authStatus === "loading") return;
     generation.current += 1;
     const controller = new AbortController();
-    void loadPage(1, controller.signal);
+    const refresh = forceRefresh.current;
+    forceRefresh.current = false;
+    void loadPage(1, controller.signal, refresh);
     return () => controller.abort();
   }, [loadPage, refreshKey, authStatus]);
+
+  const refreshFeed = () => {
+    forceRefresh.current = true;
+    setRefreshKey((key) => key + 1);
+  };
 
   const hasMore = feed.hasMore;
 
   return (
     <>
-      {authStatus !== "loading" && <NewsTicker country={filters.country} language={language} />}
+      {authStatus === "loading" ? <TickerSkeleton /> : <NewsTicker country={filters.country} language={language} />}
       <div className="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
         <ArticleAiModal
           article={ai.article}
@@ -182,7 +193,12 @@ export default function NewsCard() {
         <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <h1 className="text-2xl font-bold tracking-tight">News</h1>
-            <PoweredBy {...PROVIDERS[feed.provider]} />
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <PoweredBy {...PROVIDERS[feed.provider]} />
+              {feed.updatedAt && status !== "loading" && (
+                <span className="text-xs text-muted-foreground">Updated {formatDistanceToNow(new Date(feed.updatedAt), { addSuffix: true })}</span>
+              )}
+            </div>
             <p className="sr-only" aria-live="polite">{status === "loading" ? "Loading articles" : `${feed.articles.length} articles shown`}</p>
           </div>
           <div className="flex w-full items-center gap-2 lg:max-w-md">
@@ -195,12 +211,12 @@ export default function NewsCard() {
               onChange={(event) => setSearchInput(event.target.value)}
               onClear={() => setSearchInput("")}
             />
-            <ToolTip content="Refresh">
+            <ToolTip content="Check for new headlines">
               <Button
                 variant="outline"
                 size="icon"
                 className="h-11 w-11 shrink-0 rounded-full"
-                onClick={() => setRefreshKey((key) => key + 1)}
+                onClick={refreshFeed}
                 disabled={status === "loading"}
                 aria-label="Refresh news"
               >
@@ -236,12 +252,12 @@ export default function NewsCard() {
         {status === "error" && (
           <div role="alert" className="mb-6 flex flex-col items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-6 text-center text-sm">
             <p className="text-destructive">{errorMessage}</p>
-            <Button variant="outline" size="sm" onClick={() => setRefreshKey((key) => key + 1)}>Try again</Button>
+            <Button variant="outline" size="sm" onClick={refreshFeed}>Try again</Button>
           </div>
         )}
 
         {status === "loading" && feed.articles.length === 0 ? (
-          <CardsSkeleton />
+          <NewsGridSkeleton />
         ) : (
           <div className={status === "loading" ? "opacity-60 transition-opacity" : ""}>
             <NewsCardItems articles={feed.articles} onOpenAi={ai.open} />

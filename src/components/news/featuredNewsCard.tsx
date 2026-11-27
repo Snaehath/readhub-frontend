@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { CalendarIcon } from "lucide-react";
@@ -6,20 +5,15 @@ import { format, isValid } from "date-fns";
 import { Category, NewsArticle } from "@/types";
 import { NEWS_CATEGORY_COLORS } from "@/constants";
 import { Card } from "../ui/card";
+import { CoverImage } from "@/components/misc/cover-image";
 
 export default function FeaturedNewsCard({ article }: { article: NewsArticle }) {
   const published = new Date(article.publishedAt);
   return (
     <Card className="group overflow-hidden p-0 transition-shadow hover:shadow-lg">
       <div className="relative h-56 overflow-hidden bg-muted">
-        <img
-          src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
-          alt=""
-          loading="lazy"
-          referrerPolicy="no-referrer"
-          onError={(event) => {
-            event.currentTarget.src = "/ReadHub_PlaceHolder.png";
-          }}
+        <CoverImage
+          src={article.urlToImage}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         {article.category[0] && (

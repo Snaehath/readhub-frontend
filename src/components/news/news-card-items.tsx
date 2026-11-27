@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -9,10 +8,13 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import ToolTip from "../ui/custom/tooltip";
-import { API_BASE_URL, NEWS_CATEGORY_COLORS } from "@/constants";
+import { NEWS_CATEGORY_COLORS } from "@/constants";
 import { Category, NewsArticle } from "@/types";
 import { SavedListKey, useUserStore } from "@/lib/store/userStore";
 import { ArticleAiMode } from "@/lib/hooks/useArticleAi";
+import { NEWS_GRID } from "@/components/misc/skeletons";
+import { apiRequest } from "@/lib/api-client";
+import { CoverImage } from "@/components/misc/cover-image";
 
 type SaveKind = "likes" | "bookmarks";
 const SAVE_ENDPOINT: Record<SaveKind, string> = { likes: "/user/like-news", bookmarks: "/user/bookmark-news" };
@@ -40,15 +42,12 @@ function useSavedToggle() {
     setSavedList(key, wasSaved ? previous.filter((id) => id !== article.id) : [...previous, article.id]);
     setPending(`${kind}:${article.id}`);
     try {
-      const res = await fetch(`${API_BASE_URL}${SAVE_ENDPOINT[kind]}`, {
+      const data = await apiRequest<Partial<Record<typeof kind, string[]>>>(SAVE_ENDPOINT[kind], {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ newsId: article.id, country: article.savedRegion }),
+        body: { newsId: article.id, country: article.savedRegion },
       });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      if (Array.isArray(data[kind])) setSavedList(key, data[kind]);
+      const ids = data?.[kind];
+      if (Array.isArray(ids)) setSavedList(key, ids);
     } catch {
       setSavedList(key, previous);
       toast.error(`Couldn't update your ${kind === "likes" ? "likes" : "bookmarks"}. Please try again.`);
@@ -69,7 +68,7 @@ export default function NewsCardItems({ articles, onOpenAi }: NewsCardItemsProps
   const { isSaved, toggle, pending } = useSavedToggle();
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className={NEWS_GRID}>
       {articles.map((article) => {
         const published = new Date(article.publishedAt);
         const liked = isSaved("likes", article);
@@ -78,19 +77,8 @@ export default function NewsCardItems({ articles, onOpenAi }: NewsCardItemsProps
           <Card key={article.id} className="group/card flex h-full flex-col overflow-hidden p-0 transition-shadow duration-200 hover:shadow-lg">
             <CardHeader className="p-0">
               <div className="relative h-44 w-full overflow-hidden bg-muted">
-                <img
-                  src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
-                  alt=""
-                  loading="lazy"
-                  decoding="async"
-                  referrerPolicy="no-referrer"
-                  onError={(event) => {
-                    const image = event.currentTarget;
-                    if (!image.dataset.fallback) {
-                      image.dataset.fallback = "1";
-                      image.src = "/ReadHub_PlaceHolder.png";
-                    }
-                  }}
+                <CoverImage
+                  src={article.urlToImage}
                   className="h-full w-full object-cover transition-transform duration-500 group-hover/card:scale-105"
                 />
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent" />

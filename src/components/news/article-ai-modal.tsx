@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Link from "next/link";
@@ -10,6 +9,7 @@ import { Button } from "../ui/button";
 import { ArticleForecast, ForecastScenario, NewsArticle } from "@/types";
 import { ArticleAiMode } from "@/lib/hooks/useArticleAi";
 import { InsightBasis } from "@/api/ai";
+import { CoverImage } from "@/components/misc/cover-image";
 
 const MODE_COPY: Record<ArticleAiMode, { label: string; icon: typeof Sparkles; accent: string; loading: string; disclaimer: string; signIn: string }> = {
   explain: {
@@ -151,13 +151,9 @@ export default function ArticleAiModal({ article, mode, explanation, forecast, b
         {article && (
           <>
             <header className="flex gap-4 border-b p-5 pr-12">
-              <img
-                src={article.urlToImage || "/ReadHub_PlaceHolder.png"}
-                alt=""
-                referrerPolicy="no-referrer"
-                onError={(event) => {
-                  event.currentTarget.src = "/ReadHub_PlaceHolder.png";
-                }}
+              <CoverImage
+                src={article.urlToImage}
+                loading="eager"
                 className="hidden h-20 w-28 shrink-0 rounded-lg object-cover sm:block"
               />
               <div className="min-w-0 space-y-1.5">

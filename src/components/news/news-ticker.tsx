@@ -6,6 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 import { fetchNews } from "@/api/news";
 import { Category, NewsArticle } from "@/types";
 import { NEWS_CATEGORY_COLORS } from "@/constants";
+import { TickerSkeleton } from "@/components/misc/skeletons";
 
 /** Pick one headline per category for variety, falling back to the latest headlines. */
 function pickHeadlines(articles: NewsArticle[]) {
@@ -20,10 +21,12 @@ function pickHeadlines(articles: NewsArticle[]) {
 }
 
 export default function NewsTicker({ country, language }: { country: string; language: string }) {
-  const [items, setItems] = useState<NewsArticle[]>([]);
+  // null while loading; [] when there is nothing to show.
+  const [items, setItems] = useState<NewsArticle[] | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
+    setItems(null);
     fetchNews({ country, language, limit: 20 }, controller.signal)
       .then((res) => setItems(pickHeadlines(res.news)))
       .catch(() => {
@@ -32,6 +35,7 @@ export default function NewsTicker({ country, language }: { country: string; lan
     return () => controller.abort();
   }, [country, language]);
 
+  if (items === null) return <TickerSkeleton />;
   if (items.length === 0) return <div className="h-12 border-y bg-muted/40" aria-hidden="true" />;
 
   return (

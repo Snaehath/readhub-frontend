@@ -38,6 +38,7 @@ import { suggestions } from "@/constants";
 import { useChat } from "@/lib/hooks/useChat";
 import { useUserStore } from "@/lib/store/userStore";
 import { linkCitations, safeHttpUrl } from "@/lib/utils";
+import { ChatMessagesSkeleton, ChatSkeleton } from "@/components/misc/skeletons";
 import { AgentEvent, ChatMessage, ChatSourceReference } from "@/types";
 
 // Older messages stored a text log instead of structured events.
@@ -257,14 +258,7 @@ export const ChatbotView = () => {
     setDraft("");
   };
 
-  if (status === "loading") {
-    return (
-      <div className="flex min-h-[70vh] items-center justify-center" role="status">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        <span className="sr-only">Loading</span>
-      </div>
-    );
-  }
+  if (status === "loading") return <ChatSkeleton />;
 
   if (!isAuthenticated) {
     return (
@@ -329,7 +323,7 @@ export const ChatbotView = () => {
 
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto pb-6">
         {chat.historyLoading ? (
-          <div className="flex h-full items-center justify-center"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+          <div role="status" aria-label="Loading conversation"><ChatMessagesSkeleton /></div>
         ) : chat.messages.length === 0 ? (
           <div className="flex min-h-full flex-col items-center justify-center gap-8 py-8 text-center">
             <div className="space-y-3">

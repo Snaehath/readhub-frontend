@@ -5,7 +5,7 @@ import { Library, Search } from "lucide-react";
 import { PoweredBy } from "../misc/powered-by";
 import { FilterChip } from "../misc/filter-chip";
 import { Input } from "@/components/ui/input";
-import { BookCardSkeleton } from "@/components/misc/skeletons";
+import { BOOK_GRID, BookGridSkeleton } from "@/components/misc/skeletons";
 import BookCard from "./book-card";
 import { Book } from "@/types";
 import { booksCategories } from "@/constants";
@@ -67,9 +67,7 @@ export default function LibraryView() {
           We couldn&apos;t reach Open Library. Check your connection and try again.
         </div>
       ) : isLoading ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {Array.from({ length: 10 }, (_, index) => <BookCardSkeleton key={index} />)}
-        </div>
+        <BookGridSkeleton />
       ) : books.length === 0 ? (
         <div className="flex flex-col items-center py-20 text-center">
           <span className="mb-4 rounded-full bg-muted p-5"><Search className="h-7 w-7 text-muted-foreground" aria-hidden="true" /></span>
@@ -78,7 +76,7 @@ export default function LibraryView() {
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          <div className={BOOK_GRID}>
             {books.map((book) => <BookCard key={book.work_key} book={book} />)}
           </div>
           <p className="mt-10 text-center text-xs text-muted-foreground">

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { API_BASE_URL } from "@/constants";
+import { ApiError, apiRequest } from "@/lib/api-client";
 
 export type User = {
   _id: string;
@@ -38,33 +38,28 @@ export const useUserStore = create<UserStore>()((set) => ({
   setUser: (user) => set({ user, isAuthenticated: Boolean(user), status: user ? "authenticated" : "anonymous" }),
   setSavedList: (key, ids) => set((state) => (state.user ? { user: { ...state.user, [key]: ids } } : state)),
   savePreferences: async (preferences) => {
-    const res = await fetch(`${API_BASE_URL}/user/preferences`, {
+    const data = await apiRequest<{ preferences: User["preferences"] }>("/user/preferences", {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(preferences),
+      body: preferences,
+      errorMessage: "Couldn't save your preferences.",
     });
-    const data = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(data?.error || "Couldn't save your preferences.");
     set((state) => (state.user ? { user: { ...state.user, preferences: data.preferences } } : state));
   },
   fetchUser: async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/user/me`, { credentials: "include", cache: "no-store" });
-      if (res.ok) {
-        set({ user: await res.json(), isAuthenticated: true, status: "authenticated" });
-      } else if (res.status === 401 || res.status === 404) {
+      const user = await apiRequest<User>("/user/me", { cache: "no-store" });
+      set({ user, isAuthenticated: true, status: "authenticated" });
+    } catch (error) {
+      if (error instanceof ApiError && (error.status === 401 || error.status === 404)) {
         set({ user: null, isAuthenticated: false, status: "anonymous" });
       } else {
+        // Keep the current state on network/server errors; only settle the initial check.
         set((state) => (state.status === "loading" ? { status: "anonymous" } : state));
       }
-    } catch {
-      // Keep the current state on network errors; only settle the initial check.
-      set((state) => (state.status === "loading" ? { status: "anonymous" } : state));
     }
   },
   logout: async () => {
-    await fetch(`${API_BASE_URL}/user/logout`, { method: "POST", credentials: "include" }).catch(() => undefined);
+    await apiRequest("/user/logout", { method: "POST" }).catch(() => undefined);
     set({ user: null, isAuthenticated: false, status: "anonymous" });
   },
 }));

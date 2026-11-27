@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { format, isValid } from "date-fns";
@@ -10,13 +11,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useUserStore } from "@/lib/store/userStore";
-import { API_BASE_URL, avatarOptions } from "@/constants";
+import { avatarOptions } from "@/constants";
 import { toast } from "sonner";
-import { AlertTriangle, Edit2, Loader2, User as UserIcon } from "lucide-react";
-import Typography from "@/components/ui/custom/typography";
+import { AlertTriangle, Edit2, User as UserIcon } from "lucide-react";
+import { ProfileSkeleton } from "@/components/misc/skeletons";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useRouter } from "next/navigation";
 import { NewsPreferencesCard } from "./news-preferences-card";
+import { apiRequest } from "@/lib/api-client";
 
 const ProfileView = () => {
   const { user, setUser, status, fetchUser, logout } = useUserStore();
@@ -36,14 +38,7 @@ const ProfileView = () => {
 
   const joinedDate = user?.createdAt && isValid(new Date(user.createdAt)) ? format(new Date(user.createdAt), "MMMM d, yyyy") : "";
 
-  if (status === "loading") {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center" role="status">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        <span className="sr-only">Loading your profile</span>
-      </div>
-    );
-  }
+  if (status === "loading") return <ProfileSkeleton />;
 
   if (!user) {
     return (
@@ -52,8 +47,8 @@ const ProfileView = () => {
           <UserIcon className="h-12 w-12 text-muted-foreground" />
         </div>
         <div className="space-y-2">
-          <Typography variant="h3">You&apos;re signed out</Typography>
-          <Typography variant="muted">Sign in to view your profile.</Typography>
+          <h3 className="text-2xl font-semibold tracking-tight">You&apos;re signed out</h3>
+          <p className="text-sm text-muted-foreground">Sign in to view your profile.</p>
         </div>
         <Button asChild>
           <Link href="/login?next=/profile">Sign in</Link>
@@ -76,20 +71,11 @@ const ProfileView = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/user/update`, {
+      const data = await apiRequest<{ user: { username: string; avatar: string } }>("/user/update", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          username: newUsername.trim(),
-          ...(newAvatar ? { avatar: newAvatar } : {}),
-        }),
+        body: { username: newUsername.trim(), ...(newAvatar ? { avatar: newAvatar } : {}) },
+        errorMessage: "Failed to update profile",
       });
-
-      const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error || "Failed to update profile");
 
       setUser({ ...user, username: data.user.username, avatar: data.user.avatar });
 
@@ -111,14 +97,7 @@ const ProfileView = () => {
   const handleDeleteAccount = async () => {
     setDeletingAccount(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/user/account`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ password: deletePassword }),
-      });
-      const data = response.status === 204 ? null : await response.json();
-      if (!response.ok) throw new Error(data?.error || "Unable to delete the account.");
+      await apiRequest("/user/account", { method: "DELETE", body: { password: deletePassword }, errorMessage: "Unable to delete the account." });
       await logout();
       toast.success("Your account and saved data were deleted.");
       router.replace("/");
@@ -204,62 +183,44 @@ const ProfileView = () => {
               </div>
             ) : (
               <div className="text-center space-y-1">
-                <Typography variant="h2" className="tracking-tight">
+                <h2 className={cn("text-3xl font-semibold tracking-tight", "tracking-tight")}>
                   {user.username}
-                </Typography>
-                <Typography variant="muted" className="font-medium text-sm">
+                </h2>
+                <p className={cn("text-sm text-muted-foreground", "font-medium text-sm")}>
                   {user.email}
-                </Typography>
+                </p>
                 <div className="pt-3 flex flex-wrap justify-center gap-2">
                   {joinedDate && (
-                    <Typography
-                      variant="muted"
-                      className="px-3 py-1 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold rounded-full border border-indigo-100 dark:border-indigo-900/50 uppercase tracking-wider leading-none"
-                    >
+                    <p className={cn("text-sm text-muted-foreground", "px-3 py-1 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 text-[11px] font-bold rounded-full border border-indigo-100 dark:border-indigo-900/50 uppercase tracking-wider leading-none")}>
                       Member since {joinedDate}
-                    </Typography>
+                    </p>
                   )}
                   {user.role === "admin" && (
-                    <Typography
-                      variant="muted"
-                      className="px-3 py-1 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-[11px] font-bold rounded-full border border-amber-100 dark:border-amber-900/50 uppercase tracking-wider leading-none"
-                    >
+                    <p className={cn("text-sm text-muted-foreground", "px-3 py-1 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-[11px] font-bold rounded-full border border-amber-100 dark:border-amber-900/50 uppercase tracking-wider leading-none")}>
                       Administrator
-                    </Typography>
+                    </p>
                   )}
                 </div>
 
                 {/* User Stats/Summary */}
                 <div className="grid grid-cols-2 gap-4 w-full pt-6 border-t mt-6 dark:border-zinc-800">
                   <div className="text-center p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800/50">
-                    <Typography
-                      variant="h3"
-                      className="text-indigo-600 dark:text-indigo-400"
-                    >
+                    <h3 className={cn("text-2xl font-semibold tracking-tight", "text-indigo-600 dark:text-indigo-400")}>
                       {(user.likes_us?.length || 0) +
                         (user.likes_in?.length || 0)}
-                    </Typography>
-                    <Typography
-                      variant="muted"
-                      className="text-[10px] uppercase font-bold tracking-widest"
-                    >
+                    </h3>
+                    <p className={cn("text-sm text-muted-foreground", "text-[10px] uppercase font-bold tracking-widest")}>
                       Liked Articles
-                    </Typography>
+                    </p>
                   </div>
                   <div className="text-center p-3 rounded-2xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800/50">
-                    <Typography
-                      variant="h3"
-                      className="text-emerald-600 dark:text-emerald-400"
-                    >
+                    <h3 className={cn("text-2xl font-semibold tracking-tight", "text-emerald-600 dark:text-emerald-400")}>
                       {(user.bookmarks_us?.length || 0) +
                         (user.bookmarks_in?.length || 0)}
-                    </Typography>
-                    <Typography
-                      variant="muted"
-                      className="text-[10px] uppercase font-bold tracking-widest"
-                    >
+                    </h3>
+                    <p className={cn("text-sm text-muted-foreground", "text-[10px] uppercase font-bold tracking-widest")}>
                       Bookmarked Articles
-                    </Typography>
+                    </p>
                   </div>
                 </div>
               </div>

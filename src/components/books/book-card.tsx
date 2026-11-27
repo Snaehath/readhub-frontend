@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import { BookOpen, ExternalLink } from "lucide-react";
 
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Category, Book } from "@/types";
 import { BOOK_CATEGORY_COLORS } from "@/constants";
 import ToolTip from "../ui/custom/tooltip";
+import { CoverImage } from "@/components/misc/cover-image";
 
 interface BookCardProps {
   book: Book;
@@ -20,7 +20,7 @@ export default function BookCard({ book }: BookCardProps) {
     ? `https://covers.openlibrary.org/b/id/${book.cover_id}-M.jpg`
     : book.cover_edition_key
       ? `https://covers.openlibrary.org/b/olid/${book.cover_edition_key}-M.jpg`
-      : "/ReadHub_PlaceHolder.png";
+      : undefined;
 
   const lendingId = book.lending_identifier_s?.trim();
   const archiveUrl = lendingId
@@ -35,14 +35,9 @@ export default function BookCard({ book }: BookCardProps) {
     <Card className="group overflow-hidden flex flex-col hover:-translate-y-1 hover:shadow-xl transition-all duration-300 border-zinc-200 dark:border-zinc-800 hover:border-zinc-400 dark:hover:border-zinc-600">
       {/* Cover Image */}
       <div className="relative h-52 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-        <img
+        <CoverImage
           src={coverUrl}
-          loading="lazy"
-          onError={(e) => {
-            e.currentTarget.src = "/ReadHub_PlaceHolder.png";
-          }}
           className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-          alt=""
         />
         {/* Gradient overlay */}
         <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />

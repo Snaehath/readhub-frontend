@@ -14,10 +14,11 @@ import { Button } from "@/components/ui/button";
 import { API_BASE_URL } from "@/constants";
 import { SingleAiNewsResponse } from "@/types";
 import { format, isValid } from "date-fns";
-import { fetcher } from "@/lib/fetcher";
+import { fetcher } from "@/lib/api-client";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-import { linkCitations, safeHttpUrl } from "@/lib/utils";
+import { linkCitations, readMinutes, safeHttpUrl } from "@/lib/utils";
+import { AiReportArticleSkeleton } from "@/components/misc/skeletons";
 import AiByline from "./ai-byline";
 
 export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
@@ -58,20 +59,10 @@ export const NewsView = ({ params }: { params: Promise<{ id: string }> }) => {
   const body = (news?.content || "").replace(/^# .*\n?/, "").trim();
   const filteredContent = linkCitations(body, linkedSources.map((source) => source.citationNumber), "report-source");
   const wordCount = body ? body.split(/\s+/).length : 0;
-  const readTime = Math.max(1, Math.ceil(wordCount / 220));
+  const readTime = readMinutes(wordCount);
   const createdAt = news ? new Date(news.createdAt) : null;
 
-  if (isLoading) {
-    return (
-      <div className="mx-auto max-w-3xl animate-pulse space-y-4 px-6 py-16" role="status" aria-label="Loading report">
-        <div className="h-4 w-40 rounded bg-muted" />
-        <div className="h-10 w-full rounded bg-muted" />
-        <div className="h-10 w-2/3 rounded bg-muted" />
-        <div className="h-5 w-full rounded bg-muted" />
-        <div className="h-64 w-full rounded bg-muted" />
-      </div>
-    );
-  }
+  if (isLoading) return <AiReportArticleSkeleton />;
 
   if (error || !news) {
     return (

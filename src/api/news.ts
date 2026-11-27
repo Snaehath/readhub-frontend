@@ -10,15 +10,18 @@ export interface NewsQuery {
   sort?: string;
   freshness?: string;
   language?: string;
+  /** Ask the backend for new headlines instead of its cached copy (refresh button). */
+  refresh?: boolean;
 }
 
 /** US and India English news come from ReadHub's saved archive; everything else is the live global feed. */
-export const savedRegionFor = (country: string, language: string): "us" | "in" | undefined =>
+const savedRegionFor = (country: string, language: string): "us" | "in" | undefined =>
   (country === "us" || country === "in") && language === "en" ? country : undefined;
 
 /** Path and query string for a news request, relative to the API base URL. */
-export function buildNewsPath({ q, page = 1, limit = 12, category = "all", country = "world", sort = "latest", freshness = "any", language = "en" }: NewsQuery) {
+export function buildNewsPath({ q, page = 1, limit = 12, category = "all", country = "world", sort = "latest", freshness = "any", language = "en", refresh = false }: NewsQuery) {
   const params = new URLSearchParams({ page: String(page), limit: String(limit), sort, freshness });
+  if (refresh) params.set("refresh", "1");
   if (q?.trim()) params.set("q", q.trim());
   if (category !== "all") params.set("category", category);
 
@@ -31,7 +34,7 @@ export function buildNewsPath({ q, page = 1, limit = 12, category = "all", count
   return { path: `${endpoint}?${params.toString()}`, savedRegion };
 }
 
-export const toNewsArticle = (article: RawNewsArticle, savedRegion?: "us" | "in"): NewsArticle => ({
+const toNewsArticle = (article: RawNewsArticle, savedRegion?: "us" | "in"): NewsArticle => ({
   id: article._id || article.id || article.url,
   title: article.title,
   description: article.description,
@@ -59,12 +62,13 @@ export async function parseNewsResponse(res: Response, savedRegion?: "us" | "in"
     totalArticles: data.totalArticles ?? 0,
     hasMore: typeof data.hasMore === "boolean" ? data.hasMore : (data.currentPage ?? 1) < (data.totalPages ?? 0),
     totalIsEstimate: Boolean(data.totalIsEstimate),
+    updatedAt: data.updatedAt || data.fetchedAt || undefined,
     provider: data.provider || (savedRegion === "us" ? "NewsAPI" : savedRegion === "in" ? "GNews" : "GDELT"),
   };
 }
 
 export async function fetchNews(query: NewsQuery, signal?: AbortSignal): Promise<PaginatedNewsResponse> {
   const { path, savedRegion } = buildNewsPath(query);
-  const res = await fetch(`${API_BASE_URL}${path}`, { signal });
+  const res = await fetch(`${API_BASE_URL}${path}`, { signal, cache: query.refresh ? "no-store" : "default" });
   return parseNewsResponse(res, savedRegion);
 }

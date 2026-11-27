@@ -3,14 +3,14 @@
 import { buildNewsPath, parseNewsResponse, NewsQuery } from "@/api/news";
 import { AiNews, NewsArticle } from "@/types";
 
-export function getBackendApiUrl() {
+function getBackendApiUrl() {
   const configured = process.env.BACKEND_API_URL
     || (process.env.NODE_ENV === "development" ? "http://localhost:5000" : "https://readhub-backend.onrender.com");
   const base = configured.replace(/\/+$/, "");
   return base.endsWith("/api") ? base : `${base}/api`;
 }
 
-export async function getNewsServer(query: NewsQuery): Promise<NewsArticle[]> {
+async function getNewsServer(query: NewsQuery): Promise<NewsArticle[]> {
   try {
     const { path, savedRegion } = buildNewsPath(query);
     const res = await fetch(`${getBackendApiUrl()}${path}`, { next: { revalidate: 300 } });

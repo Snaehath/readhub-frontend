@@ -1,5 +1,5 @@
-import { API_BASE_URL } from "@/constants";
 import { ArticleForecast, NewsArticle } from "@/types";
+import { apiRequest } from "@/lib/api-client";
 
 // Slightly above the server's 30s budget so the server's own timeout message wins.
 const CLIENT_TIMEOUT_MS = 40000;
@@ -24,26 +24,14 @@ const toArticleSelection = (article: NewsArticle): ArticleSelection =>
         },
       };
 
-async function postInsight<T>(path: string, article: NewsArticle, signal?: AbortSignal): Promise<T & { basis: InsightBasis }> {
-  let res: Response;
-  try {
-    res = await fetch(`${API_BASE_URL}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ userMessage: toArticleSelection(article) }),
-      signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(CLIENT_TIMEOUT_MS)]) : AbortSignal.timeout(CLIENT_TIMEOUT_MS),
-    });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === "TimeoutError") throw new Error("The AI took too long to respond. Please try again.");
-    throw error;
-  }
-  const data = await res.json().catch(() => null);
-  if (!res.ok) {
-    const fallback = res.status === 429 ? "You've reached the AI limit. Please try again in a few minutes." : "The AI service is temporarily unavailable.";
-    throw new Error(data?.error || fallback);
-  }
-  return data;
+function postInsight<T>(path: string, article: NewsArticle, signal?: AbortSignal) {
+  return apiRequest<T & { basis: InsightBasis }>(path, {
+    method: "POST",
+    body: { userMessage: toArticleSelection(article) },
+    signal,
+    timeoutMs: CLIENT_TIMEOUT_MS,
+    errorMessage: "The AI service is temporarily unavailable.",
+  });
 }
 
 export async function explainArticle(article: NewsArticle, signal?: AbortSignal) {

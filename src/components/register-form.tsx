@@ -9,7 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { avatarOptions, API_BASE_URL } from "@/constants";
+import { avatarOptions } from "@/constants";
+import { apiRequest } from "@/lib/api-client";
 
 export default function RegisterForm() {
   const [email, setEmail] = useState("");
@@ -32,16 +33,11 @@ export default function RegisterForm() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/user/addUser`, {
+      await apiRequest("/user/addUser", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, username, password, avatar }),
+        body: { email, username, password, avatar },
+        errorMessage: "Registration failed. Please try again.",
       });
-
-      const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error || "Registration failed. Please try again.");
 
       toast.success("Account created. Please sign in.");
       router.push("/login");

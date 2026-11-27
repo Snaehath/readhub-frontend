@@ -73,6 +73,8 @@ export interface PaginatedNewsResponse {
   /** True when more articles exist than `totalArticles` (global feed fetches in batches). */
   totalIsEstimate?: boolean;
   provider?: "GDELT" | "GNews" | "NewsAPI";
+  /** When the backend last pulled this feed from its provider (ISO date). */
+  updatedAt?: string;
 }
 
 export interface RawNewsArticle {

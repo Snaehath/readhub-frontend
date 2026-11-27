@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUserStore } from "@/lib/store/userStore";
-import { API_BASE_URL } from "@/constants";
+import { apiRequest } from "@/lib/api-client";
 
 /** Only allow same-site relative redirects to avoid open-redirects via ?next=. */
 const safeNextPath = (value: string | null) => (value && value.startsWith("/") && !value.startsWith("//") ? value : "/");
@@ -27,14 +27,7 @@ export default function LoginForm() {
     event.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/user/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(data?.error || "Sign-in failed. Please try again.");
+      await apiRequest("/user/login", { method: "POST", body: { email, password }, errorMessage: "Sign-in failed. Please try again." });
       await fetchUser();
       toast.success("Signed in.");
       router.replace(safeNextPath(searchParams.get("next")));

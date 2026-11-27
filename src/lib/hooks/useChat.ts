@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { API_BASE_URL } from "@/constants";
 import { AgentEvent, ChatMessage, ChatSession } from "@/types";
+import { apiRequest } from "@/lib/api-client";
 
 const ACTIVE_SESSION_KEY = "active_session_id";
 
@@ -72,8 +73,8 @@ export function useChat(isAuthenticated: boolean) {
 
   const refreshSessions = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/ai/history`, { credentials: "include", cache: "no-store" });
-      if (res.ok) setSessions((await res.json()).sessions || []);
+      const data = await apiRequest<{ sessions?: ChatSession[] }>("/ai/history", { cache: "no-store" });
+      setSessions(data?.sessions || []);
     } catch {
       // The session list is a convenience; the chat still works without it.
     }
@@ -85,9 +86,8 @@ export function useChat(isAuthenticated: boolean) {
     storage.set(id);
     setHistoryLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/ai/history/${encodeURIComponent(id)}`, { credentials: "include", cache: "no-store" });
-      if (!res.ok) throw new Error();
-      const history: ChatMessage[] = (await res.json()).history || [];
+      const data = await apiRequest<{ history?: ChatMessage[] }>(`/ai/history/${encodeURIComponent(id)}`, { cache: "no-store" });
+      const history = data?.history || [];
       if (history.length === 0) {
         // The stored session no longer exists (deleted or trimmed).
         setSessionId(null);
@@ -205,8 +205,7 @@ export function useChat(isAuthenticated: boolean) {
 
   const deleteSession = useCallback(async (id: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/ai/history/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "include" });
-      if (!res.ok) throw new Error();
+      await apiRequest(`/ai/history/${encodeURIComponent(id)}`, { method: "DELETE" });
       setSessions((previous) => previous.filter((session) => session.sessionId !== id));
       if (id === sessionId) newChat();
       toast.success("Conversation deleted.");
@@ -222,13 +221,7 @@ export function useChat(isAuthenticated: boolean) {
     const before = messages.find((item) => item._id === messageId)?.feedback;
     setRating(rating);
     try {
-      const res = await fetch(`${API_BASE_URL}/ai/feedback`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ sessionId, messageId, rating }),
-      });
-      if (!res.ok) throw new Error();
+      await apiRequest("/ai/feedback", { method: "POST", body: { sessionId, messageId, rating } });
     } catch {
       setRating(before);
       toast.error("Feedback could not be saved.");

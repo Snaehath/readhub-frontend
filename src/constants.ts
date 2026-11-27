@@ -81,6 +81,7 @@ export const NEWS_CATEGORY_COLORS: Record<string, string> = {
   business: "bg-amber-100 text-amber-950 border-amber-300 dark:bg-amber-950 dark:text-amber-200 dark:border-amber-800",
   politics: "bg-orange-100 text-orange-950 border-orange-300 dark:bg-orange-950 dark:text-orange-200 dark:border-orange-800",
   entertainment: "bg-pink-100 text-pink-900 border-pink-300 dark:bg-pink-950 dark:text-pink-200 dark:border-pink-800",
+  general: "bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-700",
 };
 
 export const BOOK_CATEGORY_COLORS: Record<string, string> = {
